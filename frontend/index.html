@@ -1,1 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Login</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Changed to 100vh for full viewport height */
+            background: url("assets/images/background.jpg") no-repeat center center fixed; /* Added fixed to prevent scrolling */
+            background-size: cover; /* Added background-size: cover to fill the viewport */
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            margin: 0; /* Remove default body margin */
+        }
+        .login-container {
+            background: rgba(0,0,0,0.8);
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            width: 350px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container h2 {
+            margin-bottom: 10px;
+            font-size: 60px;
+            margin-top: 2px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+            border: 5px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Added box-sizing to include padding in width */
+            background-color: rgba(255, 255, 255, 0.1); /* Added subtle background for input */
+            color: white; /* Added text color for input */
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7); /* Added placeholder color */
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #FF69B4;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .login-btn:hover {
+            background: hsl(240, 82%, 30%);
+        }
+        .google-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4285F4;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .google-btn:hover {
+            background: hsl(218, 89%, 40%);
+        }
+        .google-btn img {
+            width: 25px;
+            margin-right: 10px;
+        }
 
+        .logo {
+            width: 100px; /* Adjust logo size */
+            margin-bottom: 20px;
+            border-radius:50%;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="assets/images/logo.jpg" alt="UniVerse Logo" class="logo">
+        <h2>UniVerse <br> Login</h2>
+        <input type="text" class="input-field" placeholder="Username/Email">
+        <input type="password" class="input-field" placeholder="Password">
+        <button class="login-btn">Login</button>
+        <button class="google-btn">
+            <img src="assets/images/google-logo.png" alt="Google Logo">
+            Login with Google
+        </button>
+    </div>
+</body>
+</html>
