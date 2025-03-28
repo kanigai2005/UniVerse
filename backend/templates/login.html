@@ -1,27 +1,72 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Login</title>
+    <style>
+        /* Add your existing styles here */
+        body {
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            background: linear-gradient(180deg, rgb(25, 196, 230), rgb(10, 28, 117));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            background: #050b78;
+            color: white;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background: #7445db;
+        }
+        p {
+            color: red;
+        }
+    </style>
 </head>
 <body>
+    <h1>Welcome to UniVerse</h1>
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <p>{{ error }}</p>
     {% endif %}
+    <!-- Login Form -->
     <form method="post" action="/login">
-        <label>Username/Email:</label><br>
-        <input type="text" name="username"><br>
-        <label>Password:</label><br>
-        <input type="password" name="password"><br><br>
+        <label for="username">Username/Email:</label><br>
+        <input type="text" id="username" name="username" placeholder="Enter your username or email" required><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required><br>
         <input type="submit" value="Login">
     </form>
+
+    <!-- Registration Form -->
     <form method="post" action="/register">
-        <label>Username:</label><br>
-        <input type="text" name="username"><br>
-        <label>Email:</label><br>
-        <input type="email" name="email"><br>
-        <label>Password:</label><br>
-        <input type="password" name="password"><br><br>
+        <label for="reg-username">Username:</label><br>
+        <input type="text" id="reg-username" name="username" placeholder="Enter your username" required><br>
+        <label for="reg-email">Email:</label><br>
+        <input type="email" id="reg-email" name="email" placeholder="Enter your email" required><br>
+        <label for="reg-password">Password:</label><br>
+        <input type="password" id="reg-password" name="password" placeholder="Enter your password" required><br>
         <input type="submit" value="Register">
     </form>
 </body>
