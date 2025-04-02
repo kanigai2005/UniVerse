@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Alumni Association Platform</title>
+    <style>
+       
+            body {
+    font-family: 'Trebuchet MS', sans-serif;
+    margin: 0;
+    padding: 0;
+    background:linear-gradient(150deg,  hsl(190, 80%, 50%),hsl(272, 84%, 25%)); /* Add your image URL here */
+    background-size: cover; /* Make the image cover the entire page */
+    background-position: center center; /* Center the image */
+    background-attachment: fixed; /* Keep the image fixed when scrolling */
+}
+
+        header {
+            background-color: #050897; /* Medium Blue */
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+          font-family:'Trebuchet MS', sans-serif;
+
+
+
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .box {
+            width: 280px;
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            text-align: center;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .box h2 {
+            color: #050897; /* Medium Blue */
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .box p {
+            font-size: 16px;
+            color: #777;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background-color: #3498db; /* Medium Blue */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        .btn:hover {
+            background-color: #2980b9; /* Darker Medium Blue */
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 60%;
+            max-width: 600px;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background-color: red;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        /* Newsletter Panel Styling */
+        .newsletter-panel {
+            background-color: rgba(221, 230, 236, 0.918); /* Medium Blue */
+            color: white;
+            padding: 30px;
+            margin: 20px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .newsletter-panel h2 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            color:black
+        }
+
+        .newsletter-panel p {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-style: italic;
+            color:black;
+        }
+
+        
+
+        /* Moving Panel for Expert Q&A and Webinars */
+        .moving-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        .panel-item {
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            width: 280px;
+        }
+
+        .panel-item:hover {
+            transform: scale(1.05);
+        }
+
+
+        .moving-panel .panel-item:hover {
+            transform: scale(1.05);
+        }
+
+        .moving-panel .panel-item h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        .moving-panel .panel-item p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        .moving-panel .panel-item .btn {
+            background-color: #fff;
+            color: #3498db; /* Medium Blue */
+            border: 2px solid #3498db; /* Medium Blue */
+            padding: 10px 20px;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        .moving-panel .panel-item .btn:hover {
+            background-color: #2980b9; /* Darker Medium Blue */
+            color: white;
+            font-family: 'Trebuchet MS',sans-serif;
+        }
+
+        /* Scrollbar customization for the moving panel */
+        .moving-panel::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .moving-panel::-webkit-scrollbar-thumb {
+            background-color: #3498db; /* Medium Blue */
+            border-radius: 10px;
+        }
+
+        .moving-panel::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Header Section -->
+    <header>
+        Explore Our UniVerse - The Ultimate Collaboration Space!
+    </header>
+
+    <!-- Newsletter Panel -->
+    <div class="newsletter-panel">
+        <h2>Monthly Newsletter</h2>
+        <p>Stay updated with the latest news, events, and opportunities. Subscribe to our monthly newsletter!</p>
+        <button class="btn">Subscribe Now</button>
+    </div>
+
+    <!-- Moving Panel for Expert Q&A and Webinars -->
+    <div class="moving-panel">
+        <div class="panel-item">
+            <h3>Expert Q&A</h3>
+            <p>Get your career-related questions answered by top industry experts.</p>
+            <button class="btn">Join Q&A</button>
+        </div>
+    </div>
+
+    <!-- Container for the features -->
+    <div class="container">
+
+        <!-- Career Fairs Box -->
+        <div class="box" id="career-fairs">
+            <h2>Career Fairs</h2>
+            <p>Attend virtual career fairs, connect with alumni, and apply for jobs and internships.</p>
+            <button class="btn" onclick="showModal('careerFairsModal')">Explore Career Fairs</button>
+        </div>
+
+        <!-- Hackathons and Contests Box -->
+        <div class="box" id="hackathons-contests">
+            <h2>Hackathons and Contests</h2>
+            <p>Participate in exciting challenges and solve real-world problems with your peers.</p>
+            <button class="btn" onclick="showModal('hackathonModal')">Explore Hackathons</button>
+        </div>
+
+        <!-- Internships and Placements Box -->
+        <div class="box" id="internships-placements">
+            <h2>Internships and Placements</h2>
+            <p>Browse and apply for internships, get AI-powered recommendations, and more.</p>
+            <button class="btn" onclick="showModal('internshipModal')">Explore Internships</button>
+        </div>
+
+        <!-- Roadmaps and Success Stories Box -->
+        <div class="box" id="roadmaps-success-stories">
+            <h2>Roadmaps and Success Stories</h2>
+            <p>Explore inspiring alumni success stories and career paths to help guide your journey.</p>
+            <button class="btn" onclick="showModal('careerSuccessModal')">Explore Success Stories</button>
+        </div>
+
+        <!-- Leaderboard and Recognition Box -->
+        <div class="box" id="leaderboard-recognition">
+            <h2>Leaderboard and Recognition</h2>
+            <p>Get recognized for your mentorship, job referrals, and contributions to the community.</p>
+            <button class="btn" onclick="showModal('leaderboardModal')">Explore Leaderboard</button>
+        </div>
+
+        <!-- Exciting Rewards Box -->
+        <div class="box" id="exciting-rewards">
+            <h2>Exciting Rewards</h2>
+            <p>Earn coins by engaging and redeem them for rewards such as mentorship or event discounts.</p>
+            <button class="btn" onclick="showModal('virtualCoinModal')">Explore Virtual Coins</button>
+        </div>
+
+    </div>
+
+    <!-- Footer Section -->
+    <footer style="text-align:center; background-color:#3498db; color:white; padding:15px;">
+        &copy; 2025 Alumni Association Platform. All rights reserved.
+    </footer>
+
+    <!-- Modal for Career Fairs -->
+    <div class="modal" id="careerFairsModal">
+        <div class="modal-content">
+            <div class="modal-header">Career Fairs</div>
+            <div class="modal-body">
+                <p>Organizers can create and manage career fairs. Alumni can host live sessions and students can apply for jobs or internships.</p>
+                <h3>Job Listings</h3>
+                <p>Browse the latest job openings from top companies.</p>
+                <button class="btn">View Job Listings</button>
+                <h3>Apply for Jobs</h3>
+                <p>Apply directly for jobs listed in career fairs.</p>
+                <button class="btn">Apply Now</button>
+                <h3>Create and Manage Events</h3>
+                <p>Create and manage career fairs and events to help connect alumni and students.</p>
+                <button class="btn">Create Event</button>
+                <button class="btn close-btn" onclick="closeModal('careerFairsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Hackathons and Contests -->
+    <div class="modal" id="hackathonModal">
+        <div class="modal-content">
+            <div class="modal-header">Hackathons and Contests</div>
+            <div class="modal-body">
+                <p>Participate in exciting hackathons and contests, form teams, and get feedback from industry professionals.</p>
+                <h3>Event Listings</h3>
+                <p>Browse upcoming hackathons and contests.</p>
+                <button class="btn">View Hackathons</button>
+                <h3>Team Member Collaboration</h3>
+                <p>Collaborate with other participants on hackathon challenges.</p>
+                <button class="btn">Join Team</button>
+                <button class="btn close-btn" onclick="closeModal('hackathonModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Internships and Placements -->
+    <div class="modal" id="internshipModal">
+        <div class="modal-content">
+            <div class="modal-header">Internships and Placements</div>
+            <div class="modal-body">
+                <p>Browse internship listings, get AI-powered recommendations, and apply for opportunities directly.</p>
+                <h3>Support and Assistance</h3>
+                <p>Receive support during your internship application process.</p>
+                <button class="btn">Get Assistance</button>
+                <h3>Resources and Preparation</h3>
+                <p>Access resources to help you prepare for your internships.</p>
+                <button class="btn">Explore Resources</button>
+                <button class="btn close-btn" onclick="closeModal('internshipModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Roadmaps and Success Stories -->
+    <div class="modal" id="careerSuccessModal">
+        <div class="modal-content">
+            <div class="modal-header">Roadmaps and Success Stories</div>
+            <div class="modal-body">
+                <p>Explore success stories from alumni with key takeaways and milestones to inspire your own career journey.</p>
+                <button class="btn close-btn" onclick="closeModal('careerSuccessModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Leaderboard and Recognition -->
+    <div class="modal" id="leaderboardModal">
+        <div class="modal-content">
+            <div class="modal-header">Leaderboard and Recognition</div>
+            <div class="modal-body">
+                <p>Recognize top mentors, contributors, and job referrers through leaderboards and achievement badges.</p>
+                <button class="btn close-btn" onclick="closeModal('leaderboardModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Exciting Rewards -->
+    <div class="modal" id="virtualCoinModal">
+        <div class="modal-content">
+            <div class="modal-header">Exciting Rewards</div>
+            <div class="modal-body">
+                <p>Earn coins by engaging in activities. These coins can be redeemed for rewards such as mentorship or event discounts.</p>
+                <button class="btn close-btn" onclick="closeModal('virtualCoinModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/workspaces/UniVerse/explore/frontend-exp/static/exp.js"></script>
+
+</body>
+
+</html>
+

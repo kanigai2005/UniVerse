@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Home</title>
+    <style>
+        /* Your CSS styles here */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            background: url('') no-repeat center center/cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #03030e, #c0cdeb);
+            padding: 15px 0;
+            text-align: center;
+            font-size: 50px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+        }
+        .container {
+            background: linear-gradient(180deg, rgb(25, 196, 230), rgb(10, 28, 117));
+            width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark-mode .container {
+            background: linear-gradient(180deg, rgb(10, 50, 70), rgb(5, 15, 60));
+        }
+
+        .dark-mode .nav a {
+            background: #a1a5a5;
+            color: white;
+        }
+
+        .dark-mode .nav a:hover {
+            background: #555;
+        }
+
+        .dark-mode .sidebar,
+        .dark-mode .feed,
+        .dark-mode .widgets {
+            background: rgba(134, 165, 172, 0.774);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .theme-toggle {
+            background: #838989;
+            color: white;
+        }
+
+        .dark-mode .theme-toggle:hover {
+            background: #555;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 30px;
+        }
+        .nav a {
+            background: #050b78;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .nav a:hover {
+            background: #7445db;
+        }
+        .search-bar {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            position: relative; /* Add this for absolute positioning of results */
+        }
+        .search-bar input {
+            padding: 20px;
+            border-radius: 10px 0 0 10px;
+            border: none;
+            width: 100%;
+            font-size: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .search-bar button {
+            padding: 10px 20px;
+            border-radius: 0 10px 10px 0;
+            border: none;
+            background-color: #050b78;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-bar button:hover {
+             background-color: #7445db;
+        }
+
+        .content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1100px;
+            margin-top: 10px;
+        }
+        .sidebar, .feed, .widgets {
+            background: rgba(24, 23, 23, 0.5);
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+            margin: 5px;
+            font-size: 30px;
+            color: rgb(255, 255, 255);
+            flex: 1;
+            min-width: 250px;
+        }
+        .feed {
+            flex: 1.2;
+        }
+        .theme-toggle {
+            padding: 12px 20px;
+            background: #ebedf0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 30px;
+            color: rgb(12, 6, 6);
+            font-family: 'Trebuchet MS',  sans-serif;
+        }
+        .theme-toggle:hover{
+            background-color:rgb(46, 125, 209);
+        }
+        .footer {
+            font-size: 22px;
+            margin-top: 5px;
+            font-family:  'Trebuchet MS',  sans-serif;;
+        }
+        #search-results {
+            margin-top: 20px;
+            text-align: left;
+            width: 100%;
+            color: #03030e;
+            max-width: 1000px;
+        }
+        #search-results p {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            background-color: rgb(0,0,0);
+            border-radius: 5px;
+            
+        }
+
+        #search-results p:last-child {
+            border-bottom: none;
+            background-color: rgb(0,0,0);
+        }
+          #suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            color: #03030e;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        #suggestions-list li {
+            padding: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        #suggestions-list li:hover {
+            background-color: #f0f0f0;
+        }
+        #suggestions-list li.no-results {
+            color: red;
+            font-style: italic;
+        }
+
+
+        #search-history {
+            margin-top: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 1000px;
+            display: none;
+        }
+
+        #search-history h3{
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 10px;
+        }
+        #search-history ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #search-history li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+             background-color: rgb(0,0,0);
+            border-radius: 5px;
+            font-size: 24px;
+        }
+        #search-history li:last-child {
+            border-bottom: none;
+        }
+        .search-history-tab {
+            cursor: pointer;
+            color: blue;
+            text-decoration: underline;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">UniVerse</div>
+    <div class="container">
+        <div class="nav">
+            <a href="Profile Page.html">Profile</a>
+            <a href="Explore Page.html">Explore</a>
+            <a href="Notification page.html">Notifications</a>
+            <a href="Help Page.html">Help</a>
+            <span class="search-history-tab" onclick="toggleSearchHistory()">Search History</span>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search for events, alumni, hackathons..." oninput="fetchSuggestions()">
+            <ul id="suggestions-list"></ul>
+            <button onclick="searchData()">Search</button>
+        </div>
+        <div id="search-results"></div>
+        <div class="content">
+            <div class="sidebar" id="sidebar-content">
+                <h3>Alumni Stories</h3>
+                <div id="alumni-stories">
+                    <p>Loading alumni stories...</p>
+                </div>
+                <h3>Leaderboard</h3>
+                <div id="leaderboard">
+                    <p>Loading leaderboard...</p>
+                </div>
+            </div>
+            <div class="feed" id="feed-content">
+                <h3>The Daily Spark</h3>
+                <div id="daily-spark">
+                    <p>Loading daily spark...</p>
+                </div>
+                <h3>Feed</h3>
+                <div id="feed">
+                    <p>Loading feed...</p>
+                </div>
+                <div>
+                  <textarea id="postText" placeholder="Write something..."></textarea>
+                  <button onclick="postData()">Post</button>
+                </div>
+            </div>
+            <div class="widgets" id="widgets-content">
+                <h3>Trending Events</h3>
+                <div id="trending-events">
+                    <p>Loading trending events...</p>
+                </div>
+            </div>
+        </div>
+        <div id="search-results"></div>
+        <div id="search-history">
+             <h3>Search History</h3>
+             <ul></ul>
+        </div>
+
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+        <div class="footer">
+            <p>&copy; 2025 UniVerse. All rights reserved.</p>
+        </div>
+    </div>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script src="static/script.js"></script>
+</body>
+</html>
