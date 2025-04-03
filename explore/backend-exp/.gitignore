@@ -1,13 +1,9 @@
-# Python virtual environment
-venv/
-
-# Byte-compiled files
-__pycache__/
+# Ignore Python bytecode files
 *.pyc
 *.pyo
+__pycache__/
 
-
-
-# OS-specific files
-.DS_Store
-Thumbs.db
+# Ignore virtual environment directories
+explore/backend-exp/.venv/
+.venv/
+env/
