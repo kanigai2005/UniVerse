@@ -1,91 +1,137 @@
-// static/exp.js
-
-// Function to show a modal
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = "flex";
-    } else {
-        console.error(`Modal with ID "${modalId}" not found.`);
-    }
-}
-
-// Function to close a modal
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = "none";
-    } else {
-        console.error(`Modal with ID "${modalId}" not found.`);
-    }
-}
-
-// Fetch and display features from the backend
-async function loadFeatures() {
+// Function to fetch and display career fairs
+async function loadCareerFairs() {
     try {
-        const response = await fetch("http://127.0.0.1:8000/api/features");
+        const response = await fetch("/career_fairs");
         if (!response.ok) {
-            throw new Error("Failed to fetch features");
+            throw new Error("Failed to fetch career fairs");
         }
-        const features = await response.json();
-        const container = document.getElementById("features-container");
+        const fairs = await response.json();
+        const container = document.getElementById("career-fairs-list");
+        container.innerHTML = ""; // Clear existing content
 
-        features.forEach((feature) => {
-            const box = document.createElement("div");
-            box.className = "box";
-            box.innerHTML = `
-                <h2>${feature.title}</h2>
-                <p>${feature.description}</p>
-                <button class="btn" onclick="viewFeature(${feature.id})">View Details</button>
+        fairs.forEach(fair => {
+            const fairItem = document.createElement("div");
+            fairItem.className = "fair-item";
+            fairItem.innerHTML = `
+                <h3>${fair.name}</h3>
+                <p>Location: ${fair.location}</p>
+                <p>Date: ${fair.date}</p>
+                <p>${fair.description}</p>
             `;
-            container.appendChild(box);
+            container.appendChild(fairItem);
         });
     } catch (error) {
-        console.error("Error loading features:", error);
+        console.error("Error loading career fairs:", error);
     }
 }
 
-// Fetch and display details of a specific feature
-async function viewFeature(featureId) {
+// Function to fetch and display hackathons
+async function loadHackathons() {
     try {
-        const response = await fetch(`http://127.0.0.1:8000/api/features/${featureId}`);
+        const response = await fetch("/hackathons");
         if (!response.ok) {
-            throw new Error("Failed to fetch feature details");
+            throw new Error("Failed to fetch hackathons");
         }
-        const feature = await response.json();
-        alert(`Feature: ${feature.title}\nDescription: ${feature.description}`);
-    } catch (error) {
-        console.error("Error fetching feature details:", error);
-    }
-}
+        const hackathons = await response.json();
+        const container = document.getElementById("hackathons-list");
+        container.innerHTML = ""; // Clear existing content
 
-// Handle newsletter subscription
-async function subscribeNewsletter() {
-    const email = prompt("Enter your email to subscribe:");
-    if (!email) {
-        alert("Subscription canceled.");
-        return;
-    }
-
-    try {
-        const response = await fetch("http://127.0.0.1:8000/api/newsletter", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
+        hackathons.forEach(hackathon => {
+            const hackathonItem = document.createElement("div");
+            hackathonItem.className = "hackathon-item";
+            hackathonItem.innerHTML = `
+                <h3>${hackathon.name}</h3>
+                <p>Location: ${hackathon.location}</p>
+                <p>Date: ${hackathon.date}</p>
+                <p>${hackathon.description}</p>
+            `;
+            container.appendChild(hackathonItem);
         });
-
-        if (response.ok) {
-            const data = await response.json();
-            alert(data.message);
-        } else {
-            const error = await response.json();
-            alert(`Error: ${error.detail[0].msg}`);
-        }
     } catch (error) {
-        console.error("Error subscribing to newsletter:", error);
-        alert("An error occurred while subscribing to the newsletter.");
+        console.error("Error loading hackathons:", error);
     }
 }
 
-// Load features on page load
-document.addEventListener("DOMContentLoaded", loadFeatures);
+// Function to fetch and display internships
+async function loadInternships() {
+    try {
+        const response = await fetch("/internships");
+        if (!response.ok) {
+            throw new Error("Failed to fetch internships");
+        }
+        const internships = await response.json();
+        const container = document.getElementById("internships-list");
+        container.innerHTML = ""; // Clear existing content
+
+        internships.forEach(internship => {
+            const internshipItem = document.createElement("div");
+            internshipItem.className = "internship-item";
+            internshipItem.innerHTML = `
+                <h3>${internship.title}</h3>
+                <p>Company: ${internship.company}</p>
+                <p>Start Date: ${internship.start_date}</p>
+                <p>End Date: ${internship.end_date}</p>
+                <p>${internship.description}</p>
+            `;
+            container.appendChild(internshipItem);
+        });
+    } catch (error) {
+        console.error("Error loading internships:", error);
+    }
+}
+
+// Function to fetch and display leaderboard
+async function loadLeaderboard() {
+    try {
+        const response = await fetch("/leaderboard");
+        if (!response.ok) {
+            throw new Error("Failed to fetch leaderboard");
+        }
+        const users = await response.json();
+        const container = document.getElementById("leaderboard-list");
+        container.innerHTML = ""; // Clear existing content
+
+        users.forEach(user => {
+            const userItem = document.createElement("div");
+            userItem.className = "user-item";
+            userItem.innerHTML = `
+                <h3>${user.name}</h3>
+                <p>Activity Score: ${user.activity_score}</p>
+                <p>Achievements: ${user.achievements.join(", ")}</p>
+                <p>Alumni Gems: ${user.alumni_gems}</p>
+                <button class="btn" onclick="viewUserProfile('${user.name}')">View Profile</button>
+            `;
+            container.appendChild(userItem);
+        });
+    } catch (error) {
+        console.error("Error loading leaderboard:", error);
+    }
+}
+
+// Function to fetch and display user profile
+async function viewUserProfile(username) {
+    try {
+        const response = await fetch(`/user/${username}`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch user profile");
+        }
+        const user = await response.json();
+        alert(`
+            Name: ${user.name}
+            Email: ${user.email}
+            Activity Score: ${user.activity_score}
+            Achievements: ${user.achievements.join(", ")}
+            Alumni Gems: ${user.alumni_gems}
+        `);
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+    }
+}
+
+// Load all data on page load
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadCareerFairs();
+    await loadHackathons();
+    await loadInternships();
+    await loadLeaderboard();
+});

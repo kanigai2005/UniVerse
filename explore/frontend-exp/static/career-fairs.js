@@ -1,118 +1,103 @@
-// static/career-fairs.js
+document.addEventListener("DOMContentLoaded", async () => {
+    await loadCareerFairs();
+    await loadHackathons();
+    await loadInternships();
+    await loadLeaderboard();
+});
 
 // Function to fetch and display career fairs
 async function loadCareerFairs() {
     try {
-        const response = await fetch("http://127.0.0.1:8000/career_fairs");
-        if (!response.ok) {
-            throw new Error("Failed to fetch career fairs");
-        }
+        const response = await fetch("/career_fairs");
         const fairs = await response.json();
         const container = document.getElementById("career-fairs-list");
-
         container.innerHTML = ""; // Clear existing content
 
         fairs.forEach(fair => {
-            const fairItem = document.createElement("li");
-            fairItem.classList.add("fair-item");
-            fairItem.setAttribute("data-fair", JSON.stringify(fair));
+            const fairItem = document.createElement("div");
+            fairItem.className = "fair-item";
             fairItem.innerHTML = `
                 <h3>${fair.name}</h3>
-                <p>Venue: ${fair.location}</p>
+                <p>Location: ${fair.location}</p>
                 <p>Date: ${fair.date}</p>
+                <p>${fair.description}</p>
             `;
             container.appendChild(fairItem);
         });
-        addCareerFairClickListeners();
-
     } catch (error) {
         console.error("Error loading career fairs:", error);
     }
 }
 
-// Function to fetch and display job listings
-async function loadJobs() {
+// Function to fetch and display hackathons
+async function loadHackathons() {
     try {
-        const response = await fetch("http://127.0.0.1:8000/internships");
-        if (!response.ok) {
-            throw new Error("Failed to fetch jobs");
-        }
-        const jobs = await response.json();
-        const container = document.getElementById("job-listings-list");
-
+        const response = await fetch("/hackathons");
+        const hackathons = await response.json();
+        const container = document.getElementById("hackathons-list");
         container.innerHTML = ""; // Clear existing content
 
-        jobs.forEach(job => {
-            const jobItem = document.createElement("li");
-            jobItem.classList.add("job-item");
-            jobItem.setAttribute("data-job", JSON.stringify(job));
-            jobItem.innerHTML = `
-                <h3>${job.role}</h3>
-                <p>Company: ${job.company}</p>
-                <p>Location: ${job.location}</p>
+        hackathons.forEach(hackathon => {
+            const hackathonItem = document.createElement("div");
+            hackathonItem.className = "hackathon-item";
+            hackathonItem.innerHTML = `
+                <h3>${hackathon.name}</h3>
+                <p>Location: ${hackathon.location}</p>
+                <p>Date: ${hackathon.date}</p>
+                <p>${hackathon.description}</p>
             `;
-            container.appendChild(jobItem);
+            container.appendChild(hackathonItem);
         });
-        addJobClickListeners();
-
     } catch (error) {
-        console.error("Error loading jobs:", error);
+        console.error("Error loading hackathons:", error);
     }
 }
 
-// Function to add click listeners to career fair items
-function addCareerFairClickListeners() {
-    document.querySelectorAll('.fair-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const fairData = JSON.parse(item.getAttribute('data-fair'));
-            const popupDescription = document.getElementById('popup-description');
-            popupDescription.innerHTML = `
-                <h3>${fairData.name} - Description</h3>
-                <p>${fairData.description}</p>
-            `;
-            popupDescription.style.display = 'block';
+// Function to fetch and display internships
+async function loadInternships() {
+    try {
+        const response = await fetch("/internships");
+        const internships = await response.json();
+        const container = document.getElementById("internships-list");
+        container.innerHTML = ""; // Clear existing content
 
-            popupDescription.addEventListener('mouseleave', () => {
-                popupDescription.style.display = 'none';
-            });
+        internships.forEach(internship => {
+            const internshipItem = document.createElement("div");
+            internshipItem.className = "internship-item";
+            internshipItem.innerHTML = `
+                <h3>${internship.title}</h3>
+                <p>Company: ${internship.company}</p>
+                <p>Start Date: ${internship.start_date}</p>
+                <p>End Date: ${internship.end_date}</p>
+                <p>${internship.description}</p>
+            `;
+            container.appendChild(internshipItem);
         });
-    });
+    } catch (error) {
+        console.error("Error loading internships:", error);
+    }
 }
 
-// Function to add click listeners to job items
-function addJobClickListeners() {
-    document.querySelectorAll('.job-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const jobData = JSON.parse(item.getAttribute('data-job'));
-            const popupDescription = document.getElementById('popup-description');
-            popupDescription.innerHTML = `
-                <h3>${jobData.role} - Details</h3>
-                <p>Company: ${jobData.company}</p>
-                <p>Location: ${jobData.location}</p>
-                <p>Link: <a href="${jobData.link}" target="_blank">Apply Here</a></p>
-                <p>Requirements: ${jobData.requirements}</p>
+// Function to fetch and display leaderboard
+async function loadLeaderboard() {
+    try {
+        const response = await fetch("/leaderboard");
+        const users = await response.json();
+        const container = document.getElementById("leaderboard-list");
+        container.innerHTML = ""; // Clear existing content
+
+        users.forEach(user => {
+            const userItem = document.createElement("div");
+            userItem.className = "user-item";
+            userItem.innerHTML = `
+                <h3>${user.name}</h3>
+                <p>Activity Score: ${user.activity_score}</p>
+                <p>Achievements: ${user.achievements.join(", ")}</p>
+                <p>Alumni Gems: ${user.alumni_gems}</p>
             `;
-            popupDescription.style.display = 'block';
-
-            popupDescription.addEventListener('mouseleave', () => {
-                popupDescription.style.display = 'none';
-            });
+            container.appendChild(userItem);
         });
-    });
+    } catch (error) {
+        console.error("Error loading leaderboard:", error);
+    }
 }
-
-// Search functionality (dummy for now)
-document.getElementById('search-button').addEventListener('click', () => {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    alert(`Search for: ${searchTerm}`);
-});
-
-// Upcoming fairs filter (dummy for now)
-document.getElementById('upcoming-button').addEventListener('click', () => {
-    alert('Displaying upcoming fairs...');
-});
-
-document.addEventListener('DOMContentLoaded', ()=>{
-    loadCareerFairs();
-    loadJobs();
-});

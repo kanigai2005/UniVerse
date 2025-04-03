@@ -1,163 +1,180 @@
-from fastapi import FastAPI, HTTPException
-import sqlite3
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy import create_engine, Column, Integer, String, Date, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
 from datetime import date
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI()
 
-DATABASE_NAME = "explore.db"
+# Construct the correct path to the frontend-exp directory
+frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
 
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
+# Construct paths to HTML files
+explore_html_path = os.path.join(frontend_dir, "explore.html")
+career_fairs_html_path = os.path.join(frontend_dir, "career-fairs.html")
+expertqa_html_path = os.path.join(frontend_dir, "expertqa.html")
+explore_hackathon_html_path = os.path.join(frontend_dir, "explore-hackathons.html")
+internship_html_path = os.path.join(frontend_dir, "intership.html")
+leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
+leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
 
+# Serve static files (e.g., JavaScript, CSS)
+static_dir = os.path.join(frontend_dir, "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Serve HTML files
+@app.get("/")
+async def serve_explore_html():
+    return FileResponse(explore_html_path)
+
+@app.get("/career-fairs.html")
+async def serve_career_fairs_html():
+    return FileResponse(career_fairs_html_path)
+
+@app.get("/expertqa.html")
+async def serve_expertqa_html():
+    return FileResponse(expertqa_html_path)
+
+@app.get("/explore-hackathons.html")
+async def serve_explore_hackathon_html():
+    return FileResponse(explore_hackathon_html_path)
+
+@app.get("/intership.html")
+async def serve_internship_html():
+    return FileResponse(internship_html_path)
+
+@app.get("/leader-profile.html")
+async def serve_leader_profile_html():
+    return FileResponse(leader_profile_html_path)
+
+@app.get("/leaderboard.html")
+async def serve_leaderboard_html():
+    return FileResponse(leaderboard_html_path)
+
+# Database setup
+DATABASE_URL = "sqlite:///explore.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Models
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    email = Column(String, unique=True, index=True)
+    activity_score = Column(Integer)
+    achievements = Column(Text)
+    alumni_gems = Column(Integer)
+
+class CareerFair(Base):
+    __tablename__ = "career_fairs"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    date = Column(Date)
+    location = Column(String)
+    description = Column(Text)
+
+class Internship(Base):
+    __tablename__ = "internships"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    company = Column(String)
+    start_date = Column(Date)
+    end_date = Column(Date)
+    description = Column(Text)
+
+class Hackathon(Base):
+    __tablename__ = "hackathons"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    date = Column(Date)
+    location = Column(String)
+    description = Column(Text)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Insert dummy data on startup
 @app.on_event("startup")
 async def startup():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Create users table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            email TEXT,
-            activity_score INTEGER,
-            achievements TEXT,
-            alumni_gems INTEGER
-        )
-    """)
-
-    # Create career_fairs table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS career_fairs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            date TEXT,
-            location TEXT,
-            description TEXT
-        )
-    """)
-
-    # Create internships table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS internships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            company TEXT,
-            start_date TEXT,
-            end_date TEXT,
-            description TEXT
-        )
-    """)
-
-    # Create hackathons table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS hackathons (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            date TEXT,
-            location TEXT,
-            description TEXT
-        )
-    """)
-
-    # Insert dummy data (if tables are empty)
-    cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("INSERT INTO users (name, email, activity_score, achievements, alumni_gems) VALUES (?, ?, ?, ?, ?)", [
-            ("Alex Johnson", "alex@example.com", 50, "Mentorship Pro, Top Contributor", 10),
-            ("Sarah Lee", "sarah@example.com", 42, "Job Connector", 8),
-            ("Michael Carter", "michael@example.com", 38, "Mentor Pro", 5),
+    db = SessionLocal()
+    if not db.query(User).first():
+        db.add_all([
+            User(name="Alex Johnson", email="alex@example.com", activity_score=50, achievements="Mentorship Pro, Top Contributor", alumni_gems=10),
+            User(name="Sarah Lee", email="sarah@example.com", activity_score=42, achievements="Job Connector", alumni_gems=8),
+            User(name="Michael Carter", email="michael@example.com", activity_score=38, achievements="Mentor Pro", alumni_gems=5),
         ])
-
-    cursor.execute("SELECT COUNT(*) FROM career_fairs")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("INSERT INTO career_fairs (name, date, location, description) VALUES (?, ?, ?, ?)", [
-            ("Tech Career Fair", "2024-12-15", "San Francisco", "Meet top tech companies."),
-            ("Engineering Jobs", "2025-01-10", "New York", "Find engineering jobs."),
+    if not db.query(CareerFair).first():
+        db.add_all([
+            CareerFair(name="Tech Career Fair", date="2024-12-15", location="San Francisco", description="Meet top tech companies."),
+            CareerFair(name="Engineering Jobs", date="2025-01-10", location="New York", description="Find engineering jobs."),
         ])
-
-    cursor.execute("SELECT COUNT(*) FROM internships")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("INSERT INTO internships (title, company, start_date, end_date, description) VALUES (?, ?, ?, ?, ?)", [
-            ("Software Dev Intern", "Google", "2024-12-01", "2025-03-01", "Work on cool projects."),
-            ("Data Science Intern", "Amazon", "2025-01-15", "2025-04-15", "Analyze large datasets."),
+    if not db.query(Internship).first():
+        db.add_all([
+            Internship(title="Software Dev Intern", company="Google", start_date="2024-12-01", end_date="2025-03-01", description="Work on cool projects."),
+            Internship(title="Data Science Intern", company="Amazon", start_date="2025-01-15", end_date="2025-04-15", description="Analyze large datasets."),
         ])
-
-    cursor.execute("SELECT COUNT(*) FROM hackathons")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("INSERT INTO hackathons (name, date, location, description) VALUES (?, ?, ?, ?)", [
-            ("AI Hackathon", "2024-12-10", "Online", "Develop innovative AI solutions."),
-            ("Web Dev Challenge", "2025-01-20", "San Francisco", "Showcase your web development skills."),
+    if not db.query(Hackathon).first():
+        db.add_all([
+            Hackathon(name="AI Hackathon", date="2024-12-10", location="Online", description="Develop innovative AI solutions."),
+            Hackathon(name="Web Dev Challenge", date="2025-01-20", location="San Francisco", description="Showcase your web development skills."),
         ])
+    db.commit()
+    db.close()
 
-    conn.commit()
-    conn.close()
+# API Routes
+BASE_API_PATH = "/api"
 
-@app.get("/career_fairs")
-async def get_career_fairs():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM career_fairs WHERE date >= ? ORDER BY date ASC", (str(date.today()),))
-    career_fairs = cursor.fetchall()
-    conn.close()
-    return [dict(fair) for fair in career_fairs]
+@app.get(f"{BASE_API_PATH}/career_fairs")
+async def get_career_fairs(db: Session = Depends(get_db)):
+    career_fairs = db.query(CareerFair).filter(CareerFair.date >= date.today()).order_by(CareerFair.date).all()
+    return career_fairs
 
-@app.get("/internships")
-async def get_internships():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM internships WHERE start_date >= ? ORDER BY start_date ASC", (str(date.today()),))
-    internships = cursor.fetchall()
-    conn.close()
-    return [dict(internship) for internship in internships]
+@app.get(f"{BASE_API_PATH}/internships")
+async def get_internships(db: Session = Depends(get_db)):
+    internships = db.query(Internship).filter(Internship.start_date >= date.today()).order_by(Internship.start_date).all()
+    return internships
 
-@app.get("/hackathons")
-async def get_hackathons():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hackathons WHERE date >= ? ORDER BY date ASC", (str(date.today()),))
-    hackathons = cursor.fetchall()
-    conn.close()
-    return [dict(hackathon) for hackathon in hackathons]
+@app.get(f"{BASE_API_PATH}/hackathons")
+async def get_hackathons(db: Session = Depends(get_db)):
+    hackathons = db.query(Hackathon).filter(Hackathon.date >= date.today()).order_by(Hackathon.date).all()
+    return hackathons
 
-@app.get("/leaderboard")
-async def get_leaderboard():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users ORDER BY activity_score DESC, alumni_gems DESC")
-    users = cursor.fetchall()
-    conn.close()
-
+@app.get(f"{BASE_API_PATH}/leaderboard")
+async def get_leaderboard(db: Session = Depends(get_db)):
+    users = db.query(User).order_by(User.activity_score.desc(), User.alumni_gems.desc()).all()
     return [
         {
-            "name": user["name"],
-            "activity_score": user["activity_score"],
-            "achievements": user["achievements"].split(",") if user["achievements"] else [],
-            "alumni_gems": user["alumni_gems"]
+            "name": user.name,
+            "activity_score": user.activity_score,
+            "achievements": user.achievements.split(",") if user.achievements else [],
+            "alumni_gems": user.alumni_gems
         }
         for user in users
     ]
 
-@app.get("/user/{username}")
-async def get_user(username: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE name = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-
+@app.get(f"{BASE_API_PATH}/user/{{username}}")
+async def get_user(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
     return {
-        "name": user["name"],
-        "email": user["email"],
-        "activity_score": user["activity_score"],
-        "achievements": user["achievements"].split(",") if user["achievements"] else [],
-        "alumni_gems": user["alumni_gems"]
+        "name": user.name,
+        "email": user.email,
+        "activity_score": user.activity_score,
+        "achievements": user.achievements.split(",") if user.achievements else [],
+        "alumni_gems": user.alumni_gems
     }
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Explore API!"}
