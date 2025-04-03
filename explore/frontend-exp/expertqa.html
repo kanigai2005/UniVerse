@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Q&A</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            text-align: center;
+        }
+
+        header {
+            background: #555555;
+            color: white;
+            padding: 1em;
+        }
+
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        #ask-question {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form textarea, form button {
+            display: block;
+            width: 90%;
+            padding: 10px;
+            margin: 10px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            background: #555555;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background: #444444;
+        }
+
+        #questions-list, #user-questions-list {
+            max-width: 90%;
+            margin: 20px auto;
+        }
+
+        .question-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            text-align: left;
+            position: relative;
+        }
+
+        .vote-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .vote-buttons button {
+            background: #ddd;
+            border: none;
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .vote-buttons button:hover {
+            background: #ccc;
+        }
+
+        .answer {
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 3px solid #007bff;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Internship Q&A</h1>
+</header>
+
+<main>
+    <section id="ask-question">
+        <h2>Ask a Question</h2>
+        <form id="question-form">
+            <textarea id="question-input" placeholder="Type your question here..." required></textarea>
+            <button type="submit">Submit</button>
+        </form>
+    </section>
+
+    <h2>Your Questions</h2>
+    <section id="user-questions-list"></section>
+
+    <h2>Community Questions</h2>
+    <section id="questions-list"></section>
+</main>
+
+<script src="static/expertqa.js">
+    </script>
+</body>
+</html>

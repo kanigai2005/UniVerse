@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        .profile-info {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .profile-info p {
+            margin-bottom: 10px;
+        }
+
+        .profile-achievements {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .profile-achievements ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .profile-achievements li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h2 id="profile-name"></h2>
+        <div class="profile-info">
+            <p><strong>Activity Score:</strong> <span id="profile-activity"></span></p>
+            <p><strong>Alumni Gems:</strong> <span id="profile-gems"></span></p>
+        </div>
+        <div class="profile-achievements">
+            <h3>Achievements</h3>
+            <ul id="achievements-list"></ul>
+        </div>
+    </div>
+    <script src="static/leader-profile.js"></script>
+</body>
+</html>

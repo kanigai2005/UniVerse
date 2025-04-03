@@ -1,3 +1,5 @@
+// static/exp.js
+
 // Function to show a modal
 function showModal(modalId) {
     const modal = document.getElementById(modalId);

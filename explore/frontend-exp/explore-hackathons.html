@@ -87,7 +87,26 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        #registration-form {
             display: none;
+            margin-top: 20px;
+        }
+
+        #registration-form input, #registration-form button {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        #registration-form button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -126,10 +145,8 @@
                 <p>Location: Los Angeles</p>
             </li>
         </ul>
-
-        <div id="popup-description"></div>
     </div>
-
+    <div id="popup-description"></div>
     <script src="static/explore-hackathons.js"></script>
 </body>
 </html>

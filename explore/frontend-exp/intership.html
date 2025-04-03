@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Internship Listings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            text-align: center;
+        }
+
+        header {
+            background: #555555;
+            color: white;
+            padding: 1em;
+        }
+
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        /* Add an Internship Form */
+        #add-internship {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form input, form button {
+            display: block;
+            width: 90%;
+            padding: 10px;
+            margin: 10px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            background: #555555;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background: #444444;
+        }
+
+        /* Featured Internships */
+        #featured-internships {
+            max-width: 90%;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .internship-box {
+            background: white;
+            padding: 15px;
+            width: 250px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .internship-box:hover {
+            background: #e3e3e3;
+        }
+
+        .internship-box img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -55%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: red;
+            color: white;
+            border: none;
+            font-size: 18px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            background: darkred;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        #popup-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px;
+            background: #555;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        #popup-link:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Internship Listings</h1>
+</header>
+
+<main>
+    <!-- Add an Internship -->
+    <section id="add-internship">
+        <h2>Add an Internship</h2>
+        <form id="internship-form">
+            <input type="text" id="company" placeholder="Company Name" required>
+            <input type="text" id="role" placeholder="Internship Role" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="url" id="link" placeholder="Application Link" required>
+            <button type="submit">Submit</button>
+        </form>
+    </section>
+
+    <!-- Featured Internships -->
+    <h2>Exciting Internship Opportunities</h2>
+    <section id="featured-internships">
+        <div class="internship-box" onclick="showPopup('Google', 'Software Engineering Intern', 'Mountain View, CA', 'https://careers.google.com/', 'Proficiency in Python, C++ or Java. Basic knowledge of Data Structures and Algorithms.')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google Logo">
+            <h3>Google</h3>
+            <p><strong>Role:</strong> Software Engineering Intern</p>
+            <p><strong>Location:</strong> Mountain View, CA</p>
+        </div>
+        <div class="internship-box" onclick="showPopup('Microsoft', 'Data Analyst Intern', 'Redmond, WA', 'https://careers.microsoft.com/', 'Experience with SQL and Python. Strong analytical and problem-solving skills.')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo">
+            <h3>Microsoft</h3>
+            <p><strong>Role:</strong> Data Analyst Intern</p>
+            <p><strong>Location:</strong> Redmond, WA</p>
+        </div>
+        <div class="internship-box" onclick="showPopup('Tesla', 'Battery Technology Intern', 'Palo Alto, CA', 'https://www.tesla.com/careers', 'Background in Electrical or Mechanical Engineering. Knowledge of Lithium-ion batteries preferred.')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg" alt="Tesla Logo">
+            <h3>Tesla</h3>
+            <p><strong>Role:</strong> Battery Technology Intern</p>
+            <p><strong>Location:</strong> Palo Alto, CA</p>
+        </div>
+    </section>
+</main>
+
+<!-- Popup Modal -->
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+<div class="popup" id="popup">
+    <button class="close-btn" onclick="closePopup()">X</button>
+    <h2 id="popup-title">Internship Details</h2>
+    <p><strong>Company:</strong> <span id="popup-company"></span></p>
+    <p><strong>Role:</strong> <span id="popup-role"></span></p>
+    <p><strong>Location:</strong> <span id="popup-location"></span></p>
+    <p><strong>Requirements:</strong> <span id="popup-requirements"></span></p>
+    <a id="popup-link" href="#" target="_blank">Apply Here</a>
+</div>
+
+<script src="static/internship.js"></script>
+
+</body>
+</html>

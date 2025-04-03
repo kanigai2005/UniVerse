@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard & Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            text-align: center;
+        }
+
+        header {
+            background: #555555;
+            color: white;
+            padding: 1em;
+        }
+
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            max-width: 600px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .list li {
+            background: #e3e3e3;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .view-profile {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .view-profile:hover {
+            background: #0056b3;
+        }
+
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #ffcc00;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Leaderboard & Recognition</h1>
+    </header>
+
+    <main>
+        <section class="section" id="leaderboard">
+            <h2>🏆 Mentorship Leaderboard</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Activity Score</th>
+                        <th>Achievements</th>
+                        <th>Alumni Gems</th>
+                        <th>Profile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section class="section" id="job-recognition">
+            <h2>🎉 Job Referral Recognition</h2>
+            <ul class="list" id="job-referral-list">
+                </ul>
+        </section>
+
+        <section class="section" id="badges">
+            <h2>🎖 Contributor Badges</h2>
+            <div class="badge-container" id="badge-container">
+                </div>
+        </section>
+    </main>
+
+    <script src="static/leaderboard.js"></script>
+</body>
+</html>
