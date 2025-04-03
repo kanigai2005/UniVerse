@@ -83,16 +83,25 @@ async def login(
     password: Annotated[str, Form()],
     db: Session = Depends(get_db)
 ):
+    # Check if the user exists in the database
     user = db.query(User).filter((User.username == username) | (User.email == username)).first()
     if not user or not pwd_context.verify(password, user.hashed_password):
+        # Redirect back to the login page with an error message
         params = {"error": "Invalid username or password"}
         return RedirectResponse(url=f"/?{urlencode(params)}", status_code=302)
 
+    # Redirect to the home page on successful login
     return RedirectResponse(url="/home", status_code=302)
 
 @app.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
+    # Render the home page
     return templates.TemplateResponse("home.html", {"request": request})
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    # Render the registration page
+    return templates.TemplateResponse("register.html", {"request": request})
 
 @app.post("/register", response_class=HTMLResponse)
 async def register(
