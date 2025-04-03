@@ -1,11 +1,158 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            background: url('') no-repeat center center/cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #03030e, #c0cdeb);
+            padding: 15px 0;
+            text-align: center;
+            font-size: 50px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+        }
+        .container {
+            background: linear-gradient(180deg, rgb(25, 196, 230), rgb(10, 28, 117));
+            width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 30px;
+        }
+        .nav a {
+            background: #050b78;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .nav a:hover {
+            background: #7445db;
+        }
+        .search-bar {
+            width: 100%;
+            max-width: 1000px;
+        }
+        .search-bar input {
+            padding: 20px;
+            border-radius: 10px;
+            border: none;
+            width: 100%;
+            font-size: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1100px;
+            margin-top: 10px;
+        }
+        .sidebar, .feed, .widgets {
+            background: rgba(211, 211, 211, 0.5);
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+            margin: 5px;
+            font-size: 30px;
+            color: rgb(255, 255, 255);
+            flex: 1;
+            min-width: 250px;
+        }
+        .feed {
+            flex: 1.2;
+        }
+        .theme-toggle {
+            padding: 12px 20px;
+            background: #ebedf0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 30px;
+            color: rgb(12, 6, 6);
+            font-family: 'Trebuchet MS',  sans-serif;
+        }
+        .footer {
+            font-size: 22px;
+            margin-top: 5px;
+            font-family:  'Trebuchet MS',  sans-serif;;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Home Page!</h1>
-    <p>You have successfully logged in.</p>
+    <div class="header">UniVerse</div>
+    <div class="container">
+        <div class="nav">
+            <a href="#">Home</a>
+            <a href="#">Profile</a>
+            <a href="#">Explore</a>
+            <a href="#">Notifications</a>
+            <a href="#">Help</a>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search for events, alumni, hackathons...">
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <h3>Alumni Stories</h3>
+                <p>Explore career journeys of successful alumni.</p>
+                <h3>Leaderboard</h3>
+                <p>Check top achievers and Almagems balance.</p>
+            </div>
+            <div class="feed">
+                <h3>The Daily Spark</h3>
+                <p>Today's problem: Solve this challenge...</p>
+                <h3>Feed</h3>
+                <p>Posts, updates, and career tips from alumni.</p>
+            </div>
+            <div class="widgets">
+                <h3>Trending Events</h3>
+                <p>Upcoming hackathons and career fairs.</p>
+            </div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+        <div class="footer">
+            <p>&copy; 2025 UniVerse. All rights reserved.</p>
+        </div>
+    </div>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+    </script>
 </body>
 </html>

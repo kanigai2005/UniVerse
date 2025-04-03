@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Hackathons</title>
+    <style>
+        body {
+            font-family: 'Trebuchet MS', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: #333;
+        }
+
+        header {
+            background-color: #050897;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Trebuchet MS', sans-serif;
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-container input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 70%;
+        }
+
+        .search-container button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #hackathons-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .hackathon-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .hackathon-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .hackathon-item h3 {
+            margin-bottom: 5px;
+        }
+
+        #popup-description {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>Explore Hackathons</header>
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search Hackathons...">
+            <button id="search-button">Search</button>
+        </div>
+
+        <ul id="hackathons-list">
+            <li class="hackathon-item" data-hackathon='{"name": "AI Hackathon", "date": "2024-12-10", "location": "Online", "description": "Develop innovative AI solutions in this exciting hackathon."}'>
+                <h3>AI Hackathon</h3>
+                <p>Date: 2024-12-10</p>
+                <p>Location: Online</p>
+            </li>
+            <li class="hackathon-item" data-hackathon='{"name": "Web Dev Challenge", "date": "2025-01-20", "location": "San Francisco", "description": "Showcase your web development skills and build amazing projects."}'>
+                <h3>Web Dev Challenge</h3>
+                <p>Date: 2025-01-20</p>
+                <p>Location: San Francisco</p>
+            </li>
+            <li class="hackathon-item" data-hackathon='{"name": "Mobile App Jam", "date": "2025-02-15", "location": "New York", "description": "Create a mobile app in 48 hours and win amazing prizes."}'>
+                <h3>Mobile App Jam</h3>
+                <p>Date: 2025-02-15</p>
+                <p>Location: New York</p>
+            </li>
+            <li class="hackathon-item" data-hackathon='{"name": "Data Science Hack", "date": "2025-03-05", "location": "Online", "description": "Solve real-world data science problems and learn from experts."}'>
+                <h3>Data Science Hack</h3>
+                <p>Date: 2025-03-05</p>
+                <p>Location: Online</p>
+            </li>
+            <li class="hackathon-item" data-hackathon='{"name": "Game Dev Sprint", "date": "2025-03-20", "location": "Los Angeles", "description": "Build a game in a weekend and compete with other developers."}'>
+                <h3>Game Dev Sprint</h3>
+                <p>Date: 2025-03-20</p>
+                <p>Location: Los Angeles</p>
+            </li>
+        </ul>
+
+        <div id="popup-description"></div>
+    </div>
+
+    <script src="static/explore-hackathons.js"></script>
+</body>
+</html>
