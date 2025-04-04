@@ -4,5 +4,6 @@
 __pycache__/
 
 # Ignore virtual environment directories
+explore/backend-exp/.venv/
 .venv/
 env/

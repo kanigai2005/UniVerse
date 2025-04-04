@@ -15,7 +15,7 @@ async function loadUserProfile() {
     }
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/user/${encodeURIComponent(username)}`);
+        const response = await fetch(`/api/user/${username}`);
         if (!response.ok) {
             throw new Error("Failed to fetch user profile");
         }

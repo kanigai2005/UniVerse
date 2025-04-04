@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to fetch and display internships from the backend
     async function loadInternships() {
         try {
-            const response = await fetch("http://127.0.0.1:8000/internships");
+            const response = await fetch("/api/internships");
             if (!response.ok) {
                 throw new Error("Failed to fetch internships");
             }

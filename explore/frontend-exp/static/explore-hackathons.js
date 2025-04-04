@@ -1,8 +1,6 @@
-// static/explore-hackathons.js
-
 async function loadHackathons() {
     try {
-        const response = await fetch("http://127.0.0.1:8000/hackathons");
+        const response = await fetch("/api/hackathons"); // Corrected API endpoint
         if (!response.ok) {
             throw new Error("Failed to fetch hackathons");
         }
@@ -30,6 +28,8 @@ async function loadHackathons() {
 
     } catch (error) {
         console.error("Error loading hackathons:", error);
+        // Add user friendly error message
+        document.getElementById("hackathons-list").innerHTML = "<p>Error loading hackathons. Please try again later.</p>"
     }
 }
 
