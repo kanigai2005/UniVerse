@@ -1,103 +1,127 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    await loadCareerFairs();
-    await loadHackathons();
-    await loadInternships();
-    await loadLeaderboard();
-});
-
-// Function to fetch and display career fairs
-async function loadCareerFairs() {
+async function loadCareerOffersAndJobs() {
     try {
-        const response = await fetch("/career_fairs");
-        const fairs = await response.json();
-        const container = document.getElementById("career-fairs-list");
-        container.innerHTML = ""; // Clear existing content
+        const careerFairsResponse = await fetch("/api/career-fairs");
+        const jobListingsResponse = await fetch("/api/internship"); // Assuming "internships" for job listings
 
-        fairs.forEach(fair => {
-            const fairItem = document.createElement("div");
-            fairItem.className = "fair-item";
+        if (!careerFairsResponse.ok || !jobListingsResponse.ok) {
+            throw new Error("Failed to fetch data");
+        }
+
+        const careerFairs = await careerFairsResponse.json();
+        const jobListings = await jobListingsResponse.json();
+        const fairsList = document.getElementById("career-fairs-list");
+        const jobsList = document.getElementById("job-listings-list");
+
+        fairsList.innerHTML = ""; // Clear existing content
+        jobsList.innerHTML = "";  // Clear existing content
+
+        // Display Career Fairs
+        careerFairs.forEach(fair => {
+            const fairItem = document.createElement("li");
+            fairItem.classList.add("fair-item");
             fairItem.innerHTML = `
                 <h3>${fair.name}</h3>
-                <p>Location: ${fair.location}</p>
                 <p>Date: ${fair.date}</p>
-                <p>${fair.description}</p>
+                <p>Location: ${fair.location}</p>
             `;
-            container.appendChild(fairItem);
+            fairItem.setAttribute('data-fair', JSON.stringify(fair)); // Store fair data for popup
+            fairsList.appendChild(fairItem);
         });
+
+        // Display Job Listings
+        jobListings.forEach(job => {
+            const jobItem = document.createElement("li");
+            jobItem.classList.add("job-item");
+            jobItem.innerHTML = `
+                <h3>${job.title}</h3>
+                <p>Company: ${job.company}</p>
+                <p>Start Date: ${job.start_date}</p>
+                <p>End Date: ${job.end_date}</p>
+            `;
+            jobItem.setAttribute('data-job', JSON.stringify(job)); // Store job data for popup
+            jobsList.appendChild(jobItem);
+        });
+
+        addClickListeners();
+        addSearchAndFilter();
+
     } catch (error) {
-        console.error("Error loading career fairs:", error);
+        console.error("Error loading data:", error);
+        document.getElementById("career-fairs-list").innerHTML = "<p>Error loading data. Please try again later.</p>";
+        document.getElementById("job-listings-list").innerHTML = "<p>Error loading data. Please try again later.</p>";
     }
 }
 
-// Function to fetch and display hackathons
-async function loadHackathons() {
-    try {
-        const response = await fetch("/hackathons");
-        const hackathons = await response.json();
-        const container = document.getElementById("hackathons-list");
-        container.innerHTML = ""; // Clear existing content
+function addClickListeners() {
+    const fairsList = document.getElementById("career-fairs-list");
+    const jobsList = document.getElementById("job-listings-list");
 
-        hackathons.forEach(hackathon => {
-            const hackathonItem = document.createElement("div");
-            hackathonItem.className = "hackathon-item";
-            hackathonItem.innerHTML = `
-                <h3>${hackathon.name}</h3>
-                <p>Location: ${hackathon.location}</p>
-                <p>Date: ${hackathon.date}</p>
-                <p>${hackathon.description}</p>
-            `;
-            container.appendChild(hackathonItem);
-        });
-    } catch (error) {
-        console.error("Error loading hackathons:", error);
-    }
+    fairsList.addEventListener('click', (event) => {
+        const fairItem = event.target.closest('.fair-item');
+        if (fairItem) {
+            const fairData = JSON.parse(fairItem.getAttribute('data-fair'));
+            showPopup(fairData.description);
+        }
+    });
+
+    jobsList.addEventListener('click', (event) => {
+        const jobItem = event.target.closest('.job-item');
+        if (jobItem) {
+            const jobData = JSON.parse(jobItem.getAttribute('data-job'));
+            showPopup(jobData.description);
+        }
+    });
 }
 
-// Function to fetch and display internships
-async function loadInternships() {
-    try {
-        const response = await fetch("/internships");
-        const internships = await response.json();
-        const container = document.getElementById("internships-list");
-        container.innerHTML = ""; // Clear existing content
+function showPopup(description) {
+    const popup = document.getElementById('popup-description');
+    popup.innerHTML = `<p>${description}</p>`;
+    popup.style.display = 'block';
 
-        internships.forEach(internship => {
-            const internshipItem = document.createElement("div");
-            internshipItem.className = "internship-item";
-            internshipItem.innerHTML = `
-                <h3>${internship.title}</h3>
-                <p>Company: ${internship.company}</p>
-                <p>Start Date: ${internship.start_date}</p>
-                <p>End Date: ${internship.end_date}</p>
-                <p>${internship.description}</p>
-            `;
-            container.appendChild(internshipItem);
-        });
-    } catch (error) {
-        console.error("Error loading internships:", error);
-    }
+    popup.addEventListener('mouseleave', () => {
+        popup.style.display = 'none';
+    }, { once: true });
 }
 
-// Function to fetch and display leaderboard
-async function loadLeaderboard() {
-    try {
-        const response = await fetch("/leaderboard");
-        const users = await response.json();
-        const container = document.getElementById("leaderboard-list");
-        container.innerHTML = ""; // Clear existing content
+function addSearchAndFilter() {
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const upcomingButton = document.getElementById('upcoming-button');
 
-        users.forEach(user => {
-            const userItem = document.createElement("div");
-            userItem.className = "user-item";
-            userItem.innerHTML = `
-                <h3>${user.name}</h3>
-                <p>Activity Score: ${user.activity_score}</p>
-                <p>Achievements: ${user.achievements.join(", ")}</p>
-                <p>Alumni Gems: ${user.alumni_gems}</p>
-            `;
-            container.appendChild(userItem);
-        });
-    } catch (error) {
-        console.error("Error loading leaderboard:", error);
-    }
+    searchButton.addEventListener('click', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        filterItems(searchTerm);
+    });
+
+    upcomingButton.addEventListener('click', () => {
+        filterUpcomingFairs();
+    });
 }
+
+function filterItems(searchTerm) {
+    const fairItems = document.querySelectorAll('#career-fairs-list .fair-item');
+    const jobItems = document.querySelectorAll('#job-listings-list .job-item');
+
+    fairItems.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        item.style.display = itemText.includes(searchTerm) ? 'block' : 'none';
+    });
+
+    jobItems.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        item.style.display = itemText.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+function filterUpcomingFairs() {
+    const fairItems = document.querySelectorAll('#career-fairs-list .fair-item');
+    const today = new Date();
+
+    fairItems.forEach(item => {
+        const fairData = JSON.parse(item.getAttribute('data-fair'));
+        const fairDate = new Date(fairData.date);
+        item.style.display = fairDate >= today ? 'block' : 'none';
+    });
+}
+
+document.addEventListener("DOMContentLoaded", loadCareerOffersAndJobs);

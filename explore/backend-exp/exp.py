@@ -2,10 +2,12 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine, Column, Integer, String, Date, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from datetime import date
+from datetime import date, datetime
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
+import asyncio
+import uvicorn
 
 app = FastAPI()
 
@@ -43,7 +45,7 @@ async def serve_expertqa_html():
 async def serve_explore_hackathon_html():
     return FileResponse(explore_hackathon_html_path)
 
-@app.get("/intership.html")
+@app.get("/internship.html")
 async def serve_internship_html():
     return FileResponse(internship_html_path)
 
@@ -107,33 +109,36 @@ def get_db():
     finally:
         db.close()
 
-# Insert dummy data on startup
-@app.on_event("startup")
-async def startup():
-    db = SessionLocal()
-    if not db.query(User).first():
-        db.add_all([
-            User(name="Alex Johnson", email="alex@example.com", activity_score=50, achievements="Mentorship Pro, Top Contributor", alumni_gems=10),
-            User(name="Sarah Lee", email="sarah@example.com", activity_score=42, achievements="Job Connector", alumni_gems=8),
-            User(name="Michael Carter", email="michael@example.com", activity_score=38, achievements="Mentor Pro", alumni_gems=5),
-        ])
-    if not db.query(CareerFair).first():
-        db.add_all([
-            CareerFair(name="Tech Career Fair", date="2024-12-15", location="San Francisco", description="Meet top tech companies."),
-            CareerFair(name="Engineering Jobs", date="2025-01-10", location="New York", description="Find engineering jobs."),
-        ])
-    if not db.query(Internship).first():
-        db.add_all([
-            Internship(title="Software Dev Intern", company="Google", start_date="2024-12-01", end_date="2025-03-01", description="Work on cool projects."),
-            Internship(title="Data Science Intern", company="Amazon", start_date="2025-01-15", end_date="2025-04-15", description="Analyze large datasets."),
-        ])
-    if not db.query(Hackathon).first():
-        db.add_all([
-            Hackathon(name="AI Hackathon", date="2024-12-10", location="Online", description="Develop innovative AI solutions."),
-            Hackathon(name="Web Dev Challenge", date="2025-01-20", location="San Francisco", description="Showcase your web development skills."),
-        ])
-    db.commit()
-    db.close()
+# Database Initialization Function
+async def initialize_database():
+    def sync_init():
+        db = SessionLocal()
+        try:
+            if not db.query(User).first():
+                db.add_all([
+                    User(name="Alex Johnson", email="alex@example.com", activity_score=50, achievements="Mentorship Pro, Top Contributor", alumni_gems=10),
+                    User(name="Sarah Lee", email="sarah@example.com", activity_score=42, achievements="Job Connector", alumni_gems=8),
+                    User(name="Michael Carter", email="michael@example.com", activity_score=38, achievements="Mentor Pro", alumni_gems=5),
+                ])
+            if not db.query(CareerFair).first():
+                db.add_all([
+                    CareerFair(name="Tech Career Fair", date=datetime.strptime("2024-12-15", "%Y-%m-%d").date(), location="San Francisco", description="Meet top tech companies."),
+                    CareerFair(name="Engineering Jobs", date=datetime.strptime("2025-01-10", "%Y-%m-%d").date(), location="New York", description="Find engineering jobs."),
+                ])
+            if not db.query(Internship).first():
+                db.add_all([
+                    Internship(title="Software Dev Intern", company="Google", start_date=datetime.strptime("2024-12-01", "%Y-%m-%d").date(), end_date=datetime.strptime("2025-03-01", "%Y-%m-%d").date(), description="Work on cool projects."),
+                    Internship(title="Data Science Intern", company="Amazon", start_date=datetime.strptime("2025-01-15", "%Y-%m-%d").date(), end_date=datetime.strptime("2025-04-15", "%Y-%m-%d").date(), description="Analyze large datasets."),
+                ])
+            if not db.query(Hackathon).first():
+                db.add_all([
+                    Hackathon(name="AI Hackathon", date=datetime.strptime("2024-12-10", "%Y-%m-%d").date(), location="Online", description="Develop innovative AI solutions."),
+                    Hackathon(name="Web Dev Challenge", date=datetime.strptime("2025-01-20", "%Y-%m-%d").date(), location="San Francisco", description="Showcase your web development skills."),
+                ])
+            db.commit()
+        finally:
+            db.close()
+    asyncio.run(asyncio.to_thread(sync_init))
 
 # API Routes
 BASE_API_PATH = "/api"
@@ -178,3 +183,10 @@ async def get_user(username: str, db: Session = Depends(get_db)):
         "achievements": user.achievements.split(",") if user.achievements else [],
         "alumni_gems": user.alumni_gems
     }
+
+async def main():
+    await initialize_database()
+    uvicorn.run("exp:app", host="127.0.0.1", port=8000, reload=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())
