@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Roadmaps</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        .top-nav {
+            background: #2f4f4f;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .top-nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .top-nav a i {
+            font-size: 22px;
+            margin-right: 5px;
+        }
+
+        .top-nav a:hover {
+            background-color: #486363;
+        }
+
+        .roadmaps-container {
+            background: #2f4f4f;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            color: #e0e0e0;
+            margin: 15px auto;
+            max-width: 80%;
+        }
+
+        .roadmaps-title {
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .roadmap-section {
+            margin-bottom: 25px;
+        }
+
+        .section-heading {
+            font-size: 1.5em;
+            color: #b0c4de;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #546e7a;
+            padding-bottom: 8px;
+        }
+
+        .roadmap-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .roadmap-list .roadmap-card {
+            background-color: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 30%;
+            margin-bottom: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            color: #222;
+            cursor: pointer;
+        }
+
+        .roadmap-list .roadmap-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .roadmap-list .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: #222;
+            font-weight: 700;
+        }
+
+        .roadmap-list .name {
+            font-size: 1em;
+            margin-bottom: 3px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .roadmap-list .profession {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .roadmap-list .roadmap-card {
+                width: 48%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .roadmap-list .roadmap-card {
+                width: 100%;
+            }
+        }
+
+        #resetButton {
+            padding: 8px 12px;
+            background-color: #306a6e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            font-size: 1em;
+            color: #222;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .roadmap-details {
+            margin-top: 20px;
+        }
+
+        .roadmap-details h3 {
+            color: #2d6143;
+            margin-bottom: 10px;
+        }
+
+        .roadmap-details p {
+            margin-bottom: 8px;
+        }
+        #searchInput{
+            width: 95%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="Home Page.html"><i class="fas fa-home"></i></a>
+        <a href="explore.html"><i class="fas fa-compass"></i></a>
+        <a href="Notification page.html"><i class="fas fa-bell"></i></a>
+        <a href="Help Page.html"><i class="fas fa-question-circle"></i></a>
+        <a href="Profile Page.html"><i class="fas fa-user"></i></a>
+        <a href="Login Page.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+
+    <div class="roadmaps-container">
+        <h2 class="roadmaps-title">Alumni Roadmaps</h2>
+        <input type="text" id="searchInput" placeholder="Search alumni...">
+        <button id="resetButton">Reset</button>
+        <div id="roadmaps-dynamic-container"></div>
+    </div>
+
+    
+    <div id="roadmap-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="roadmap-details">
+                <h3 id="modal-name"></h3>
+                <p id="modal-profession"></p>
+                <p id="modal-almaMater"></p>
+                <p id="modal-interviews"></p>
+                <p id="modal-internships"></p>
+                <p id="modal-startups"></p>
+                <p id="modal-currentCompany"></p>
+                <p id="modal-milestones"></p>
+                <p id="modal-advice"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/alumni-roadmap.js"></script>
+</body>
+</html>

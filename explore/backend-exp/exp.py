@@ -1,16 +1,18 @@
-from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey
+# exp.py
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
+from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey, desc
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
-from typing import List
+from typing import List, Dict, Optional
 from datetime import date, datetime
 from pydantic import BaseModel
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import asyncio
 import uvicorn
 import sqlite3
+import uuid
 
 app = FastAPI()
 
@@ -37,6 +39,16 @@ class User(Base):
     activity_score = Column(Integer)
     achievements = Column(Text)
     alumni_gems = Column(Integer)
+    department = Column(String)
+    profession = Column(String)
+    alma_mater = Column(String)
+    interviews = Column(Text)
+    internships = Column(Text)
+    startups = Column(Text)
+    current_company = Column(String)
+    milestones = Column(Text)
+    advice = Column(Text)
+    likes = Column(Integer, default=0)
 
 class CareerFair(Base):
     __tablename__ = "career_fairs"
@@ -66,10 +78,40 @@ class Hackathon(Base):
 class Question(Base):
     __tablename__ = "questions"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id")) # Assuming users table exists
+    user_id = Column(Integer, ForeignKey("users.id"))
     question_text = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     likes = Column(Integer, default=0)
+
+class ChatContact(Base):
+    __tablename__ = "chat_contacts"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    contact_id = Column(Integer, ForeignKey("chat_contacts.id"))
+    sender = Column(String)  # 'me' or 'other'
+    text = Column(String, nullable=True)
+    file_path = Column(String, nullable=True)  # Store file path
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class AlumniResponse(BaseModel):
+    id: int
+    name: str
+    profession: str
+    alma_mater: str
+    interviews: str
+    internships: str
+    startups: str
+    current_company: str
+    milestones: str
+    advice: str
+    department: str
+
+    class Config:
+        from_attributes = True
 
 # --- Pydantic Models for Request/Response ---
 class QuestionCreate(BaseModel):
@@ -83,7 +125,30 @@ class QuestionOut(BaseModel):
     likes: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class ChatMessageCreate(BaseModel):
+    contact_id: int
+    text: Optional[str] = None
+    file_path: Optional[str] = None
+
+class ChatMessageOut(BaseModel):
+    id: int
+    contact_id: int
+    sender: str
+    text: Optional[str] = None
+    file_path: Optional[str] = None
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class ChatContactOut(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
 
 # --- Frontend Serving ---
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
@@ -94,6 +159,8 @@ explore_hackathon_html_path = os.path.join(frontend_dir, "explore-hackathons.htm
 internship_html_path = os.path.join(frontend_dir, "intership.html")
 leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
 leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
+alumni_roadmap_html_path = os.path.join(frontend_dir, "alumni-roadmaps.html")
+chat_html_path = os.path.join(frontend_dir, "chat.html")
 static_dir = os.path.join(frontend_dir, "static")
 
 if os.path.exists(static_dir):
@@ -102,6 +169,10 @@ if os.path.exists(static_dir):
 @app.get("/")
 async def serve_explore_html():
     return FileResponse(explore_html_path)
+
+@app.get("/explore.html", response_class=FileResponse)
+async def serve_explore():
+    return FileResponse(os.path.join(frontend_dir, "explore.html"))
 
 @app.get("/career-fairs.html")
 async def serve_career_fairs_html():
@@ -127,6 +198,14 @@ async def serve_leader_profile_html():
 async def serve_leaderboard_html():
     return FileResponse(leaderboard_html_path)
 
+@app.get("/alumni-roadmaps.html")
+async def serve_alumni_roadmap_html():
+    return FileResponse(alumni_roadmap_html_path)
+
+@app.get("/chat.html")
+async def serve_chat_html():
+    return FileResponse(chat_html_path)
+
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
 
@@ -137,8 +216,7 @@ async def get_popular_questions(db: Session = Depends(get_db)):
 
 @app.post(f"{BASE_API_PATH}/questions", response_model=QuestionOut)
 async def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
-    # In a real application, get the user_id from the logged-in user
-    db_question = Question(question_text=question.question_text, user_id=1) # Assuming user_id 1 for now
+    db_question = Question(question_text=question.question_text, user_id=1)
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
@@ -160,7 +238,7 @@ async def like_question(question_id: int, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="Question not found")
 
-# --- Existing API Endpoints (No Changes Needed for Q&A) ---
+# --- Existing API Endpoints ---
 @app.get(f"{BASE_API_PATH}/career_fairs")
 async def get_career_fairs(db: Session = Depends(get_db)):
     career_fairs = db.query(CareerFair).all()
@@ -201,6 +279,94 @@ async def get_user(username: str, db: Session = Depends(get_db)):
         "achievements": user.achievements.split(",") if user.achievements else [],
         "alumni_gems": user.alumni_gems
     }
+
+@app.get(f"{BASE_API_PATH}/alumni/top-liked", response_model=Dict[str, List[AlumniResponse]])
+async def get_top_liked_alumni(db: Session = Depends(get_db)):
+    alumni = db.query(User).filter(User.department.isnot(None)).order_by(desc(User.likes)).limit(5).all()
+    grouped_alumni = {}
+    for a in alumni:
+        if a.department not in grouped_alumni:
+            grouped_alumni[a.department] = []
+        grouped_alumni[a.department].append(a)
+    return grouped_alumni
+
+@app.get(f"{BASE_API_PATH}/alumni/{{alumni_id}}", response_model=AlumniResponse)
+async def get_alumni_details(alumni_id: int, db: Session = Depends(get_db)):
+    alumni = db.query(User).filter(User.id == alumni_id).first()
+    if alumni is None:
+        raise HTTPException(status_code=404, detail="Alumni not found")
+    return alumni
+
+@app.get(f"{BASE_API_PATH}/alumni/{{alumni_id}}/like")
+async def like_alumni(alumni_id: int, db: Session = Depends(get_db)):
+    alumni = db.query(User).filter(User.id == alumni_id).first()
+    if alumni:
+        alumni.likes += 1
+        db.commit()
+        db.refresh(alumni)
+        return {"message": "Alumni liked successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Alumni not found")
+
+# --- Chat API Endpoints ---
+@app.get(f"{BASE_API_PATH}/contacts", response_model=List[ChatContactOut])
+async def get_contacts(db: Session = Depends(get_db)):
+    contacts = db.query(ChatContact).all()
+    return contacts
+
+@app.get(f"{BASE_API_PATH}/chat/{{contact_id}}", response_model=List[ChatMessageOut])
+async def get_chat_history(contact_id: int, db: Session = Depends(get_db)):
+    messages = db.query(ChatMessage).filter(ChatMessage.contact_id == contact_id).order_by(ChatMessage.timestamp).all()
+    return messages
+
+# ... (other imports and code) ...
+
+@app.post(f"{BASE_API_PATH}/send-message", response_model=ChatMessageOut)
+async def send_message(message: ChatMessageCreate, db: Session = Depends(get_db)):
+    try:
+        db_message = ChatMessage(contact_id=message.contact_id, text=message.text, sender='me')
+        db.add(db_message)
+        db.commit()
+        db.refresh(db_message)
+        return db_message
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error sending message: {e}")
+    
+# ... (other imports and code) ...
+
+@app.post(f"{BASE_API_PATH}/upload-file")
+async def upload_file(
+    contact_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        upload_dir = "uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        file_extension = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = os.path.join(upload_dir, unique_filename)
+
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+
+        db_message = ChatMessage(contact_id=contact_id, file_path=unique_filename, sender='me') #store the file name only
+        db.add(db_message)
+        db.commit()
+        db.refresh(db_message)
+        return {"file_path": unique_filename} # return the file name only
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/uploads/{file_path:path}")
+async def get_uploaded_file(file_path: str):
+    full_path = os.path.join("uploads", file_path)
+    if os.path.exists(full_path):
+        return FileResponse(full_path)
+    else:
+        raise HTTPException(status_code=404, detail="File not found")
 
 # --- Database Initialization ---
 async def initialize_database():

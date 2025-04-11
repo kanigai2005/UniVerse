@@ -3,170 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Alumni Association Platform</title>
+    <title>UniVerse - Explore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Trebuchet MS', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(150deg, hsl(0, 0%, 85%), hsl(0, 0%, 60%));
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 15px;
         }
 
-        header {
-            background-color: #333;
+        .top-nav {
+            background-color: #007bff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .top-nav a {
             color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
+            text-decoration: none;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1.1rem;
+        }
+
+        .top-nav a:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .side-panel {
+            background-color: #343a40;
+            color: #fff;
+            width: 250px;
+            padding-top: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            height: 100%;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            transition: left 0.3s ease-in-out;
+            z-index: 20;
+            font-size: 0.9rem;
+        }
+
+        .side-panel.open {
+            left: 0;
+        }
+
+        .side-panel-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 0.8rem;
+            cursor: pointer;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 30;
+        }
+
+        .side-panel h3 {
+            margin-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .side-panel hr {
+            border: 0;
+            height: 1px;
+            background: #555;
+            margin: 1rem 1.5rem;
+            width: 80%;
+        }
+
+        .side-panel a {
+            color: #fff;
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            width: 100%;
+            text-align: left;
+            transition: background-color 0.3s ease;
+        }
+
+        .side-panel a:hover {
+            background-color: #495057;
+        }
+
+        .content-wrapper {
+            flex-grow: 1;
+            padding-top: 5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding-bottom: 4rem;
         }
 
         .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .box {
-            width: 280px;
-            margin: 20px;
-            padding: 20px;
-            background-color: #ddd;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            padding: 2rem;
+            max-width: 1200px;
+            width: 95%;
+            margin: 0 auto;
             text-align: center;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .box:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .box h2 {
-            color: #444;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .box p {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            background-color: #666;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .btn:hover {
-            background-color: #444;
-        }
-
-        .newsletter-panel {
-            background-color: rgba(200, 200, 200, 0.9);
-            color: black;
-            padding: 30px;
-            margin: 20px;
-            border-radius: 30px 30px 0 0;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .newsletter-panel h2, .newsletter-panel p {
-            color: #333;
-        }
-
-        .moving-panel {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f1f1f1;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
         }
 
-        .panel-item {
-            background-color: #999;
-            color: white;
-            text-align: center;
-            padding: 20px;
+        .explore-header {
+            margin-bottom: 2rem;
+        }
+
+        .explore-header h1 {
+            font-size: 2.8rem;
+            color: #007bff;
+            margin-bottom: 0.2rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .explore-subheader {
+            color: #6c757d;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .explore-description {
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .explore-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns, each taking equal space */
+            gap: 2rem;
+            margin-top: 2rem;
+            justify-items: center;
+        }
+
+        .explore-card, .chat-card, .expert-qa-panel {
+            background-color: white;
+            padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            width: 280px;
-        }
-
-        .panel-item:hover {
-            transform: scale(1.05);
-        }
-
-        footer {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
             text-align: center;
-            background-color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .explore-card:hover, .chat-card:hover, .expert-qa-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .explore-card i, .chat-card i, .expert-qa-panel i {
+            font-size: 2.5rem;
+            color: #007bff;
+            margin-bottom: 0.8rem;
+        }
+
+        .explore-card h3, .chat-card h3, .expert-qa-panel h2 {
+            font-size: 2rem;
+            color: #343a40;
+            margin-bottom: 0.5rem;
+        }
+
+        .explore-card p, .chat-card p, .expert-qa-panel p {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .ask-question-btn {
+            background-color: #007bff;
             color: white;
-            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .ask-question-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: #343a40;
+            color: #fff;
+            text-align: center;
+            padding: 1.2rem 0;
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
+    <button class="side-panel-toggle" id="sidePanelToggle">
+        <i class="fas fa-bars"></i>
+    </button>
 
-    <header>Explore Our UniVerse - The Ultimate Collaboration Space!</header>
+    <nav class="top-nav">
+        <a href="home.html"><i class="fas fa-home"></i></a>
+        <a href="explore.html"><i class="fas fa-compass"></i></a>
+        <a href="notifications.html"><i class="fas fa-bell"></i></a>
+        <a href="help.html"><i class="fas fa-question-circle"></i></a>
+        <a href="profile.html"><i class="fas fa-user"></i></a>
+        <a href="#" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+    </nav>
 
-    <div class="moving-panel">
-        <div class="panel-item">
-            <h3>Expert Q&A</h3>
-            <p>Get your career-related questions answered by top industry experts.</p>
-            <a href="expertqa.html" class="btn">Expert Q&A</a>
+    <div class="side-panel" id="sidePanel">
+        <h3>Explore More</h3>
+        <hr>
+        <a href="chat.html"><i class="fas fa-comments"></i> Community Forum (Chat)</a>
+        <hr>
+        <a href="career-fairs.html"><i class="fas fa-briefcase"></i> Career Fairs</a>
+        <a href="explore-hackathons.html"><i class="fas fa-code"></i> Hackathons & Contests</a>
+        <a href="intership.html"><i class="fas fa-graduation-cap"></i> Internships & Placements</a>
+        <a href="alumni-roadmaps.html"><i class="fas fa-route"></i> Roadmaps & Success Stories</a>
+        <a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard & Recognition</a>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="container">
+            <div class="explore-header">
+                <h1>Explore UniVerse</h1>
+                <h2 class="explore-subheader">The Ultimate Collaboration Space</h2>
+                <p class="explore-description">Discover various features and opportunities within our platform</p>
+            </div>
+
+            <div class="expert-qa-panel">
+                <i class="fas fa-question"></i>
+                <h2>Expert Q&A</h2>
+                <p>Get your questions answered by industry experts and successful alumni.</p>
+                <button class="ask-question-btn" onclick="navigateTo('expertqa.html')">Ask Question</button>
+            </div>
+
+            <div class="explore-grid">
+                <div class="explore-card" onclick="navigateTo('career-fairs.html')">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Career Fairs</h3>
+                    <p>Connect with alumni and explore job and internship opportunities.</p>
+                </div>
+
+                <div class="explore-card" onclick="navigateTo('explore-hackathons.html')">
+                    <i class="fas fa-code"></i>
+                    <h3>Hackathons & Contests</h3>
+                    <p>Participate in challenges, collaborate, and showcase your skills.</p>
+                </div>
+
+                <div class="chat-card" onclick="navigateTo('chat.html')">
+                    <i class="fas fa-comments"></i>
+                    <h3>Community Chat</h3>
+                    <p>Connect and chat with fellow members in real-time.</p>
+                </div>
+
+                <div class="explore-card" onclick="navigateTo('intership.html')">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Internships & Placements</h3>
+                    <p>Browse and apply for internships and placement opportunities.</p>
+                </div>
+
+                <div class="explore-card" onclick="navigateTo('alumni-roadmaps.html')">
+                    <i class="fas fa-route"></i>
+                    <h3>Roadmaps & Success Stories</h3>
+                    <p>Explore career paths and learn from inspiring alumni journeys.</p>
+                </div>
+
+                <div class="explore-card" onclick="navigateTo('leaderboard.html')">
+                    <i class="fas fa-trophy"></i>
+                    <h3>Leaderboard & Recognition</h3>
+                    <p>See top contributors and get recognized for your engagement.</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="container">
-        <div class="box">
-            <h2>Career Fairs</h2>
-            <p>Attend virtual career fairs, connect with alumni, and apply for jobs and internships.</p>
-            <a href="career-fairs.html" class="btn">Explore Career Fairs</a>
-        </div>
+    <footer class="footer">
+        &copy; 2025 UniVerse. All rights reserved.
+    </footer>
 
-        <div class="box">
-            <h2>Hackathons & Contests</h2>
-            <p>Participate in exciting challenges and solve real-world problems with your peers.</p>
-            <a href="explore-hackathons.html" class="btn">Explore Hackathons</a>
-        </div>
-
-        <div class="box">
-            <h2>Internships & Placements</h2>
-            <p>Browse and apply for internships, get AI-powered recommendations, and more.</p>
-            <a href="intership.html" class="btn">Explore Internships</a>
-        </div>
-
-        <div class="box">
-            <h2>Leaderboard & Recognition</h2>
-            <p>Get recognized for your mentorship, job referrals, and contributions to the community.</p>
-            <a href="leaderboard.html" class="btn">Explore Leaderboard</a>
-        </div>
-    </div>
-    <footer>&copy; 2025 Alumni Association Platform. All rights reserved.</footer>
-    
     <script src="static/exp.js"></script>
+    <script>
+        const sidePanel = document.getElementById('sidePanel');
+        const sidePanelToggle = document.getElementById('sidePanelToggle');
+        const contentWrapper = document.querySelector('.content-wrapper');
+
+        sidePanelToggle.addEventListener('click', () => {
+            sidePanel.classList.toggle('open');
+        });
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+    </script>
 </body>
 </html>

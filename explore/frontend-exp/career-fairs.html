@@ -13,14 +13,29 @@
             color: #333;
         }
 
-        header {
-            background-color: #050897;
+        
+        .back-icon {
+            font-size: 40px; /* Adjust icon size if needed */
+            color: black; /* Icon color */
+            text-decoration: none; /* Remove underline */
+            cursor: pointer; /* Show pointer cursor on hover */
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align */
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            background-color: #007bff;
             color: white;
-            padding: 15px;
+            padding: 10px;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            margin: 0;
+            flex-grow: 1;
             text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            font-family: 'Trebuchet MS', sans-serif;
         }
 
         .container {
@@ -92,14 +107,19 @@
     </style>
 </head>
 <body>
-    <header>Career Fairs</header>
+    <div class="header-container">
+        <a href="explore.html" class="back-icon">⬅️</a>
+        <h1 class="header-title">Career Fairs</h1>
+        <div></div>
+    </div>
+    
     <div class="container">
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Search Career Fairs...">
             <button id="search-button">Search</button>
             <button id="upcoming-button">Upcoming Fairs</button>
         </div>
-
+        
         <h2>Career Fairs List</h2>
         <ul id="career-fairs-list">
             </ul>
