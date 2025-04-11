@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Annotated
 from passlib.context import CryptContext
 from urllib.parse import urlencode
@@ -53,7 +53,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
-    @validator("password")
+    @field_validator("password")
     def validate_password(cls, value):
         if len(value) < 8:
             raise ValueError("Password must be at least 8 characters long")

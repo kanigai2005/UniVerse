@@ -90,11 +90,25 @@
             background: #ccc;
         }
 
-        .answer {
+        .like-feedback {
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .success-message {
+            color: green;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .post-feedback {
             margin-top: 10px;
-            padding-left: 10px;
-            border-left: 3px solid #007bff;
-            font-style: italic;
+            font-size: 0.9em;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -110,17 +124,17 @@
         <form id="question-form">
             <textarea id="question-input" placeholder="Type your question here..." required></textarea>
             <button type="submit">Submit</button>
+            <div class="post-feedback"></div>
         </form>
     </section>
 
     <h2>Your Questions</h2>
     <section id="user-questions-list"></section>
 
-    <h2>Community Questions</h2>
+    <h2>Community Questions (Ordered by Likes)</h2>
     <section id="questions-list"></section>
 </main>
 
-<script src="static/expertqa.js">
-    </script>
+<script src="static/expertqa.js"></script>
 </body>
 </html>

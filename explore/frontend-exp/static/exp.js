@@ -1,7 +1,12 @@
+// static/exp.js
+
 // Function to fetch and display Career Fair data
 async function displayCareerFairs(url, elementId) {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const careerFairs = await response.json();
         const element = document.getElementById(elementId);
 
@@ -20,6 +25,7 @@ async function displayCareerFairs(url, elementId) {
         }
     } catch (error) {
         console.error("Error fetching Career Fairs:", error);
+        document.getElementById(elementId).innerHTML = "<p>Error loading career fairs.</p>";
     }
 }
 
@@ -27,6 +33,9 @@ async function displayCareerFairs(url, elementId) {
 async function displayInternships(url, elementId) {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const internships = await response.json();
         const element = document.getElementById(elementId);
 
@@ -46,6 +55,7 @@ async function displayInternships(url, elementId) {
         }
     } catch (error) {
         console.error("Error fetching Internships:", error);
+        document.getElementById(elementId).innerHTML = "<p>Error loading internships.</p>";
     }
 }
 
@@ -53,6 +63,9 @@ async function displayInternships(url, elementId) {
 async function displayHackathons(url, elementId) {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const hackathons = await response.json();
         const element = document.getElementById(elementId);
 
@@ -71,6 +84,7 @@ async function displayHackathons(url, elementId) {
         }
     } catch (error) {
         console.error("Error fetching Hackathons:", error);
+        document.getElementById(elementId).innerHTML = "<p>Error loading hackathons.</p>";
     }
 }
 
@@ -78,6 +92,9 @@ async function displayHackathons(url, elementId) {
 async function displayLeaderboard(url, elementId) {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const users = await response.json();
         const element = document.getElementById(elementId);
 
@@ -96,6 +113,7 @@ async function displayLeaderboard(url, elementId) {
         }
     } catch (error) {
         console.error("Error fetching Leaderboard:", error);
+        document.getElementById(elementId).innerHTML = "<p>Error loading the leaderboard.</p>";
     }
 }
 
@@ -103,6 +121,9 @@ async function displayLeaderboard(url, elementId) {
 async function displayUser(url, elementId) {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const user = await response.json();
         const element = document.getElementById(elementId);
 
@@ -119,30 +140,30 @@ async function displayUser(url, elementId) {
         }
     } catch (error) {
         console.error("Error fetching User:", error);
+        document.getElementById(elementId).innerHTML = "<p>Error loading user data.</p>";
     }
 }
 
 // Example usage (replace with your actual element IDs and URLs):
 document.addEventListener("DOMContentLoaded", function() {
-  if (document.getElementById("careerFairs")) {
-    displayCareerFairs("/api/career_fairs", "careerFairs");
-  }
+    if (document.getElementById("careerFairs")) {
+        displayCareerFairs("/api/career_fairs", "careerFairs");
+    }
 
-  if (document.getElementById("internships")) {
-    displayInternships("/api/internships", "internships");
-  }
+    if (document.getElementById("internships")) {
+        displayInternships("/api/internships", "internships");
+    }
 
-  if (document.getElementById("hackathons")) {
-    displayHackathons("/api/hackathons", "hackathons");
-  }
+    if (document.getElementById("hackathons")) {
+        displayHackathons("/api/hackathons", "hackathons");
+    }
 
-  if (document.getElementById("leaderboard")) {
-    displayLeaderboard("/api/leaderboard", "leaderboard");
-  }
+    if (document.getElementById("leaderboard")) {
+        displayLeaderboard("/api/leaderboard", "leaderboard");
+    }
 
     if (document.getElementById("userData")) {
         const username = window.location.pathname.split("/").pop(); //get username from url.
         displayUser(`/api/user/${username}`, "userData");
     }
-
 });

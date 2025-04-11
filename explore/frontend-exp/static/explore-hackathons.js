@@ -1,8 +1,9 @@
+// static/explore-hackathons.js
 async function loadHackathons() {
     try {
-        const response = await fetch("/api/hackathons"); // Corrected API endpoint
+        const response = await fetch("/api/hackathons");
         if (!response.ok) {
-            throw new Error("Failed to fetch hackathons");
+            throw new Error(`Failed to fetch hackathons: ${response.status}`);
         }
         const hackathons = await response.json();
         const container = document.getElementById("hackathons-list");
@@ -10,39 +11,37 @@ async function loadHackathons() {
         container.innerHTML = ""; // Clear existing content
 
         hackathons.forEach(hackathon => {
-            // Check if the hackathon date is today or in the future
-            if (new Date(hackathon.date) >= new Date(new Date().setHours(0, 0, 0, 0))) {
-                const hackathonItem = document.createElement("li");
-                hackathonItem.classList.add("hackathon-item");
-                hackathonItem.setAttribute("data-hackathon", JSON.stringify(hackathon));
-                hackathonItem.innerHTML = `
-                    <h3>${hackathon.name}</h3>
-                    <p>Date: ${hackathon.date}</p>
-                    <p>Location: ${hackathon.location}</p>
-                `;
-                container.appendChild(hackathonItem);
-            }
+            const hackathonItem = document.createElement("li");
+            hackathonItem.classList.add("hackathon-item");
+            hackathonItem.setAttribute("data-hackathon", JSON.stringify(hackathon));
+            hackathonItem.innerHTML = `
+                <h3>${hackathon.name}</h3>
+                <p>Date: ${hackathon.date}</p>
+                <p>Location: ${hackathon.location}</p>
+            `;
+            container.appendChild(hackathonItem);
         });
 
         addHackathonClickListeners();
 
     } catch (error) {
         console.error("Error loading hackathons:", error);
-        // Add user friendly error message
-        document.getElementById("hackathons-list").innerHTML = "<p>Error loading hackathons. Please try again later.</p>"
+        document.getElementById("hackathons-list").innerHTML = "<p>Error loading hackathons. Please try again later.</p>";
     }
 }
 
 function addHackathonClickListeners() {
+    const popupDescription = document.getElementById('popup-description');
+    if (!popupDescription) return; // Ensure popup exists
+
     document.querySelectorAll('.hackathon-item').forEach(item => {
         item.addEventListener('click', () => {
             const hackathonData = JSON.parse(item.getAttribute('data-hackathon'));
-            const popupDescription = document.getElementById('popup-description');
             popupDescription.innerHTML = `
                 <h3>${hackathonData.name} - Description</h3>
                 <p>${hackathonData.description}</p>
                 <button id="register-button">Register</button>
-                <div id="registration-form">
+                <div id="registration-form" style="display:none;">
                     <input type="text" id="name" placeholder="Your Name">
                     <input type="email" id="email" placeholder="Your Email">
                     <button id="submit-registration">Submit</button>
@@ -52,21 +51,35 @@ function addHackathonClickListeners() {
 
             popupDescription.addEventListener('mouseleave', () => {
                 popupDescription.style.display = 'none';
-            });
+            }, { once: true });
 
-            document.getElementById('register-button').addEventListener('click', () => {
-                document.getElementById('registration-form').style.display = 'block';
-            });
+            const registerButton = document.getElementById('register-button');
+            if (registerButton) {
+                registerButton.addEventListener('click', () => {
+                    const registrationForm = document.getElementById('registration-form');
+                    if (registrationForm) {
+                        registrationForm.style.display = 'block';
+                    }
+                });
+            }
 
-            document.getElementById('submit-registration').addEventListener('click', () => {
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
-                alert(`Registration submitted for ${hackathonData.name}!\nName: ${name}\nEmail: ${email}`);
-                document.getElementById('registration-form').style.display = 'none';
-            });
+            const submitRegistrationButton = document.getElementById('submit-registration');
+            if (submitRegistrationButton) {
+                submitRegistrationButton.addEventListener('click', () => {
+                    const name = document.getElementById('name').value;
+                    const email = document.getElementById('email').value;
+                    alert(`Registration submitted for ${hackathonData.name}!\nName: ${name}\nEmail: ${email}`);
+                    const registrationForm = document.getElementById('registration-form');
+                    if (registrationForm) {
+                        registrationForm.style.display = 'none';
+                    }
+                });
+            }
         });
     });
 }
+
+document.addEventListener('DOMContentLoaded', loadHackathons);
 
 document.getElementById('search-button').addEventListener('click', () => {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
@@ -84,5 +97,3 @@ document.getElementById('search-button').addEventListener('click', () => {
         }
     });
 });
-
-document.addEventListener('DOMContentLoaded', loadHackathons);

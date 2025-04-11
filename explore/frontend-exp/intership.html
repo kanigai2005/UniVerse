@@ -169,7 +169,6 @@
 </header>
 
 <main>
-    <!-- Add an Internship -->
     <section id="add-internship">
         <h2>Add an Internship</h2>
         <form id="internship-form">
@@ -181,41 +180,32 @@
         </form>
     </section>
 
-    <!-- Featured Internships -->
-    <h2>Exciting Internship Opportunities</h2>
-    <section id="featured-internships">
-        <div class="internship-box" onclick="showPopup('Google', 'Software Engineering Intern', 'Mountain View, CA', 'https://careers.google.com/', 'Proficiency in Python, C++ or Java. Basic knowledge of Data Structures and Algorithms.')">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google Logo">
-            <h3>Google</h3>
-            <p><strong>Role:</strong> Software Engineering Intern</p>
-            <p><strong>Location:</strong> Mountain View, CA</p>
-        </div>
-        <div class="internship-box" onclick="showPopup('Microsoft', 'Data Analyst Intern', 'Redmond, WA', 'https://careers.microsoft.com/', 'Experience with SQL and Python. Strong analytical and problem-solving skills.')">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo">
-            <h3>Microsoft</h3>
-            <p><strong>Role:</strong> Data Analyst Intern</p>
-            <p><strong>Location:</strong> Redmond, WA</p>
-        </div>
-        <div class="internship-box" onclick="showPopup('Tesla', 'Battery Technology Intern', 'Palo Alto, CA', 'https://www.tesla.com/careers', 'Background in Electrical or Mechanical Engineering. Knowledge of Lithium-ion batteries preferred.')">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg" alt="Tesla Logo">
-            <h3>Tesla</h3>
-            <p><strong>Role:</strong> Battery Technology Intern</p>
-            <p><strong>Location:</strong> Palo Alto, CA</p>
-        </div>
+    <section id="internship-listings">
+        <h2>Available Internships</h2>
+        <div id="internships-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            </div>
     </section>
 </main>
 
-<!-- Popup Modal -->
-<div class="overlay" id="overlay" onclick="closePopup()"></div>
-<div class="popup" id="popup">
-    <button class="close-btn" onclick="closePopup()">X</button>
+<div class="overlay" id="overlay"></div>
+<div class="popup" id="popup-description">
+    <button class="close-btn" onclick="document.getElementById('popup-description').style.display='none'; document.getElementById('overlay').style.display='none';">X</button>
     <h2 id="popup-title">Internship Details</h2>
     <p><strong>Company:</strong> <span id="popup-company"></span></p>
     <p><strong>Role:</strong> <span id="popup-role"></span></p>
-    <p><strong>Location:</strong> <span id="popup-location"></span></p>
-    <p><strong>Requirements:</strong> <span id="popup-requirements"></span></p>
+    <p><strong>Start Date:</strong> <span id="popup-start-date"></span></p>
+    <p><strong>End Date:</strong> <span id="popup-end-date"></span></p>
+    <p><strong>Description:</strong> <span id="popup-description-text"></span></p>
     <a id="popup-link" href="#" target="_blank">Apply Here</a>
+    <button id="apply-button">Apply Now</button>
+    <div id="application-form" style="display:none;">
+        <input type="text" id="name" placeholder="Your Name">
+        <input type="email" id="email" placeholder="Your Email">
+        <textarea id="resume" placeholder="Link to your Resume"></textarea>
+        <button id="submit-application">Submit Application</button>
+    </div>
 </div>
+
 
 <script src="static/internship.js"></script>
 

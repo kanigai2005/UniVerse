@@ -1,69 +1,34 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, String, Date, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.declarative import declarative_base
+from typing import List
 from datetime import date, datetime
+from pydantic import BaseModel
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import asyncio
 import uvicorn
+import sqlite3
 
 app = FastAPI()
 
-# Construct the correct path to the frontend-exp directory
-frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
-
-# Construct paths to HTML files
-explore_html_path = os.path.join(frontend_dir, "explore.html")
-career_fairs_html_path = os.path.join(frontend_dir, "career-fairs.html")
-expertqa_html_path = os.path.join(frontend_dir, "expertqa.html")
-explore_hackathon_html_path = os.path.join(frontend_dir, "explore-hackathons.html")
-internship_html_path = os.path.join(frontend_dir, "intership.html")
-leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
-leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
-
-# Serve static files (e.g., JavaScript, CSS)
-static_dir = os.path.join(frontend_dir, "static")
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-# Serve HTML files
-@app.get("/")
-async def serve_explore_html():
-    return FileResponse(explore_html_path)
-
-@app.get("/career-fairs.html")
-async def serve_career_fairs_html():
-    return FileResponse(career_fairs_html_path)
-
-@app.get("/expertqa.html")
-async def serve_expertqa_html():
-    return FileResponse(expertqa_html_path)
-
-@app.get("/explore-hackathons.html")
-async def serve_explore_hackathon_html():
-    return FileResponse(explore_hackathon_html_path)
-
-@app.get("/internship.html")
-async def serve_internship_html():
-    return FileResponse(internship_html_path)
-
-@app.get("/leader-profile.html")
-async def serve_leader_profile_html():
-    return FileResponse(leader_profile_html_path)
-
-@app.get("/leaderboard.html")
-async def serve_leaderboard_html():
-    return FileResponse(leaderboard_html_path)
-
-# Database setup
-DATABASE_URL = "sqlite:///explore.db"
+# --- Database Setup ---
+DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')}"
+print(f"Database URL: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Models
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# --- Database Models ---
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -98,54 +63,107 @@ class Hackathon(Base):
     location = Column(String)
     description = Column(Text)
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+class Question(Base):
+    __tablename__ = "questions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id")) # Assuming users table exists
+    question_text = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    likes = Column(Integer, default=0)
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# --- Pydantic Models for Request/Response ---
+class QuestionCreate(BaseModel):
+    question_text: str
 
-# Database Initialization Function
-async def initialize_database():
-    def sync_init():
-        db = SessionLocal()
-        try:
-            if not db.query(User).first():
-                db.add_all([
-                    User(name="Alex Johnson", email="alex@example.com", activity_score=50, achievements="Mentorship Pro, Top Contributor", alumni_gems=10),
-                    User(name="Sarah Lee", email="sarah@example.com", activity_score=42, achievements="Job Connector", alumni_gems=8),
-                    User(name="Michael Carter", email="michael@example.com", activity_score=38, achievements="Mentor Pro", alumni_gems=5),
-                ])
-            if not db.query(CareerFair).first():
-                db.add_all([
-                    CareerFair(name="Tech Career Fair", date=datetime.strptime("2024-12-15", "%Y-%m-%d").date(), location="San Francisco", description="Meet top tech companies."),
-                    CareerFair(name="Engineering Jobs", date=datetime.strptime("2025-01-10", "%Y-%m-%d").date(), location="New York", description="Find engineering jobs."),
-                ])
-            if not db.query(Internship).first():
-                db.add_all([
-                    Internship(title="Software Dev Intern", company="Google", start_date=datetime.strptime("2024-12-01", "%Y-%m-%d").date(), end_date=datetime.strptime("2025-03-01", "%Y-%m-%d").date(), description="Work on cool projects."),
-                    Internship(title="Data Science Intern", company="Amazon", start_date=datetime.strptime("2025-01-15", "%Y-%m-%d").date(), end_date=datetime.strptime("2025-04-15", "%Y-%m-%d").date(), description="Analyze large datasets."),
-                ])
-            if not db.query(Hackathon).first():
-                db.add_all([
-                    Hackathon(name="AI Hackathon", date=datetime.strptime("2024-12-10", "%Y-%m-%d").date(), location="Online", description="Develop innovative AI solutions."),
-                    Hackathon(name="Web Dev Challenge", date=datetime.strptime("2025-01-20", "%Y-%m-%d").date(), location="San Francisco", description="Showcase your web development skills."),
-                ])
-            db.commit()
-        finally:
-            db.close()
-    asyncio.run(asyncio.to_thread(sync_init))
+class QuestionOut(BaseModel):
+    id: int
+    user_id: int
+    question_text: str
+    created_at: datetime
+    likes: int
 
-# API Routes
+    class Config:
+        orm_mode = True
+
+# --- Frontend Serving ---
+frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
+explore_html_path = os.path.join(frontend_dir, "explore.html")
+career_fairs_html_path = os.path.join(frontend_dir, "career-fairs.html")
+expertqa_html_path = os.path.join(frontend_dir, "expertqa.html")
+explore_hackathon_html_path = os.path.join(frontend_dir, "explore-hackathons.html")
+internship_html_path = os.path.join(frontend_dir, "intership.html")
+leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
+leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
+static_dir = os.path.join(frontend_dir, "static")
+
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.get("/")
+async def serve_explore_html():
+    return FileResponse(explore_html_path)
+
+@app.get("/career-fairs.html")
+async def serve_career_fairs_html():
+    return FileResponse(career_fairs_html_path)
+
+@app.get("/expertqa.html")
+async def serve_expertqa_html():
+    return FileResponse(expertqa_html_path)
+
+@app.get("/explore-hackathons.html")
+async def serve_explore_hackathon_html():
+    return FileResponse(explore_hackathon_html_path)
+
+@app.get("/intership.html")
+async def serve_intership_html():
+    return FileResponse(internship_html_path)
+
+@app.get("/leader-profile.html")
+async def serve_leader_profile_html():
+    return FileResponse(leader_profile_html_path)
+
+@app.get("/leaderboard.html")
+async def serve_leaderboard_html():
+    return FileResponse(leaderboard_html_path)
+
+# --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
 
+@app.get(f"{BASE_API_PATH}/questions/popular", response_model=List[QuestionOut])
+async def get_popular_questions(db: Session = Depends(get_db)):
+    questions = db.query(Question).order_by(Question.likes.desc(), Question.created_at.desc()).all()
+    return questions
+
+@app.post(f"{BASE_API_PATH}/questions", response_model=QuestionOut)
+async def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
+    # In a real application, get the user_id from the logged-in user
+    db_question = Question(question_text=question.question_text, user_id=1) # Assuming user_id 1 for now
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
+    return db_question
+
+@app.get(f"{BASE_API_PATH}/users/{{user_id}}/questions", response_model=List[QuestionOut])
+async def get_user_questions(user_id: int, db: Session = Depends(get_db)):
+    questions = db.query(Question).filter(Question.user_id == user_id).order_by(Question.created_at.desc()).all()
+    return questions
+
+@app.post(f"{BASE_API_PATH}/questions/{{question_id}}/like")
+async def like_question(question_id: int, db: Session = Depends(get_db)):
+    db_question = db.query(Question).filter(Question.id == question_id).first()
+    if db_question:
+        db_question.likes += 1
+        db.commit()
+        db.refresh(db_question)
+        return {"message": f"Question {question_id} liked!"}
+    else:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+# --- Existing API Endpoints (No Changes Needed for Q&A) ---
 @app.get(f"{BASE_API_PATH}/career_fairs")
 async def get_career_fairs(db: Session = Depends(get_db)):
-    career_fairs = db.query(CareerFair).filter(CareerFair.date >= date.today()).order_by(CareerFair.date).all()
+    career_fairs = db.query(CareerFair).all()
     return career_fairs
 
 @app.get(f"{BASE_API_PATH}/internships")
@@ -184,9 +202,30 @@ async def get_user(username: str, db: Session = Depends(get_db)):
         "alumni_gems": user.alumni_gems
     }
 
+# --- Database Initialization ---
+async def initialize_database():
+    db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')
+    schema_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schema.sql')
+    conn = None
+    try:
+        print(f"Initializing database from schema: {schema_file}")
+        conn = sqlite3.connect(db_file)
+        cursor = conn.cursor()
+        with open(schema_file, 'r') as f:
+            sql_script = f.read()
+            cursor.executescript(sql_script)
+        conn.commit()
+        print("Database initialized successfully from schema.")
+    except sqlite3.Error as e:
+        print(f"Error initializing database from schema: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+# --- Main Execution ---
 async def main():
     await initialize_database()
-    uvicorn.run("exp:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("explore.backend-exp.exp:app", host="127.0.0.1", port=8000, reload=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
