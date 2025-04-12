@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-nav {
+            background: #2f4f4f;
+            padding: 25px 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 26px;
+        }
+
+        .top-nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 18px 25px;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .top-nav a i {
+            font-size: 30px;
+            margin-right: 8px;
+        }
+
+        .top-nav a:hover {
+            background-color: #486363;
+        }
+
+        .profile-container {
+            background-color: #fff;
+            width: 100%;
+            max-width: 950px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 60px;
+            margin: 60px auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-header {
+            text-align: center;
+            padding-bottom: 60px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+
+        .profile-pic-icon {
+            font-size: 180px;
+            color: #0077b5;
+            margin-bottom: 30px;
+        }
+
+        .profile-name {
+            font-size: 40px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            margin-bottom: 15px;
+        }
+
+        .profile-title {
+            font-size: 28px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .profile-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 35px;
+            padding: 60px 0;
+            border-bottom: 3px solid #e0e0e0;
+            font-size: 22px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-item i {
+            font-size: 45px;
+            color: #0077b5;
+            margin-bottom: 15px;
+        }
+
+        .info-item strong {
+            display: block;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            margin-bottom: 15px;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #333;
+        }
+
+        .profile-actions {
+            text-align: center;
+            padding: 60px 0;
+            border-bottom: 3px solid #e0e0e0;
+        }
+
+        .profile-actions button {
+            background-color: #0077b5;
+            color: white;
+            padding: 30px 60px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 26px;
+            width: 80%;
+        }
+
+        .achievements-section {
+            padding-top: 60px;
+            font-size: 22px;
+        }
+
+        .achievements-section h3 {
+            font-size: 32px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .achievement-item {
+            padding: 30px;
+            border-bottom: 3px solid #e0e0e0;
+            color: #333;
+        }
+
+        .time-machine {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            font-size: 22px;
+        }
+
+        .time-machine .time-item {
+            padding: 15px 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .time-machine .active {
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 950px) {
+            .profile-actions button {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="Home Page.html"><i class="fas fa-home"></i></a>
+        <a href="Explore Page.html"><i class="fas fa-compass"></i></a>
+        <a href="Notification page.html"><i class="fas fa-bell"></i></a>
+        <a href="Help Page.html"><i class="fas fa-question-circle"></i></a>
+        <a href="Profile Page.html"><i class="fas fa-user"></i></a>
+        <a href="Login Page.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <i class="fas fa-user profile-pic-icon"></i>
+            <h2 class="profile-name" id="profile-name">Loading...</h2>
+            <p class="profile-title" id="profile-title">Loading...</p>
+        </div>
+
+        <div class="profile-info">
+            <div class="info-item">
+                <i class="fas fa-trophy"></i> <strong>Rank</strong>
+                <p id="profile-rank">Loading...</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-gem"></i> <strong>Almagems</strong>
+                <p id="profile-almagems">Loading...</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-shield-alt"></i> <strong>Badges</strong>
+                <p id="profile-badges">Loading...</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-puzzle-piece"></i> <strong>Solved</strong>
+                <p id="profile-solved">Loading...</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-users"></i> <strong>Links</strong>
+                <p id="profile-links">Loading...</p>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <button id="edit-profile-button">Edit Profile</button>
+            <a href="connections.html"><button>Connections</button></a>
+        </div>
+
+        <div class="achievements-section">
+            <h3>Achievements</h3>
+            <div class="achievement-item" id="achievements">Loading...</div>
+        </div>
+    </div>
+    <script src="profile.js"></script>
+</body>
+</html>

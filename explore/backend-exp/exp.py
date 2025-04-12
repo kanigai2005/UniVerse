@@ -1,13 +1,14 @@
 # exp.py
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
-from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey, desc
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Request
+from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey, desc, Table
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Dict, Optional
 from datetime import date, datetime
 from pydantic import BaseModel
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import os
 import asyncio
 import uvicorn
@@ -49,6 +50,13 @@ class User(Base):
     milestones = Column(Text)
     advice = Column(Text)
     likes = Column(Integer, default=0)
+
+user_connections = Table(
+    "user_connections",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("connected_user_id", Integer, ForeignKey("users.id")),
+)
 
 class CareerFair(Base):
     __tablename__ = "career_fairs"
@@ -150,6 +158,8 @@ class ChatContactOut(BaseModel):
     class Config:
         from_attributes = True
 
+# Removed UserProfile Pydantic Model
+
 # --- Frontend Serving ---
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
 explore_html_path = os.path.join(frontend_dir, "explore.html")
@@ -162,6 +172,7 @@ leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
 alumni_roadmap_html_path = os.path.join(frontend_dir, "alumni-roadmaps.html")
 chat_html_path = os.path.join(frontend_dir, "chat.html")
 static_dir = os.path.join(frontend_dir, "static")
+templates = Jinja2Templates(directory=frontend_dir)
 
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -205,6 +216,14 @@ async def serve_alumni_roadmap_html():
 @app.get("/chat.html")
 async def serve_chat_html():
     return FileResponse(chat_html_path)
+
+@app.get("/profile.html", response_class=HTMLResponse)
+async def serve_profile(request: Request):
+    return templates.TemplateResponse("profile.html", {"request": request})
+
+@app.get("/connections.html", response_class=HTMLResponse)
+async def serve_connections(request: Request):
+    return templates.TemplateResponse("connections.html", {"request": request})
 
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
@@ -267,18 +286,12 @@ async def get_leaderboard(db: Session = Depends(get_db)):
         for user in users
     ]
 
-@app.get(f"{BASE_API_PATH}/user/{{username}}")
+@app.get(f"{BASE_API_PATH}/user/{{username}}", response_model=User)
 async def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {
-        "name": user.name,
-        "email": user.email,
-        "activity_score": user.activity_score,
-        "achievements": user.achievements.split(",") if user.achievements else [],
-        "alumni_gems": user.alumni_gems
-    }
+    return user
 
 @app.get(f"{BASE_API_PATH}/alumni/top-liked", response_model=Dict[str, List[AlumniResponse]])
 async def get_top_liked_alumni(db: Session = Depends(get_db)):
@@ -319,8 +332,6 @@ async def get_chat_history(contact_id: int, db: Session = Depends(get_db)):
     messages = db.query(ChatMessage).filter(ChatMessage.contact_id == contact_id).order_by(ChatMessage.timestamp).all()
     return messages
 
-# ... (other imports and code) ...
-
 @app.post(f"{BASE_API_PATH}/send-message", response_model=ChatMessageOut)
 async def send_message(message: ChatMessageCreate, db: Session = Depends(get_db)):
     try:
@@ -331,8 +342,6 @@ async def send_message(message: ChatMessageCreate, db: Session = Depends(get_db)
         return db_message
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error sending message: {e}")
-    
-# ... (other imports and code) ...
 
 @app.post(f"{BASE_API_PATH}/upload-file")
 async def upload_file(
@@ -359,7 +368,7 @@ async def upload_file(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.get("/uploads/{file_path:path}")
 async def get_uploaded_file(file_path: str):
     full_path = os.path.join("uploads", file_path)
@@ -367,6 +376,53 @@ async def get_uploaded_file(file_path: str):
         return FileResponse(full_path)
     else:
         raise HTTPException(status_code=404, detail="File not found")
+
+# --- Profile and Connections API Endpoints ---
+
+@app.get(f"{BASE_API_PATH}/users/{{username}}", response_model=User)
+async def get_user_profile(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@app.get(f"{BASE_API_PATH}/users/{{username}}/connections", response_model=List[User])
+async def get_user_connections(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    connections = db.query(User).join(user_connections, (user_connections.c.connected_user_id == User.id)).filter(user_connections.c.user_id == user.id).all()
+    return connections
+
+@app.get(f"{BASE_API_PATH}/users/{{username}}/suggestions", response_model=List[User])
+async def get_user_suggestions(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    suggestions = db.query(User).filter(User.id != user.id).limit(10).all() # Example: Get 10 suggestions
+    return suggestions
+
+@app.post(f"{BASE_API_PATH}/users/{{username}}/follow/{{suggestion_username}}")
+async def follow_user(username: str, suggestion_username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    suggestion_user = db.query(User).filter(User.name == suggestion_username).first()
+    if not user or not suggestion_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.connections.append(suggestion_user)
+    db.commit()
+    return {"message": f"Followed {suggestion_username}"}
+
+@app.post(f"{BASE_API_PATH}/users/{{username}}/edit")
+async def edit_user_profile(username: str, request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    user = db.query(User).filter(User.name == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    for field, value in form_data.items():
+        if hasattr(user, field):
+            setattr(user, field, value)
+    db.commit()
+    return {"message": "Profile updated successfully"}
 
 # --- Database Initialization ---
 async def initialize_database():

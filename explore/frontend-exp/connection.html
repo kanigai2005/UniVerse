@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-nav {
+            background: #2f4f4f;
+            padding: 25px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 26px;
+        }
+
+        .top-nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 18px 25px;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .top-nav a i {
+            font-size: 30px;
+            margin-right: 8px;
+        }
+
+        .top-nav a:hover {
+            background-color: #486363;
+        }
+
+        .connections-container {
+            background-color: #fff;
+            width: 100%;
+            max-width: 950px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 60px;
+            margin: 60px auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .connections-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            color: #333;
+        }
+
+        #connections-list, #suggestions-list {
+            padding: 30px;
+            border-bottom: 3px solid #e0e0e0;
+            color: #333;
+        }
+
+        #connections-list div, #suggestions-list div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        #connections-list button, #suggestions-list button {
+            background-color: #0077b5;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        #connections-list button:hover, #suggestions-list button:hover {
+            background-color: #005582;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="profile.html"><i class="fas fa-arrow-left"></i></a>
+        <span>Connections</span>
+    </div>
+
+    <div class="connections-container">
+        <h2>My Connections</h2>
+        <div id="connections-list">Loading...</div>
+
+        <h2>Suggestions</h2>
+        <div id="suggestions-list">Loading...</div>
+    </div>
+
+    <script src="static/connection.js"></script>
+</body>
+</html>
