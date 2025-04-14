@@ -121,6 +121,27 @@ class AlumniResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    activity_score: int
+    achievements: str
+    alumni_gems: int
+    department: str
+    profession: str
+    alma_mater: str
+    interviews: str
+    internships: str
+    startups: str
+    current_company: str
+    milestones: str
+    advice: str
+    likes: int
+
+    class Config:
+        from_attributes = True
+
 # --- Pydantic Models for Request/Response ---
 class QuestionCreate(BaseModel):
     question_text: str
@@ -158,8 +179,6 @@ class ChatContactOut(BaseModel):
     class Config:
         from_attributes = True
 
-# Removed UserProfile Pydantic Model
-
 # --- Frontend Serving ---
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
 explore_html_path = os.path.join(frontend_dir, "explore.html")
@@ -171,6 +190,7 @@ leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
 leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
 alumni_roadmap_html_path = os.path.join(frontend_dir, "alumni-roadmaps.html")
 chat_html_path = os.path.join(frontend_dir, "chat.html")
+connections_html_path = os.path.join(frontend_dir, "connections.html")  # Add connections.html path
 static_dir = os.path.join(frontend_dir, "static")
 templates = Jinja2Templates(directory=frontend_dir)
 
@@ -221,9 +241,9 @@ async def serve_chat_html():
 async def serve_profile(request: Request):
     return templates.TemplateResponse("profile.html", {"request": request})
 
-@app.get("/connections.html", response_class=HTMLResponse)
-async def serve_connections(request: Request):
-    return templates.TemplateResponse("connections.html", {"request": request})
+@app.get("/connections.html", response_class=FileResponse)  # Serve connections.html
+async def serve_connections():
+    return FileResponse(connections_html_path)
 
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
@@ -286,7 +306,7 @@ async def get_leaderboard(db: Session = Depends(get_db)):
         for user in users
     ]
 
-@app.get(f"{BASE_API_PATH}/user/{{username}}", response_model=User)
+@app.get(f"{BASE_API_PATH}/user/{{username}}", response_model=UserResponse)
 async def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
@@ -379,14 +399,14 @@ async def get_uploaded_file(file_path: str):
 
 # --- Profile and Connections API Endpoints ---
 
-@app.get(f"{BASE_API_PATH}/users/{{username}}", response_model=User)
+@app.get(f"{BASE_API_PATH}/users/{{username}}", response_model=UserResponse)
 async def get_user_profile(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@app.get(f"{BASE_API_PATH}/users/{{username}}/connections", response_model=List[User])
+@app.get(f"{BASE_API_PATH}/users/{{username}}/connections", response_model=List[UserResponse])
 async def get_user_connections(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
@@ -394,7 +414,7 @@ async def get_user_connections(username: str, db: Session = Depends(get_db)):
     connections = db.query(User).join(user_connections, (user_connections.c.connected_user_id == User.id)).filter(user_connections.c.user_id == user.id).all()
     return connections
 
-@app.get(f"{BASE_API_PATH}/users/{{username}}/suggestions", response_model=List[User])
+@app.get(f"{BASE_API_PATH}/users/{{username}}/suggestions", response_model=List[UserResponse])
 async def get_user_suggestions(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:

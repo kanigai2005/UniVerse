@@ -13,12 +13,30 @@
             text-align: center;
         }
 
-        header {
-            background: #555555;
-            color: white;
-            padding: 1em;
+        .back-icon {
+            font-size: 40px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-right: 10px; /* Add space between icon and heading */
         }
 
+        .header-container {
+            display: flex;
+            align-items: center;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            justify-content: flex-start; /* Align items to the left */
+        }
+
+        .header-container h1 {
+        flex-grow: 1; /* Allow heading to take up remaining space */
+        text-align: center; /* Center the heading text */
+        margin: 0; /* Remove default margins */
+    }
         h1, h2 {
             margin-bottom: 10px;
         }
@@ -164,7 +182,8 @@
 </head>
 <body>
 
-<header>
+<header class="header-container">
+    <a href="explore.html" class="back-icon">⬅️</a>
     <h1>Internship Listings</h1>
 </header>
 

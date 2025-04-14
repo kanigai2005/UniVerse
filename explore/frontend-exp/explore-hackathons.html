@@ -12,15 +12,35 @@
             background-color: white;
             color: #333;
         }
-
-        header {
-            background-color: #050897;
+        .header-container {
+            display: flex;
+            align-items: center;
+            background-color: #007bff;
             color: white;
-            padding: 15px;
+            padding: 10px;
+            justify-content: flex-start; /* Align items to the left */
+        }
+        .header-title {
+            margin: 0;
+            flex-grow: 1;
             text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            font-family: 'Trebuchet MS', sans-serif;
+        }
+
+        .back-icon {
+            font-size: 40px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-right: 10px; /* Add space between icon and heading */
+        }
+
+        .header-container header {
+            flex-grow: 1; /* Allow heading to take up remaining space */
+            text-align: center; /* Center the heading text */
+            margin: 0; 
+            font-size:40px
         }
 
         .container {
@@ -111,7 +131,10 @@
     </style>
 </head>
 <body>
-    <header>Explore Hackathons</header>
+    <div class="header-container">
+        <a href="explore.html" class="back-icon">⬅️</a>
+        <header>Explore Hackathons</header>
+    </div>
     <div class="container">
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Search Hackathons...">
@@ -119,7 +142,7 @@
         </div>
 
         <ul id="hackathons-list">
-            </ul>
+        </ul>
     </div>
     <div id="popup-description"></div>
     <script src="static/explore-hackathons.js"></script>

@@ -13,10 +13,22 @@
             text-align: center;
         }
 
-        header {
-            background: #555555;
+        back-icon {
+            font-size: 40px; /* Adjust icon size if needed */
+            color: black; /* Icon color */
+            text-decoration: none; /* Remove underline */
+            cursor: pointer; /* Show pointer cursor on hover */
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align */
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            background-color: #007bff;
             color: white;
-            padding: 1em;
+            padding: 10px;
+            justify-content: space-between;
         }
 
         .back-icon {
@@ -138,9 +150,10 @@
 </head>
 <body>
 
-<header>
-    <h1>Internship Q&A</h1>
-</header>
+    <div class="header-container">
+        <a href="explore.html" class="back-icon">⬅️</a>
+        <h1 class="header-title">Expert Q&A</h1>
+    </div>
 
 <main>
     <section id="ask-question">

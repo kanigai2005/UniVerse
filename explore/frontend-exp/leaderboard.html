@@ -13,14 +13,34 @@
             text-align: center;
         }
 
-        header {
-            background: #555555;
-            color: white;
-            padding: 1em;
+        .back-icon {
+            font-size: 40px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-right: 10px; /* Add space between icon and heading */
         }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            justify-content: flex-start; /* Align items to the left */
+        }
+
+        .header-container h1 {
+        flex-grow: 1; /* Allow heading to take up remaining space */
+        text-align: center; /* Center the heading text */
+        margin: 0; /* Remove default margins */
+    }
 
         h1, h2 {
             margin-bottom: 10px;
+            margin-top: 0; /* Remove default top margin */
         }
 
         main {
@@ -53,14 +73,14 @@
         }
 
         .view-profile-btn {
-            background-color: #007bff; /* Example button color */
+            background-color: #007bff;
             color: white;
             border: none;
             padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
-            text-decoration: none; /* Remove default link styling if any */
-            font-size: inherit; /* Inherit font size from the table */
+            text-decoration: none;
+            font-size: inherit;
         }
 
         .view-profile-btn:hover {
@@ -85,7 +105,8 @@
 </head>
 <body>
 
-    <header>
+    <header class="header-container">
+        <a href="explore.html" class="back-icon">⬅️</a>
         <h1>Leaderboard & Recognition</h1>
     </header>
 
@@ -104,20 +125,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                </tbody>
             </table>
         </section>
 
         <section class="section" id="job-recognition">
             <h2>🎉 Job Referral Recognition</h2>
             <ul class="list" id="job-referral-list">
-                </ul>
+            </ul>
         </section>
 
         <section class="section" id="badges">
             <h2>🎖 Contributor Badges</h2>
             <div class="badge-container" id="badge-container">
-                </div>
+            </div>
         </section>
     </main>
 
