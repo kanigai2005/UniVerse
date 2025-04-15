@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💡 Daily Spark - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Your existing CSS styles here */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+
+        :root {
+            --top-nav-bg: #2f4f4f;
+            --top-nav-text: #e0e0e0;
+            --top-nav-hover-bg: #486363;
+            --side-panel-bg: #34495e;
+            --side-panel-text: #ecf0f1;
+            --side-panel-hover-bg: #2c3e50;
+            --main-bg: #e6e1e1;
+            --text-primary: #333;
+            --link-primary: #0a66c2;
+            --card-bg: white;
+            --card-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            --card-hover-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            --footer-bg: #2f4f4f;
+            --footer-text: #e0e0e0;
+            --cloud-bg: #e0f7fa;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 15px;
+            padding-top: 4rem;
+            padding-bottom: 3rem;
+        }
+
+        .top-nav {
+            background-color: var(--top-nav-bg);
+            padding: 0.8rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .top-nav a {
+            color: var(--top-nav-text);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .top-nav a:hover {
+            background-color: var(--top-nav-hover-bg);
+            transform: scale(1.03);
+        }
+
+        header {
+            background: none;
+            color: var(--top-nav-text);
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header h1 {
+            color: var(--link-primary);
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--text-primary);
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        #todays-question {
+            background-color: var(--cloud-bg);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            position: relative;
+        }
+
+        #todays-question h2 {
+            color: var(--link-primary);
+            text-align: center;
+        }
+
+        #current-question {
+            margin-top: 10px;
+        }
+
+        #answer-submission-panel {
+            background-color: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: var(--card-shadow);
+        }
+
+        #answer-submission-panel h2 {
+            color: var(--link-primary);
+            text-align: left;
+        }
+
+        #past-questions h2 {
+            color: var(--link-primary);
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: calc(100% - 12px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            min-height: 80px;
+            width: 90%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        button {
+            background-color: var(--link-primary);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #past-questions {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .past-question-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .past-question-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .past-question-text {
+            margin-bottom: 10px;
+        }
+
+        .past-answers-container {
+            margin-top: 10px;
+            padding-left: 15px;
+            border-left: 2px solid #ccc;
+        }
+
+        .past-answer-item {
+            background-color: #e9ecef;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vote-buttons button {
+            background-color: transparent;
+            border: none;
+            padding: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-left: 5px;
+            color: #6c757d;
+        }
+
+        .vote-buttons button:hover {
+            color: #28a745;
+        }
+
+        .vote-buttons button:last-child:hover {
+            color: #dc3545;
+        }
+
+        .vote-count {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin: 0 5px;
+        }
+
+        .footer {
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
+            text-align: center;
+            padding: 0.9rem 0;
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        body {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        #todays-question, #answer-submission-panel, #past-questions {
+            width: 95%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="#"><i class="fas fa-home"></i></a>
+        <a href="#"><i class="fas fa-compass"></i></a>
+        <a href="#"><i class="fas fa-bell"></i></a>
+        <a href="#"><i class="fas fa-question-circle"></i></a>
+        <a href="#"><i class="fas fa-user"></i></a>
+        <a href="#" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+    </nav>
+    <header>
+        <h1> 💡 Daily Spark</h1>
+        <p>Share interview experiences and help each other prepare.</p>
+    </header>
+
+    <section id="todays-question">
+        <h2>Today's Question</h2>
+        <div id="current-question">
+            </div>
+    </section>
+
+    <section id="answer-submission-panel">
+        <h2>Submit Your Answer/Question</h2>
+        <form id="submit-answer-form">
+            <label for="answer-text">Your Answer/Question:</label><br>
+            <textarea id="answer-text" name="answer-text" rows="5" required></textarea><br><br>
+            <button type="submit">Submit</button>
+        </form>
+    </section>
+
+    <section id="past-questions">
+        <h2>Top 5 Liked Questions</h2>
+        <div id="past-question-list">
+            </div>
+    </section>
+
+    <footer class="footer">
+        &copy; 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <script src="static/dailyspark.js">
+        </script>
+</body>
+</html>

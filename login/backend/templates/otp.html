@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - OTP Verification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Trebuchet MS", sans-serif;
+            background-color: whitesmoke;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .otp-verification-box {
+            background: #3f1647;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            width: 350px;
+        }
+
+        .logo {
+            width: 60px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 35px;
+            margin-top: 0%;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        #otp-inputs {
+            display: flex; /* Make the input boxes display in a row */
+            justify-content: center; /* Center the input boxes horizontally */
+            margin-bottom: 15px;
+        }
+
+        #otp-inputs input[type="text"] {
+            width: 50px; /* Adjust width as needed */
+            padding: 10px;
+            margin: 0 5px; /* Add some horizontal margin between boxes */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .verify-btn {
+            width: 65%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: "Trebuchet MS", sans-serif;
+            cursor: pointer;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #ff0080, #ff66b2);
+            color: white;
+        }
+
+        .resend-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        a {
+            color: #ff66b2;
+            text-decoration: none;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="otp-verification-box">
+            <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
+            <h2>Verify OTP</h2>
+            <p>Please enter the One-Time Password sent to your email.</p>
+            <form id="otp-form">
+                <div id="otp-inputs">
+                    <input type="text" id="otp1" maxlength="1" required>
+                    <input type="text" id="otp2" maxlength="1" required>
+                    <input type="text" id="otp3" maxlength="1" required>
+                    <input type="text" id="otp4" maxlength="1" required>
+                </div>
+                <button type="submit" class="verify-btn">Verify OTP</button>
+            </form>
+            <p class="resend-link">Didn't receive the OTP? <a href="#">Resend OTP</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('otp-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let otp1 = document.getElementById('otp1').value;
+            let otp2 = document.getElementById('otp2').value;
+            let otp3 = document.getElementById('otp3').value;
+            let otp4 = document.getElementById('otp4').value;
+            let enteredOTP = otp1 + otp2 + otp3 + otp4;
+
+            // In a real application, you would send this OTP to the server
+            // to verify it against the sent OTP.
+            console.log("Entered OTP:", enteredOTP);
+            alert("OTP Verified Successfully!");
+            // After successful verification, you would typically redirect the user
+            // to the next step (e.g., set new password page after forgot password,
+            // or dashboard after registration).
+        });
+
+        // Basic script to move focus to the next input field on entering a digit
+        const otpInputs = document.querySelectorAll('#otp-inputs input');
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length === 1 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', function(event) {
+                if (event.key === "Backspace" && this.value.length === 0 && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+        });
+
+        // For the "Resend OTP" link, you would typically have an event listener
+        // that triggers an API call to resend the OTP to the user's email.
+        document.querySelector('.resend-link a').addEventListener('click', function(event) {
+            event.preventDefault();
+            alert("OTP has been resent to your email.");
+            // In a real application, you would make an AJAX request here.
+        });
+    </script>
+</body>
+</html>

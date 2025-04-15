@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Reset Password</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Trebuchet MS", sans-serif;
+            background-color: whitesmoke;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .reset-password-box {
+            background: #3f1647;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            width: 350px;
+        }
+
+        .logo {
+            width: 60px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 35px;
+            margin-top: 0%;
+        }
+
+        input {
+            width: 85%;
+            padding: 10px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .reset-btn {
+            width: 65%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: "Trebuchet MS", sans-serif;
+            cursor: pointer;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #ff0080, #ff66b2);
+            color: white;
+        }
+
+        p {
+            margin-top: 15px;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+
+        a {
+            color: #ff66b2;
+            text-decoration: none;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="reset-password-box">
+            <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
+            <h2>Reset Password</h2>
+            <p>Enter your new password and confirm it.</p>
+            <form id="reset-password-form">
+                <input type="password" id="new-password" placeholder="New Password" required>
+                <input type="password" id="confirm-new-password" placeholder="Confirm New Password" required>
+                <p class="error-message" id="password-match-error" style="display:none;">Passwords do not match!</p>
+                <button type="submit" class="reset-btn">Reset Password</button>
+            </form>
+            <p>Remember your password? <a href="Login Page.html">Login here</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('reset-password-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let newPassword = document.getElementById('new-password').value;
+            let confirmNewPassword = document.getElementById('confirm-new-password').value;
+            let passwordMatchError = document.getElementById('password-match-error');
+
+            if (newPassword !== confirmNewPassword) {
+                passwordMatchError.style.display = 'block';
+                return;
+            } else {
+                passwordMatchError.style.display = 'none';
+            }
+
+            // In a real application, you would send the new password
+            // and the reset token (likely obtained from the URL) to the server
+            // to update the user's password.
+            console.log("New Password:", newPassword);
+            alert("Password reset successful!");
+            // After successful password reset, you would typically redirect the user
+            // to the login page.
+            window.location.href = "Login Page.html";
+        });
+
+        // You might want to add JavaScript to handle password strength validation here.
+    </script>
+</body>
+</html>

@@ -1,52 +1,109 @@
-// profile.js
-document.addEventListener('DOMContentLoaded', () => {
-    const profileName = document.getElementById('profile-name');
-    const profileTitle = document.getElementById('profile-title');
-    const profileRank = document.getElementById('profile-rank');
-    const profileAlmagems = document.getElementById('profile-almagems');
-    const profileBadges = document.getElementById('profile-badges');
-    const profileSolved = document.getElementById('profile-solved');
-    const profileLinks = document.getElementById('profile-links');
-    const achievements = document.getElementById('achievements');
-    const editProfileButton = document.getElementById('edit-profile-button');
+// Get the username from localStorage
+const loggedInUserName = localStorage.getItem('username');
+const profileNameElement = document.getElementById('profile-name');
+const profileTitleElement = document.getElementById('profile-title');
+const profileRankElement = document.getElementById('profile-rank');
+const profileAlmagemsElement = document.getElementById('profile-almagems');
+const profileBadgesElement = document.getElementById('profile-badges');
+const profileSolvedElement = document.getElementById('profile-solved');
+const profileLinksElement = document.getElementById('profile-links');
+const editProfileButton = document.getElementById('edit-profile-button');
+const connectButton = document.getElementById('connect-button'); // Get the connect button
+const achievement1Element = document.getElementById('achievement-1');
+const achievement2Element = document.getElementById('achievement-2');
+const achievement3Element = document.getElementById('achievement-3');
 
-    const userName = localStorage.getItem('username'); // Get username from local storage
+// Function to fetch and display user data
+function fetchAndDisplayUserData(userName) {
+    fetch(`/api/users/${userName}`) //  Fetch user data
+        .then(response => response.json())
+        .then(user => {
+            if (user) {
+                profileNameElement.textContent = user.name;
+                profileTitleElement.textContent = user.profession ? `Alumni of ${user.alma_mater}, ${user.profession}` : `Alumni of ${user.alma_mater}`;
+                profileRankElement.textContent = `#${user.rank || 'N/A'}`;
+                profileAlmagemsElement.textContent = user.alumni_gems || 'N/A';
+                profileBadgesElement.textContent = user.badges || '0';
+                profileSolvedElement.textContent = user.solved || '0';
+                profileLinksElement.textContent = user.links || '0';
 
-    if (!userName) {
-        console.error('Username not found in local storage.');
-        alert('Please log in to view your profile.');
-        return; // Stop execution if username is not found
-    }
+                 //Dynamically set Achievements
+                const achievements = user.achievements || [];
+                achievement1Element.textContent = achievements.length > 0 ? achievements[0] : "No achievements available";
+                achievement2Element.textContent = achievements.length > 1 ? achievements[1] : "No achievements available";
+                achievement3Element.textContent = achievements.length > 2 ? achievements[2] : "No achievements available";
 
-    async function fetchUserProfile() {
-        try {
-            const response = await fetch(`/api/users/${userName}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            } else {
+                profileNameElement.textContent = 'User Not Found';
+                profileTitleElement.textContent = 'User Not Found';
+                // Clear other fields or set default values
+                profileRankElement.textContent = 'N/A';
+                profileAlmagemsElement.textContent = 'N/A';
+                profileBadgesElement.textContent = '0';
+                profileSolvedElement.textContent = '0';
+                profileLinksElement.textContent = '0';
+                achievement1Element.textContent = "No achievements available";
+                achievement2Element.textContent = "No achievements available";
+                achievement3Element.textContent = "No achievements available";
             }
-            const userData = await response.json();
+        })
+        .catch(error => {
+            console.error('Error fetching user data:', error);
+            profileNameElement.textContent = 'Error Loading Data';
+            profileTitleElement.textContent = 'Error Loading Data';
+            // Clear other fields or set default values
+            profileRankElement.textContent = 'N/A';
+            profileAlmagemsElement.textContent = 'N/A';
+            profileBadgesElement.textContent = '0';
+            profileSolvedElement.textContent = '0';
+            profileLinksElement.textContent = '0';
+            achievement1Element.textContent = "No achievements available";
+            achievement2Element.textContent = "No achievements available";
+            achievement3Element.textContent = "No achievements available";
+        });
+}
 
-            console.log("API Response:", userData);
+// Call the function to fetch and display data
+if (loggedInUserName) {
+     fetchAndDisplayUserData(loggedInUserName);
+} else {
+    profileNameElement.textContent = "Please Login";
+    profileTitleElement.textContent = "Please Login";
+}
 
-            if (userData) {
-                profileName.textContent = userData.name || 'N/A';
-                profileTitle.textContent = userData.profession ? `${userData.profession} of ${userData.alma_mater}` : 'N/A';
-                profileRank.textContent = userData.activity_score || 'N/A';
-                profileAlmagems.textContent = userData.alumni_gems || 'N/A';
-                profileBadges.textContent = userData.badges || 'N/A'; // Replace "5"
-                profileSolved.textContent = userData.solved || 'N/A'; // Replace "75"
-                profileLinks.textContent = userData.links || 'N/A'; // Replace "250"
-                achievements.textContent = userData.achievements || 'N/A';
+
+// Edit profile functionality (remains the same as before)
+editProfileButton.addEventListener('click', () => {
+    // Redirect to the edit profile page, passing the username as a query parameter
+    window.location.href = `/edit-profile.html?username=${loggedInUserName}`;
+});
+
+// Connect button functionality
+connectButton.addEventListener('click', () => {
+    if (loggedInUserName) {
+        // Implement the connection logic here.
+        alert(`Connecting with ${profileNameElement.textContent}! (Placeholder)`);
+        // You would typically send a request to your backend API to handle the connection.
+        fetch(`/api/users/${loggedInUserName}/connect`, { // Example API endpoint
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userToConnectWith: profileNameElement.textContent }), //send the name of the profile to connect with
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message); // Show success message
+            } else {
+                alert(data.message || 'Failed to connect.'); // Show error message
             }
-        } catch (error) {
-            console.error('Error fetching user profile:', error);
-            alert('Failed to load profile. Please try again.');
-        }
+        })
+        .catch(error => {
+            console.error('Error connecting:', error);
+            alert('An error occurred while connecting.');
+        });
+    } else {
+        alert('Please log in to connect with others.');
     }
-
-    fetchUserProfile();
-
-    editProfileButton.addEventListener('click', () => {
-        alert('Edit profile functionality to be implemented.');
-    });
 });

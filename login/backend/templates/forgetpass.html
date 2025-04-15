@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Forgot Password</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Trebuchet MS", sans-serif;
+            background-color: whitesmoke;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .forgot-password-box {
+            background: #3f1647;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            font-family: "Trebuchet MS", sans-serif;
+            color: white;
+            width: 350px;
+        }
+
+        .logo {
+            width: 60px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 35px;
+            margin-top: 0%;
+        }
+
+        input {
+            width: 85%;
+            padding: 10px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .reset-btn {
+            width: 65%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: "Trebuchet MS", sans-serif;
+            cursor: pointer;
+            margin-top: 10px;
+            background: linear-gradient(45deg, #ff0080, #ff66b2);
+            color: white;
+        }
+
+        p {
+            margin-top: 15px;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+
+        a {
+            color: #ff66b2;
+            text-decoration: none;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="forgot-password-box">
+            <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
+            <h2>Forgot Password ? </h2>
+            <form id="forgot-password-form">
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <button type="submit" class="reset-btn">Send Reset Link</button>
+            </form>
+            <p>Remember your password? <a href="Login Page.html">Login here</a></p>
+            <p>Don't have an account? <a href="Register Page.html">Sign up</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('forgot-password-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let email = document.getElementById('email').value;
+            // In a real application, you would send this email to the server
+            // to initiate the password reset process.
+            alert("A password reset link has been sent to: " + email);
+            // You might want to redirect the user to a confirmation page here.
+        });
+    </script>
+</body>
+</html>

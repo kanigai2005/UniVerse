@@ -1,7 +1,6 @@
-# exp.py
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Request
 from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey, desc, Table
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Dict, Optional
 from datetime import date, datetime
@@ -14,12 +13,18 @@ import asyncio
 import uvicorn
 import sqlite3
 import uuid
+from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
 # --- Database Setup ---
 DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')}"
-print(f"Database URL: {DATABASE_URL}")
+logger.info(f"Database URL: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -50,6 +55,11 @@ class User(Base):
     milestones = Column(Text)
     advice = Column(Text)
     likes = Column(Integer, default=0)
+    badges = Column(Text, nullable=True)
+    solved = Column(Integer, nullable=True)
+    links = Column(Text, nullable=True)
+
+    connections = relationship("User", secondary="user_connections", primaryjoin="User.id==user_connections.c.user_id", secondaryjoin="User.id==user_connections.c.connected_user_id")
 
 user_connections = Table(
     "user_connections",
@@ -105,6 +115,22 @@ class ChatMessage(Base):
     file_path = Column(String, nullable=True)  # Store file path
     timestamp = Column(DateTime, default=datetime.utcnow)
 
+class DailySparkQuestion(Base):
+    __tablename__ = "daily_spark_questions"
+    id = Column(Integer, primary_key=True, index=True)
+    company = Column(String)
+    role = Column(String)
+    question = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class DailySparkAnswer(Base):
+    __tablename__ = "daily_spark_answers"
+    id = Column(Integer, primary_key=True, index=True)
+    question_id = Column(Integer, ForeignKey("daily_spark_questions.id"))
+    user = Column(String)
+    text = Column(Text)
+    votes = Column(Integer, default=0)
+
 class AlumniResponse(BaseModel):
     id: int
     name: str
@@ -138,9 +164,34 @@ class UserResponse(BaseModel):
     milestones: str
     advice: str
     likes: int
+    badges: Optional[str] = None
+    solved: Optional[int] = None
+    links: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class DailySparkQuestionOut(BaseModel):
+    id: int
+    company: str
+    role: str
+    question: str
+    answers: List["DailySparkAnswerOut"]
+
+    class Config:
+        from_attributes = True
+
+class DailySparkAnswerOut(BaseModel):
+    id: int
+    user: str
+    text: str
+    votes: int
+
+    class Config:
+        from_attributes = True
+
+class DailySparkSubmit(BaseModel):
+    text: str
 
 # --- Pydantic Models for Request/Response ---
 class QuestionCreate(BaseModel):
@@ -180,7 +231,9 @@ class ChatContactOut(BaseModel):
         from_attributes = True
 
 # --- Frontend Serving ---
-frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend-exp")
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend-exp")
+home_html_path = os.path.join(frontend_dir, "home.html")
+daily_spark_html_path = os.path.join(frontend_dir, "dailyspark.html")
 explore_html_path = os.path.join(frontend_dir, "explore.html")
 career_fairs_html_path = os.path.join(frontend_dir, "career-fairs.html")
 expertqa_html_path = os.path.join(frontend_dir, "expertqa.html")
@@ -190,60 +243,77 @@ leader_profile_html_path = os.path.join(frontend_dir, "leader-profile.html")
 leaderboard_html_path = os.path.join(frontend_dir, "leaderboard.html")
 alumni_roadmap_html_path = os.path.join(frontend_dir, "alumni-roadmaps.html")
 chat_html_path = os.path.join(frontend_dir, "chat.html")
-connections_html_path = os.path.join(frontend_dir, "connections.html")  # Add connections.html path
+connections_html_path = os.path.join(frontend_dir, "connection.html")
+profile_html_path = os.path.join(frontend_dir, "profile.html")
 static_dir = os.path.join(frontend_dir, "static")
 templates = Jinja2Templates(directory=frontend_dir)
 
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+def serve_file(file_path: str):
+    logger.info(f"Serving file: {file_path}")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    else:
+        logger.error(f"File not found: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found")
+
 @app.get("/")
-async def serve_explore_html():
-    return FileResponse(explore_html_path)
+async def serve_home_html():
+    return serve_file(home_html_path)
+
+@app.get("/home.html", response_class=FileResponse)
+async def serve_home():
+    return serve_file(os.path.join(frontend_dir, "home.html"))
+
+@app.get("/dailyspark.html", response_class=FileResponse)
+async def serve_daily_spark():
+    return serve_file(os.path.join(frontend_dir, "dailyspark.html"))
 
 @app.get("/explore.html", response_class=FileResponse)
 async def serve_explore():
-    return FileResponse(os.path.join(frontend_dir, "explore.html"))
+    return serve_file(os.path.join(frontend_dir, "explore.html"))
 
 @app.get("/career-fairs.html")
 async def serve_career_fairs_html():
-    return FileResponse(career_fairs_html_path)
+    return serve_file(career_fairs_html_path)
 
 @app.get("/expertqa.html")
 async def serve_expertqa_html():
-    return FileResponse(expertqa_html_path)
+    return serve_file(expertqa_html_path)
 
 @app.get("/explore-hackathons.html")
 async def serve_explore_hackathon_html():
-    return FileResponse(explore_hackathon_html_path)
+    return serve_file(explore_hackathon_html_path)
 
 @app.get("/intership.html")
-async def serve_intership_html():
-    return FileResponse(internship_html_path)
+async def serve_internship_html():
+    return serve_file(internship_html_path)
 
 @app.get("/leader-profile.html")
 async def serve_leader_profile_html():
-    return FileResponse(leader_profile_html_path)
+    return serve_file(leader_profile_html_path)
 
 @app.get("/leaderboard.html")
 async def serve_leaderboard_html():
-    return FileResponse(leaderboard_html_path)
+    return serve_file(leaderboard_html_path)
 
 @app.get("/alumni-roadmaps.html")
 async def serve_alumni_roadmap_html():
-    return FileResponse(alumni_roadmap_html_path)
+    return serve_file(alumni_roadmap_html_path)
 
 @app.get("/chat.html")
 async def serve_chat_html():
-    return FileResponse(chat_html_path)
+    return serve_file(chat_html_path)
 
 @app.get("/profile.html", response_class=HTMLResponse)
 async def serve_profile(request: Request):
     return templates.TemplateResponse("profile.html", {"request": request})
 
-@app.get("/connections.html", response_class=FileResponse)  # Serve connections.html
+@app.get("/connection.html", response_class=FileResponse)
 async def serve_connections():
-    return FileResponse(connections_html_path)
+    return serve_file(connections_html_path)
 
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
@@ -380,11 +450,11 @@ async def upload_file(
         with open(file_path, "wb") as f:
             f.write(await file.read())
 
-        db_message = ChatMessage(contact_id=contact_id, file_path=unique_filename, sender='me') #store the file name only
+        db_message = ChatMessage(contact_id=contact_id, file_path=unique_filename, sender='me')
         db.add(db_message)
         db.commit()
         db.refresh(db_message)
-        return {"file_path": unique_filename} # return the file name only
+        return {"file_path": unique_filename}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -398,7 +468,6 @@ async def get_uploaded_file(file_path: str):
         raise HTTPException(status_code=404, detail="File not found")
 
 # --- Profile and Connections API Endpoints ---
-
 @app.get(f"{BASE_API_PATH}/users/{{username}}", response_model=UserResponse)
 async def get_user_profile(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
@@ -419,7 +488,7 @@ async def get_user_suggestions(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    suggestions = db.query(User).filter(User.id != user.id).limit(10).all() # Example: Get 10 suggestions
+    suggestions = db.query(User).filter(User.id != user.id).limit(10).all()
     return suggestions
 
 @app.post(f"{BASE_API_PATH}/users/{{username}}/follow/{{suggestion_username}}")
@@ -444,30 +513,103 @@ async def edit_user_profile(username: str, request: Request, db: Session = Depen
     db.commit()
     return {"message": "Profile updated successfully"}
 
+# --- Daily Spark API Endpoints ---
+@app.get(f"{BASE_API_PATH}/daily-spark/today", response_model=DailySparkQuestionOut)
+async def get_todays_question(db: Session = Depends(get_db)):
+    today_question = db.query(DailySparkQuestion).order_by(DailySparkQuestion.created_at.desc()).first()
+    if not today_question:
+        raise HTTPException(status_code=404, detail="Today's question not found")
+    answers = db.query(DailySparkAnswer).filter(DailySparkAnswer.question_id == today_question.id).all()
+    return DailySparkQuestionOut(
+        id=today_question.id,
+        company=today_question.company,
+        role=today_question.role,
+        question=today_question.question,
+        answers=answers
+    )
+
+@app.get(f"{BASE_API_PATH}/daily-spark/top-liked", response_model=List[DailySparkQuestionOut])
+async def get_top_liked_questions(db: Session = Depends(get_db)):
+    questions = db.query(DailySparkQuestion).join(DailySparkAnswer, DailySparkAnswer.question_id == DailySparkQuestion.id, isouter=True).group_by(DailySparkQuestion.id).order_by(desc(func.sum(DailySparkAnswer.votes))).limit(5).all()
+    result = []
+    for question in questions:
+        answers = db.query(DailySparkAnswer).filter(DailySparkAnswer.question_id == question.id).all()
+        result.append(DailySparkQuestionOut(
+            id=question.id,
+            company=question.company,
+            role=question.role,
+            question=question.question,
+            answers=answers
+        ))
+    return result
+
+@app.post(f"{BASE_API_PATH}/daily-spark/submit")
+async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depends(get_db)):
+    if "question" in data.text.lower():
+        new_question = DailySparkQuestion(question=data.text)
+        db.add(new_question)
+    else:
+        today_question = db.query(DailySparkQuestion).order_by(DailySparkQuestion.created_at.desc()).first()
+        if not today_question:
+            raise HTTPException(status_code=404, detail="Today's question not found")
+        new_answer = DailySparkAnswer(question_id=today_question.id, text=data.text, user="Anonymous")
+        db.add(new_answer)
+    db.commit()
+    return {"message": "Submission successful"}
+
+@app.post(f"{BASE_API_PATH}/daily-spark/upvote/{{question_id}}/{{answer_id}}")
+async def upvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db)):
+    answer = db.query(DailySparkAnswer).filter(DailySparkAnswer.id == answer_id, DailySparkAnswer.question_id == question_id).first()
+    if not answer:
+        raise HTTPException(status_code=404, detail="Answer not found")
+    answer.votes += 1
+    db.commit()
+    return {"votes": answer.votes}
+
+@app.post(f"{BASE_API_PATH}/daily-spark/downvote/{{question_id}}/{{answer_id}}")
+async def downvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db)):
+    answer = db.query(DailySparkAnswer).filter(DailySparkAnswer.id == answer_id, DailySparkAnswer.question_id == question_id).first()
+    if not answer:
+        raise HTTPException(status_code=404, detail="Answer not found")
+    answer.votes -= 1
+    db.commit()
+    return {"votes": answer.votes}
+
 # --- Database Initialization ---
 async def initialize_database():
     db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')
     schema_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schema.sql')
     conn = None
     try:
-        print(f"Initializing database from schema: {schema_file}")
+        logger.info(f"Initializing database from schema: {schema_file}")
         conn = sqlite3.connect(db_file)
         cursor = conn.cursor()
         with open(schema_file, 'r') as f:
             sql_script = f.read()
             cursor.executescript(sql_script)
         conn.commit()
-        print("Database initialized successfully from schema.")
+        logger.info("Database initialized successfully from schema.")
     except sqlite3.Error as e:
-        print(f"Error initializing database from schema: {e}")
+        logger.error(f"Error initializing database from schema: {e}")
+    except FileNotFoundError:
+        logger.error(f"Schema file not found: {schema_file}")
     finally:
         if conn:
             conn.close()
 
+# --- CORS Middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # --- Main Execution ---
 async def main():
     await initialize_database()
-    uvicorn.run("explore.backend-exp.exp:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("exp:app", host="127.0.0.1", port=8000, reload=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
