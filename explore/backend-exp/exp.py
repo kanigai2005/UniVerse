@@ -8,6 +8,10 @@ from pydantic import BaseModel
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.declarative import declarative_base
 import os
 import asyncio
 import uvicorn
@@ -48,9 +52,9 @@ class User(Base):
     department = Column(String)
     profession = Column(String)
     alma_mater = Column(String)
-    interviews = Column(Text)
-    internships = Column(Text)
-    startups = Column(Text)
+    interviews = Column(Text, nullable=True)
+    internships = Column(Text, nullable=True)
+    startups = Column(Text, nullable=True)
     current_company = Column(String)
     milestones = Column(Text)
     advice = Column(Text)
@@ -92,6 +96,20 @@ class Hackathon(Base):
     date = Column(Date)
     location = Column(String)
     description = Column(Text)
+    theme = Column(String)  # Added theme
+    prize_pool = Column(String) #added prize pool
+
+class HackathonOut(BaseModel):
+    id: int
+    name: str
+    date: date
+    location: str
+    description: str
+    theme: Optional[str] = None
+    prize_pool: Optional[str] = None
+
+    class Config:
+        from_attributes = True  # Use this instead of `orm_mode` in Pydantic v2
 
 class Question(Base):
     __tablename__ = "questions"
@@ -110,9 +128,9 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
     contact_id = Column(Integer, ForeignKey("chat_contacts.id"))
-    sender = Column(String)  # 'me' or 'other'
+    sender = Column(String)    # 'me' or 'other'
     text = Column(String, nullable=True)
-    file_path = Column(String, nullable=True)  # Store file path
+    file_path = Column(String, nullable=True)    # Store file path
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 class DailySparkQuestion(Base):
@@ -131,18 +149,48 @@ class DailySparkAnswer(Base):
     text = Column(Text)
     votes = Column(Integer, default=0)
 
+class Job(Base):  # Added Job model
+    __tablename__ = "jobs"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    company = Column(String)
+    location = Column(String)
+    description = Column(Text)
+    salary = Column(String)
+    date_posted = Column(Date, default=date.today)
+    type = Column(String)
+    experience = Column(String)
+    imageUrl = Column(String, nullable=True)
+
+class SearchHistory(Base):
+    __tablename__ = "search_history"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, index=True)  # Store user ID as string
+    search_term = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class Feature(Base):
+    __tablename__ = "features"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    description = Column(String)
+    url = Column(String)
+    icon = Column(String)
+
+
 class AlumniResponse(BaseModel):
     id: int
     name: str
     profession: str
-    alma_mater: str
-    interviews: str
-    internships: str
-    startups: str
-    current_company: str
-    milestones: str
-    advice: str
+    alma_mater: Optional[str] = ""
+    interviews: Optional[str] = ""
+    internships: Optional[str] = ""
+    startups: Optional[str] = ""
+    current_company: Optional[str] = ""
+    milestones: Optional[str] = ""
+    advice: Optional[str] = ""
     department: str
+    likes: int
 
     class Config:
         from_attributes = True
@@ -190,8 +238,20 @@ class DailySparkAnswerOut(BaseModel):
     class Config:
         from_attributes = True
 
-class DailySparkSubmit(BaseModel):
-    text: str
+class JobOut(BaseModel): #added JobOut
+    id: int
+    title: str
+    company: str
+    location: str
+    description: str
+    salary: str
+    date_posted: date
+    type: str
+    experience: str
+    imageUrl: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 # --- Pydantic Models for Request/Response ---
 class QuestionCreate(BaseModel):
@@ -226,6 +286,44 @@ class ChatMessageOut(BaseModel):
 class ChatContactOut(BaseModel):
     id: int
     name: str
+
+    class Config:
+        from_attributes = True
+
+class DailySparkSubmit(BaseModel):
+    text: str
+
+class SearchResult(BaseModel):
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class SearchHistoryItem(BaseModel):
+    id: int
+    user_id: str
+    search_term: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class Event(BaseModel):
+    id: int
+    name: str
+    description: str
+    date: date
+    location: str
+
+    class Config:
+        from_attributes = True
+
+class FeatureOut(BaseModel):
+    id: int
+    name: str
+    description: str
+    url: str
+    icon: str
 
     class Config:
         from_attributes = True
@@ -383,15 +481,40 @@ async def get_user(username: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@app.get(f"{BASE_API_PATH}/alumni/top-liked", response_model=Dict[str, List[AlumniResponse]])
+
+
+@app.get("/api/alumni/top-liked", response_model=Dict[str, List[AlumniResponse]])
 async def get_top_liked_alumni(db: Session = Depends(get_db)):
-    alumni = db.query(User).filter(User.department.isnot(None)).order_by(desc(User.likes)).limit(5).all()
-    grouped_alumni = {}
-    for a in alumni:
-        if a.department not in grouped_alumni:
-            grouped_alumni[a.department] = []
-        grouped_alumni[a.department].append(a)
-    return grouped_alumni
+    """
+    Retrieves the top 5 liked alumni, grouped by department.  Handles cases where a department might have fewer than 5 alumni.
+    """
+    try:
+        # Query the top 5 liked alumni overall
+        top_alumni = db.query(User).order_by(desc(User.likes)).limit(5).all()
+        
+        # Group the alumni by department
+        grouped_alumni: Dict[str, List[AlumniResponse]] = {}
+        for alumni in top_alumni:
+            if alumni.department:  # Only process alumni with a department
+                if alumni.department not in grouped_alumni:
+                    grouped_alumni[alumni.department] = []
+                
+                #  Create an instance of AlumniResponse from the SQLAlchemy User object
+                alumni_response = AlumniResponse(
+                    id=alumni.id,
+                    name=alumni.name,
+                    profession=alumni.profession,
+                    department=alumni.department,
+                    likes=alumni.likes,
+                    # Populate other fields from the User model
+                )
+                grouped_alumni[alumni.department].append(alumni_response)
+        
+        return grouped_alumni
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @app.get(f"{BASE_API_PATH}/alumni/{{alumni_id}}", response_model=AlumniResponse)
 async def get_alumni_details(alumni_id: int, db: Session = Depends(get_db)):
@@ -575,11 +698,144 @@ async def downvote_answer(question_id: int, answer_id: int, db: Session = Depend
     db.commit()
     return {"votes": answer.votes}
 
+# --- New API Endpoints for Hackathons, Feed, and Jobs ---
+
+@app.get("/api/todays-feed", response_model=DailySparkQuestionOut)
+async def get_todays_question(db: Session = Depends(get_db)):
+    """
+    Retrieve today's Daily Spark question.
+    """
+    today_question = db.query(DailySparkQuestion).order_by(DailySparkQuestion.created_at.desc()).first()
+    if not today_question:
+        raise HTTPException(status_code=404, detail="Today's question not found")
+    answers = db.query(DailySparkAnswer).filter(DailySparkAnswer.question_id == today_question.id).all()
+    return DailySparkQuestionOut(
+        id=today_question.id,
+        company=today_question.company,
+        role=today_question.role,
+        question=today_question.question,
+        answers=answers
+    )
+
+
+@app.get(f"{BASE_API_PATH}/events", response_model=List[dict])
+async def get_todays_feed(db: Session = Depends(get_db)):
+    #  "Today's feed" is subjective.  Here's a basic approach:
+    #  1.  Recent Internships
+    #  2.  Recent Hackathons
+    #  3.  Recent Job Postings
+    #  Combine and sort by date.
+
+    internships = db.query(Internship).filter(Internship.start_date <= date.today()).order_by(desc(Internship.start_date)).limit(2).all()
+    hackathons = db.query(Hackathon).filter(Hackathon.date <= date.today()).order_by(desc(Hackathon.date)).limit(2).all()
+    jobs = db.query(Job).order_by(desc(Job.date_posted)).limit(2).all()
+
+    feed_items = [
+        {"type": "internship", "data": internship, "date": internship.start_date} for internship in internships
+    ] + [
+        {"type": "hackathon", "data": hackathon, "date": hackathon.date} for hackathon in hackathons
+    ] + [
+        {"type": "job", "data": job, "date": job.date_posted} for job in jobs
+    ]
+
+    feed_items.sort(key=lambda item: item["date"], reverse=True)  # Sort by date
+
+    # Convert to a list of dictionaries
+    feed_list = []
+    for item in feed_items:
+        item_dict = {"type": item["type"]}
+        if item["type"] == "internship":
+            item_dict["data"] = {
+                "id": item["data"].id,
+                "title": item["data"].title,
+                "company": item["data"].company,
+                "start_date": item["data"].start_date,
+                "end_date": item["data"].end_date,
+                "description": item["data"].description,
+            }
+        elif item["type"] == "hackathon":
+             item_dict["data"] = {
+                "id": item["data"].id,
+                "name": item["data"].name,
+                "date": item["data"].date,
+                "location": item["data"].location,
+                "description": item["data"].description,
+                "theme": item["data"].theme,
+                "prize_pool": item["data"].prize_pool
+            }
+        elif item["type"] == "job":
+            item_dict["data"] = {
+                "id": item["data"].id,
+                "title": item["data"].title,
+                "company": item["data"].company,
+                "location": item["data"].location,
+                "description": item["data"].description,
+                "salary": item["data"].salary,
+                "date_posted": item["data"].date_posted,
+                "type": item["data"].type,
+                "experience": item["data"].experience,
+                "imageUrl": item["data"].imageUrl
+            }
+        feed_list.append(item_dict)
+    return feed_list
+
+@app.get("/api/features", response_model=List[FeatureOut])
+async def get_features(db: Session = Depends(get_db)):
+    """
+    Retrieve all features.
+    """
+    features = db.query(Feature).all()
+    return features
+
+@app.get("/api/search", response_model=List[SearchResult])
+async def search(term: str, db: Session = Depends(get_db)):
+    """
+    Search for resources (users, events, jobs, etc.) based on a term.
+    """
+    #  Implement your search logic here.  This is a placeholder.
+    #  You'll need to query your database tables (users, CareerFair, Hackathon, Job)
+    #  and combine the results.  For simplicity, this example only searches users.
+
+    users = db.query(User).filter(User.name.ilike(f"%{term}%")).all()
+    career_fairs = db.query(CareerFair).filter(CareerFair.name.ilike(f"%{term}%")).all()
+    hackathons = db.query(Hackathon).filter(Hackathon.name.ilike(f"%{term}%")).all()
+    jobs = db.query(Job).filter(Job.title.ilike(f"%{term}%")).all()
+
+    # Combine results and convert to the SearchResult model
+    results = [SearchResult(name=user.name) for user in users]
+    results.extend([SearchResult(name=fair.name) for fair in career_fairs])
+    results.extend([SearchResult(name=hack.name) for hack in hackathons])
+    results.extend([SearchResult(name=job.title) for job in jobs])
+    return results
+
+
+
+@app.post("/api/search-history")
+async def save_search_history(user_id: str, search_term: str, db: Session = Depends(get_db)):
+    """
+    Save a search term to the user's search history.
+    """
+    db_search_history = SearchHistory(user_id=user_id, search_term=search_term)
+    db.add(db_search_history)
+    db.commit()
+    db.refresh(db_search_history)
+    return {"message": "Search term saved"}
+
+@app.get("/api/search-history/{user_id}", response_model=List[SearchHistoryItem])
+async def get_search_history(user_id: str, db: Session = Depends(get_db)):
+    """
+    Retrieve the search history for a specific user.
+    """
+    history = db.query(SearchHistory).filter(SearchHistory.user_id == user_id).order_by(SearchHistory.timestamp.desc()).all()
+    return history
+
+
+
 # --- Database Initialization ---
 async def initialize_database():
     db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')
     schema_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schema.sql')
-    conn = None
+    conn = None;
     try:
         logger.info(f"Initializing database from schema: {schema_file}")
         conn = sqlite3.connect(db_file)

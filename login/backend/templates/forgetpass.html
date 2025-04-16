@@ -78,6 +78,16 @@
             text-decoration: none;
             font-family: "Trebuchet MS", sans-serif;
         }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -85,22 +95,56 @@
         <div class="forgot-password-box">
             <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
             <h2>Forgot Password ? </h2>
-            <form id="forgot-password-form">
-                <input type="email" id="email" placeholder="Enter your email" required>
+            {% if error %}
+            <p class="error-message">{{ error }}</p>
+            {% endif %}
+            {% if message %}
+            <p class="success-message">{{ message }}</p>
+            {% endif %}
+            <form id="forgot-password-form" action="/forgot-password" method="post">
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
                 <button type="submit" class="reset-btn">Send Reset Link</button>
             </form>
-            <p>Remember your password? <a href="Login Page.html">Login here</a></p>
-            <p>Don't have an account? <a href="Register Page.html">Sign up</a></p>
+            <p>Remember your password? <a href="/">Login here</a></p>
+            <p>Don't have an account? <a href="/register">Sign up</a></p>
         </div>
     </div>
     <script>
         document.getElementById('forgot-password-form').addEventListener('submit', function(event) {
             event.preventDefault();
-            let email = document.getElementById('email').value;
-            // In a real application, you would send this email to the server
-            // to initiate the password reset process.
-            alert("A password reset link has been sent to: " + email);
-            // You might want to redirect the user to a confirmation page here.
+            const formData = new FormData(this);
+            fetch('/forgot-password', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.text().then(data => {
+                        const parser = new DOMParser();
+                        const htmlDoc = parser.parseFromString(data, 'text/html');
+                        const errorElement = htmlDoc.querySelector('.error-message');
+                        const messageElement = htmlDoc.querySelector('.success-message');
+                        const container = document.querySelector('.forgot-password-box');
+
+                        if (errorElement) {
+                            const existingError = container.querySelector('.error-message');
+                            if (existingError) existingError.remove();
+                            container.prepend(errorElement);
+                        }
+                        if (messageElement) {
+                            const existingMessage = container.querySelector('.success-message');
+                            if (existingMessage) existingMessage.remove();
+                            container.insertBefore(messageElement, container.querySelector('form'));
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                alert("An error occurred. Please try again.");
+            });
         });
     </script>
 </body>

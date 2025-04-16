@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard & Recognition</title>
     <style>
+        /* Your CSS styles here */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -20,7 +21,7 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            margin-right: 10px; /* Add space between icon and heading */
+            margin-right: 10px;
         }
 
         .header-container {
@@ -29,18 +30,18 @@
             background-color: #007bff;
             color: white;
             padding: 10px;
-            justify-content: flex-start; /* Align items to the left */
+            justify-content: flex-start;
         }
 
         .header-container h1 {
-        flex-grow: 1; /* Allow heading to take up remaining space */
-        text-align: center; /* Center the heading text */
-        margin: 0; /* Remove default margins */
-    }
+            flex-grow: 1;
+            text-align: center;
+            margin: 0;
+        }
 
         h1, h2 {
             margin-bottom: 10px;
-            margin-top: 0; /* Remove default top margin */
+            margin-top: 0;
         }
 
         main {
@@ -127,6 +128,7 @@
                 <tbody>
                 </tbody>
             </table>
+            <button id="refresh-leaderboard-button">Refresh Leaderboard</button>
         </section>
 
         <section class="section" id="job-recognition">
@@ -142,6 +144,7 @@
         </section>
     </main>
 
-    <script src="static/leaderboard.js"></script>
+    <script src="static/leaderboard.js">
+            </script>
 </body>
 </html>

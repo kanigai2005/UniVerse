@@ -7,24 +7,14 @@ async function loadLeaderboard() {
         const users = await response.json();
 
         const leaderboardTable = document.getElementById("leaderboard-table");
-        if (!leaderboardTable) return;
+        if (!leaderboardTable) {
+            console.error("Leaderboard table element not found.");
+            return; // Stop if the table is not found
+        }
 
-        leaderboardTable.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Activity Score</th>
-                    <th>Achievements</th>
-                    <th>Alumni Gems</th>
-                    <th>Profile</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        `;
-
+        // Clear the table body before adding new data
         const tableBody = leaderboardTable.querySelector("tbody");
+        tableBody.innerHTML = '';
 
         users.forEach((user, index) => {
             const row = document.createElement("tr");

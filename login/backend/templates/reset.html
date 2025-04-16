@@ -91,13 +91,14 @@
             <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
             <h2>Reset Password</h2>
             <p>Enter your new password and confirm it.</p>
-            <form id="reset-password-form">
-                <input type="password" id="new-password" placeholder="New Password" required>
+            <form id="reset-password-form" action="/reset-password" method="post">
+                <input type="hidden" name="email" value="{{ email }}">
+                <input type="password" id="new-password" name="new_password" placeholder="New Password" required>
                 <input type="password" id="confirm-new-password" placeholder="Confirm New Password" required>
                 <p class="error-message" id="password-match-error" style="display:none;">Passwords do not match!</p>
                 <button type="submit" class="reset-btn">Reset Password</button>
             </form>
-            <p>Remember your password? <a href="Login Page.html">Login here</a></p>
+            <p>Remember your password? <a href="/">Login here</a></p>
         </div>
     </div>
     <script>
@@ -114,17 +115,40 @@
                 passwordMatchError.style.display = 'none';
             }
 
-            // In a real application, you would send the new password
-            // and the reset token (likely obtained from the URL) to the server
-            // to update the user's password.
-            console.log("New Password:", newPassword);
-            alert("Password reset successful!");
-            // After successful password reset, you would typically redirect the user
-            // to the login page.
-            window.location.href = "Login Page.html";
+            const formData = new FormData(this);
+            fetch('/reset-password', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.text().then(data => {
+                        // Handle potential errors if the redirect doesn't happen
+                        console.error("Password reset failed:", data);
+                        alert("Password reset failed. Please try again.");
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                alert("An error occurred during password reset.");
+            });
         });
 
         // You might want to add JavaScript to handle password strength validation here.
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+        const passwordMatchError = document.getElementById('password-match-error');
+
+        confirmNewPasswordInput.addEventListener('input', function() {
+            if (newPasswordInput.value !== confirmNewPasswordInput.value) {
+                passwordMatchError.style.display = 'block';
+            } else {
+                passwordMatchError.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
