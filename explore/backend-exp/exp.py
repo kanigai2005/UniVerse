@@ -1,10 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Request
-from sqlalchemy import create_engine, Column, Integer, String, Date, Text, DateTime, func, ForeignKey, desc, Table
+from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, Request
+from sqlalchemy import create_engine, Column, Integer,Boolean, String, Date, Text, DateTime, func, ForeignKey, desc, Table
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Dict, Optional
-from datetime import date, datetime
-from pydantic import BaseModel
+from datetime import date, datetime , timedelta
+from pydantic import BaseModel, EmailStr
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -64,7 +64,7 @@ class User(Base):
     links = Column(Text, nullable=True)
 
     connections = relationship("User", secondary="user_connections", primaryjoin="User.id==user_connections.c.user_id", secondaryjoin="User.id==user_connections.c.connected_user_id")
-
+    applied_hackathons = relationship("AppliedHackathon", back_populates="user")
 user_connections = Table(
     "user_connections",
     Base.metadata,
@@ -98,18 +98,20 @@ class Hackathon(Base):
     description = Column(Text)
     theme = Column(String)  # Added theme
     prize_pool = Column(String) #added prize pool
+    applications = relationship("AppliedHackathon", back_populates="hackathon")
 
-class HackathonOut(BaseModel):
-    id: int
-    name: str
-    date: date
-    location: str
-    description: str
-    theme: Optional[str] = None
-    prize_pool: Optional[str] = None
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    message = Column(Text, nullable=False)
+    type = Column(String, nullable=False)
+    related_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_read = Column(Boolean, default=False)
 
-    class Config:
-        from_attributes = True  # Use this instead of `orm_mode` in Pydantic v2
+    user = relationship("User", back_populates="notifications")
+
 
 class Question(Base):
     __tablename__ = "questions"
@@ -177,6 +179,31 @@ class Feature(Base):
     url = Column(String)
     icon = Column(String)
 
+class AppliedHackathon(Base):
+    __tablename__ = "applied_hackathons"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    hackathon_id = Column(Integer, ForeignKey("hackathons.id"), primary_key=True)
+    applied_at = Column(DateTime, default=func.now())
+
+    user = relationship("User", back_populates="applied_hackathons")
+    hackathon = relationship("Hackathon", back_populates="applications")
+
+    def __repr__(self):
+        return f"<AppliedHackathon user_id={self.user_id}, hackathon_id={self.hackathon_id}, applied_at={self.applied_at}>"
+
+class UserIssue(Base):
+    __tablename__ = "user_issues"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default="pending")
+
+    user = relationship("User", back_populates="issues") # Assuming you add 'issues' relationship to User model
 
 class AlumniResponse(BaseModel):
     id: int
@@ -205,9 +232,9 @@ class UserResponse(BaseModel):
     department: str
     profession: str
     alma_mater: str
-    interviews: str
-    internships: str
-    startups: str
+    interviews: Optional[str] = None
+    internships: Optional[str] = None
+    startups: Optional[str] = None
     current_company: str
     milestones: str
     advice: str
@@ -252,6 +279,19 @@ class JobOut(BaseModel): #added JobOut
 
     class Config:
         from_attributes = True
+
+class HackathonOut(BaseModel):
+    id: int
+    name: str
+    date: date
+    location: str
+    description: str
+    theme: Optional[str] = None
+    prize_pool: Optional[str] = None
+
+    class Config:
+        from_attributes = True  # Use this instead of `orm_mode` in Pydantic v2
+
 
 # --- Pydantic Models for Request/Response ---
 class QuestionCreate(BaseModel):
@@ -328,6 +368,36 @@ class FeatureOut(BaseModel):
     class Config:
         from_attributes = True
 
+class NotificationOut(BaseModel):
+    id: int
+    message: str
+    type: str
+    related_id: Optional[int] = None
+    created_at: datetime
+    is_read: bool
+
+    class Config:
+        from_attributes = True
+
+class NotificationMarkRead(BaseModel):
+    notification_ids: List[int]
+
+class UserIssueCreate(BaseModel):
+    name: str
+    email: EmailStr
+    message: str
+
+class UserIssueResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    message: str
+    submitted_at: datetime
+    status: str
+
+    class Config:
+        from_attributes = True
+
 # --- Frontend Serving ---
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend-exp")
 home_html_path = os.path.join(frontend_dir, "home.html")
@@ -356,6 +426,96 @@ def serve_file(file_path: str):
     else:
         logger.error(f"File not found: {file_path}")
         raise HTTPException(status_code=404, detail="File not found")
+    
+async def send_hackathon_reminders(db: Session):
+    twenty_four_hours_from_now = datetime.utcnow() + timedelta(hours=24)
+    upcoming_hackathons = db.query(Hackathon).filter(Hackathon.date <= twenty_four_hours_from_now, Hackathon.date > datetime.utcnow()).all()
+
+    for hackathon in upcoming_hackathons:
+        applied_users = db.query(User).join(
+            AppliedHackathon, AppliedHackathon.c.user_id == User.id
+        ).filter(AppliedHackathon.c.hackathon_id == hackathon.id).all()
+
+        for user in applied_users:
+            existing_reminder = db.query(Notification).filter(
+                Notification.user_id == user.id,
+                Notification.type == "hackathon_reminder",
+                Notification.related_id == hackathon.id
+            ).first()
+            if not existing_reminder:
+                notification = Notification(
+                    user_id=user.id,
+                    message=f"Reminder: Your hackathon '{hackathon.name}' starts in 24 hours.",
+                    type="hackathon_reminder",
+                    related_id=hackathon.id
+                )
+                db.add(notification)
+    db.commit()
+
+# You would call this function periodically
+# asyncio.create_task(send_hackathon_reminders(SessionLocal()))
+
+def create_new_hackathon_notifications(db: Session, hackathon: Hackathon):
+    users = db.query(User).all()  # Or filter based on interests
+    for user in users:
+        notification = Notification(
+            user_id=user.id,
+            message=f"New Hackathon Alert: '{hackathon.name}' is now available!",
+            type="new_hackathon",
+            related_id=hackathon.id
+        )
+        db.add(notification)
+    db.commit()
+
+def create_new_job_notifications(db: Session, job: Job):
+    users = db.query(User).all()  # Or filter based on profession/department
+    for user in users:
+        notification = Notification(
+            user_id=user.id,
+            message=f"New Job Alert: '{job.title}' at {job.company}!",
+            type="new_job",
+            related_id=job.id
+        )
+        db.add(notification)
+    db.commit()
+
+def create_new_internship_notifications(db: Session, internship: Internship):
+    users = db.query(User).all()  # Or filter based on department/interest
+    for user in users:
+        notification = Notification(
+            user_id=user.id,
+            message=f"New Internship Opportunity: '{internship.title}' at {internship.company}!",
+            type="new_internship",
+            related_id=internship.id
+        )
+        db.add(notification)
+    db.commit()
+
+def create_daily_spark_notification(db: Session, question: DailySparkQuestion):
+    users = db.query(User).all()
+    for user in users:
+        notification = Notification(
+            user_id=user.id,
+            message="Solve today’s Daily Spark!",
+            type="daily_spark",
+            related_id=question.id
+        )
+        db.add(notification)
+    db.commit()
+
+def create_alumni_roadmap_notification(db: Session, roadmap_title: str): # You'll need a way to track new roadmaps
+    users = db.query(User).all()
+    for user in users:
+        notification = Notification(
+            user_id=user.id,
+            message=f"New roadmap from top alumni: '{roadmap_title}'",
+            type="alumni_roadmap"
+            # You might not have a related_id for general roadmaps
+        )
+        db.add(notification)
+    db.commit()
+
+# You would call these functions when new items are added to the respective tables
 
 @app.get("/")
 async def serve_home_html():
@@ -412,6 +572,12 @@ async def serve_profile(request: Request):
 @app.get("/connection.html", response_class=FileResponse)
 async def serve_connections():
     return serve_file(connections_html_path)
+
+@app.get("/notifications")
+async def get_notifications_page():
+    with open("frontend-exp/notifications.html", "r") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content, status_code=200)
 
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
@@ -808,7 +974,22 @@ async def search(term: str, db: Session = Depends(get_db)):
     results.extend([SearchResult(name=job.title) for job in jobs])
     return results
 
+@app.get(f"{BASE_API_PATH}/users/{{username}}/notifications", response_model=List[NotificationOut])
+async def get_user_notifications(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    notifications = db.query(Notification).filter(Notification.user_id == user.id).order_by(desc(Notification.created_at)).all()
+    return notifications
 
+@app.post(f"{BASE_API_PATH}/notifications/mark-read")
+async def mark_notifications_read(notification_data: NotificationMarkRead, db: Session = Depends(get_db)):
+    for notification_id in notification_data.notification_ids:
+        notification = db.query(Notification).filter(Notification.id == notification_id).first()
+        if notification:
+            notification.is_read = True
+    db.commit()
+    return {"message": "Notifications marked as read"}
 
 @app.post("/api/search-history")
 async def save_search_history(user_id: str, search_term: str, db: Session = Depends(get_db)):
@@ -829,6 +1010,34 @@ async def get_search_history(user_id: str, db: Session = Depends(get_db)):
     history = db.query(SearchHistory).filter(SearchHistory.user_id == user_id).order_by(SearchHistory.timestamp.desc()).all()
     return history
 
+async def get_current_user(db: Session = Depends(get_db), authorization: Optional[str] = Header(None)):
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        # Define or import verify_token function
+        def verify_token(db, token):
+            # Example implementation: Replace with your actual token verification logic
+            user = db.query(User).filter(User.id == token).first()
+            if not user:
+                raise HTTPException(status_code=401, detail="Invalid token")
+            return user
+
+        user = verify_token(db, token)
+        return user
+    return None
+
+@app.post(f"{BASE_API_PATH}/help/submit-issue", response_model=UserIssueResponse)
+async def submit_user_issue(issue: UserIssueCreate, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    user_id = current_user.id if current_user else None
+    db_issue = UserIssue(
+        user_id=user_id,
+        name=issue.name,
+        email=issue.email,
+        message=issue.message
+    )
+    db.add(db_issue)
+    db.commit()
+    db.refresh(db_issue)
+    return db_issue
 
 
 # --- Database Initialization ---

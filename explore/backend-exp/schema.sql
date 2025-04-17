@@ -141,6 +141,39 @@ CREATE TABLE features (
     icon TEXT
 );
 
+-- schema.sql
+-- ... other CREATE TABLE statements ...
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    message TEXT NOT NULL,
+    type TEXT NOT NULL,
+    related_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS applied_hackathons (
+    user_id INTEGER,
+    hackathon_id INTEGER,
+    applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, hackathon_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (hackathon_id) REFERENCES hackathons(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_issues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER, -- Foreign key to the users table (can be NULL if not logged in)
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    message TEXT NOT NULL,
+    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'pending', -- e.g., 'pending', 'in_progress', 'resolved'
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 -- Insert Sample Data
 INSERT INTO users (name, email, activity_score, achievements, alumni_gems, department, profession, alma_mater, interviews, internships, startups, current_company, milestones, advice, likes, badges, solved, links)
 VALUES

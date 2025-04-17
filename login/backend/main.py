@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, EmailStr, field_validator
@@ -11,22 +11,12 @@ from passlib.context import CryptContext
 from urllib.parse import urlencode
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import timedelta
 from sqlalchemy.sql import func
-from fastapi import BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from email.mime.text import MIMEText
-import ssl
-import smtplib
-import asyncio
 
 # Load environment variables (consider using a .env file for sensitive data)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///universe.db")
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT", 465)
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-EMAIL_FROM = os.getenv("EMAIL_FROM")
 
 # Database setup
 engine = create_engine(DATABASE_URL)
@@ -42,15 +32,6 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-
-class OTP(Base):
-    __tablename__ = "otps"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, index=True)
-    otp = Column(String)
-    created_at = Column(DateTime, default=func.now())
-    expires_at = Column(DateTime)
 
 Base.metadata.create_all(bind=engine)
 
@@ -98,7 +79,6 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 class ResetPasswordRequest(BaseModel):
-    otp: str
     new_password: str
 
     @field_validator("new_password")
@@ -114,43 +94,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# Utility function to send OTP email (requires SMTP server details in environment variables)
-def send_otp_email(email: str, otp: str):
-    print(f"Attempting to send OTP to: {email}, OTP: {otp}")
-    print(f"SMTP Server: {SMTP_SERVER}")
-    print(f"SMTP Port: {SMTP_PORT}")
-    print(f"SMTP Username: {SMTP_USERNAME}")
-    print(f"Email From: {EMAIL_FROM}")
-    if not all([SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM]):
-        print("SMTP configuration not found in environment variables.")
-        return
-
-    port = int(SMTP_PORT)
-    sender_email = EMAIL_FROM
-    receiver_email = email
-    password = SMTP_PASSWORD
-
-    message = MIMEText(f"Your OTP for password reset is: {otp}")
-    message['Subject'] = "Password Reset OTP"
-    message['From'] = sender_email
-    message['To'] = receiver_email
-
-    context = ssl.create_default_context()
-    try:
-        with smtplib.SMTP_SSL(SMTP_SERVER, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
-        print(f"OTP sent successfully to {email}")
-    except Exception as e:
-        print(f"Error sending OTP email: {e}")
-
-# Background task to delete expired OTPs
-def delete_expired_otps(db: Session):
-    expiration_time = datetime.utcnow()
-    expired_otps = db.query(OTP).filter(OTP.expires_at < expiration_time).delete()
-    db.commit()
-    print(f"Deleted {expired_otps} expired OTPs.")
 
 # Routes
 @app.get("/", response_class=HTMLResponse)
@@ -213,56 +156,30 @@ async def forgot_password_page(request: Request, error: str = None, message: str
 async def forgot_password(
     request: Request,
     email: Annotated[EmailStr, Form()],
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    # ... function body ...
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return templates.TemplateResponse("forgetpass.html", {"request": request, "error": "There is no account associated with this email."})
 
-    # Generate OTP
-    otp = secrets.token_hex(3).upper()  # Generate a 6-character OTP
-    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    # In a REAL APPLICATION, you would generate a reset token,
+    # store it, and send it to the user's email.
+    # For this simplified example, we'll just generate a temporary password
+    # and redirect to the reset password form.
+    reset_token = secrets.token_urlsafe(32) # Generate a unique token
+    # In a REAL APP, store this token in the database linked to the user and email
 
-    # Save OTP to the database
-    db_otp = db.query(OTP).filter(OTP.email == email).first()
-    if db_otp:
-        db_otp.otp = otp
-        db_otp.created_at = datetime.utcnow()
-        db_otp.expires_at = expires_at
-    else:
-        new_otp = OTP(email=email, otp=otp, expires_at=expires_at)
-        db.add(new_otp)
-    db.commit()
-
-    # Send OTP email in the background
-    background_tasks.add_task(send_otp_email, email, otp)
-    print(f"Initiated background task to send OTP to {email}: {otp}")
-    return RedirectResponse(url=f"/otp?email={email}", status_code=302)
-
-@app.get("/otp", response_class=HTMLResponse)
-async def otp_page(request: Request, email: str, error: str = None):
-    return templates.TemplateResponse("otp.html", {"request": request, "email": email, "error": error})
-
-@app.post("/otp", response_class=HTMLResponse)
-async def verify_otp(
-    request: Request,
-    email: Annotated[str, Form()],
-    otp: Annotated[str, Form()],
-    db: Session = Depends(get_db)
-):
-    # ... function body ...
-    db_otp = db.query(OTP).filter(OTP.email == email, OTP.otp == otp, OTP.expires_at > datetime.utcnow()).first()
-    if not db_otp:
-        params = {"email": email, "error": "Invalid or expired OTP."}
-        return RedirectResponse(url=f"/otp?{urlencode(params)}", status_code=302)
-
-    # OTP is valid, redirect to reset password page
-    return RedirectResponse(url=f"/reset-password?email={email}", status_code=302)
+    return RedirectResponse(url=f"/reset-password?email={email}&reset_token={reset_token}", status_code=302)
+@app.get("/reset-password-info", response_class=HTMLResponse)
+async def reset_password_info_page(request: Request, email: str, temp_password: str):
+    # In a REAL APPLICATION, you would NOT display the temporary password.
+    # You would instruct the user to check their email for a reset link.
+    return templates.TemplateResponse("reset_info.html", {"request": request, "email": email, "temp_password": temp_password})
 
 @app.get("/reset-password", response_class=HTMLResponse)
 async def reset_password_page(request: Request, email: str, error: str = None):
+    # This route is no longer part of the direct flow in this simplified version.
+    # You might still keep it for other reset mechanisms.
     return templates.TemplateResponse("reset.html", {"request": request, "email": email, "error": error})
 
 @app.post("/reset-password", response_class=HTMLResponse)
@@ -274,15 +191,10 @@ async def reset_password(
 ):
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        # This should ideally not happen if the flow is correct
         raise HTTPException(status_code=404, detail="User not found")
 
     hashed_password = pwd_context.hash(new_password)
     user.hashed_password = hashed_password
-    db.commit()
-
-    # Delete the used OTP
-    db.query(OTP).filter(OTP.email == email).delete()
     db.commit()
 
     return RedirectResponse(url="/?message=Password reset successfully. Please log in.", status_code=302)
@@ -293,14 +205,3 @@ async def read_user(user_id: int, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
-
-# Run the background task to delete expired OTPs periodically (e.g., every minute)
-async def scheduled_tasks():
-    while True:
-        await asyncio.sleep(60)
-        with SessionLocal() as db:
-            delete_expired_otps(db)
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(scheduled_tasks())

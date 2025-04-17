@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - Alumni Interacting App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f2ef;
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-icons {
+            display: flex;
+            justify-content: space-around;
+            flex-grow: 1;
+        }
+
+        .nav-icons a {
+            color: #666;
+            font-size: 22px;
+            text-decoration: none;
+        }
+
+        .container {
+            width: 80%;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 2em;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #ddd;
+            padding-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .help-item {
+            border: none;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .help-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .action-buttons i {
+            font-size: 1.6em;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            color: #3498db;
+        }
+
+        .action-buttons i:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #2980b9;
+        }
+
+        .help-item:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+
+        .help-content {
+            flex-grow: 1;
+        }
+
+        .help-content h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .help-content p {
+            color: #666;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            margin: 30px auto;
+            color: #676767;
+            text-align: left;
+        }
+
+        .contact-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .contact-form input,
+        .contact-form textarea,
+        .contact-form button {
+            width: 90%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .contact-form button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            width: 25%;
+        }
+
+        .toggle-theme {
+            background: #007bff;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .dark-mode {
+            background: linear-gradient(135deg, rgb(40, 40, 42), rgb(164, 166, 168));
+            color: #ffffff;
+        }
+
+        .dark-mode .navbar {
+            background: black;
+        }
+
+        .dark-mode .container,
+        .dark-mode .contact-form {
+            background: linear-gradient(135deg, black, rgb(105, 106, 108));
+        }
+
+        .dark-mode .help-item {
+            background: linear-gradient(135deg, #484a4a, #7a7b7c);
+        }
+
+        .dark-mode .help-item h3,
+        .dark-mode .help-item p,
+        .dark-mode .contact-form label,
+        .dark-mode .contact-form input,
+        .dark-mode .contact-form textarea {
+            color: white;
+        }
+
+        .dark-mode .toggle-theme {
+            background: #838989;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-icons">
+            <a href="Home Page.html"><i class="fas fa-home"></i></a>
+            <a href="Explore Page.html"><i class="fas fa-compass"></i></a>
+            <a href="Notification page.html"><i class="fas fa-bell"></i></a>
+            <a href="Help Page.html"><i class="fas fa-question-circle"></i></a>
+            <a href="Profile Page.html"><i class="fas fa-user"></i></a>
+            <a href="Login Page.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="container">
+        <h2 class="section-title">Help & Support</h2>
+        <div class="help-item">
+            <div class="help-content">
+                <h3>How do I reset my password?</h3>
+                <p>You can reset your password by clicking on "Forgot Password" on the login page. An email will be sent to you with reset instructions.</p>
+            </div>
+            <div class="action-buttons">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="help-item">
+            <div class="help-content">
+                <h3>How do I search for events and hackathons?</h3>
+                <p>Use the search bar on the homepage to find events, hackathons, and alumni roadmaps. You can also filter results by category.</p>
+            </div>
+            <div class="action-buttons">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="help-item">
+            <div class="help-content">
+                <h3>What is 'The Daily Spark'?</h3>
+                <p>'The Daily Spark' is a daily problem-solving challenge where users can submit answers and rate other responses.</p>
+            </div>
+            <div class="action-buttons">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="help-item">
+            <div class="help-content">
+                <h3>How do I earn Almagems?</h3>
+                <p>You can earn Almagems by participating in events, answering daily problems, and engaging in community activities.</p>
+            </div>
+            <div class="action-buttons">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="help-item">
+            <div class="help-content">
+                <h3>How do I enable or disable notifications?</h3>
+                <p>You can manage notification preferences in your profile settings under 'Notifications'.</p>
+            </div>
+            <div class="action-buttons">
+                <i class="fas fa-check"></i>
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="contact-form">
+            <h2>Contact Support</h2>
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" placeholder="Enter your name" required>
+            <label for="email">Your Email:</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+            <label for="message">Your Message:</label>
+            <textarea id="message" rows="4" placeholder="Describe your issue..." required></textarea>
+            <button class="submit" onclick="submitForm()">Submit</button>
+        </div>
+        <button class="toggle-theme" onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+    <script>
+        async function submitForm() {
+            let name = document.getElementById("name").value;
+            let email = document.getElementById("email").value;
+            let message = document.getElementById("message").value;
+
+            if (name && email && message) {
+                const response = await fetch('/api/help/submit-issue', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include authorization header if needed (e.g., for logged-in users)
+                        // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ name: name, email: email, message: message }),
+                });
+
+                if (response.ok) {
+                    alert("Your message has been sent! Our team will contact you soon.");
+                    document.getElementById("name").value = "";
+                    document.getElementById("email").value = "";
+                    document.getElementById("message").value = "";
+                } else {
+                    try {
+                        const errorData = await response.json();
+                        console.error("Failed to submit issue:", errorData);
+                        alert(`Failed to submit your issue. Please try again. Error: ${errorData.detail || response.statusText}`);
+                    } catch (e) {
+                        console.error("Failed to parse error response:", e);
+                        alert("Failed to submit your issue. Please try again.");
+                    }
+                }
+            } else {
+                alert("Please fill out all fields.");
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+
+            // Save user preference
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Apply saved theme on page load
+        window.onload = function () {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        };
+    </script>
+</body>
+</html>
