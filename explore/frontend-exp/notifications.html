@@ -104,11 +104,11 @@
     </nav>
     <div class="container">
         <h2 class="section-title">Notifications</h2>
-        </div>
+    </div>
 
     <script>
         async function fetchNotifications() {
-            const username = getLoggedInUsername(); // Implement this function
+            const username = getLoggedInUsername();
             if (!username) {
                 console.error("Username not found.");
                 return;
@@ -153,12 +153,9 @@
         }
 
         function getLoggedInUsername() {
-            // Implement this based on how your authentication works
-            // Example using localStorage (you might use cookies or other methods):
+            // **IMPORTANT: Adapt this function to your actual authentication mechanism.**
+            // This example tries to read from localStorage with the key 'username'.
             return localStorage.getItem('username');
-            // Replace the above line with your actual method of getting the logged-in username.
-            // For testing without authentication, you can hardcode a username:
-            // return 'John Doe';
         }
 
         function addNotificationEventListeners() {
@@ -177,15 +174,12 @@
                     });
 
                     if (response.ok) {
-                        // Optionally, provide visual feedback
                         event.target.classList.remove('fa-check');
                         event.target.classList.add('fa-check-double');
                         event.target.style.color = 'green';
-                        event.target.removeEventListener('click', arguments.callee); // Remove this listener
+                        event.target.removeEventListener('click', arguments.callee);
 
-                        // Optionally, you can choose to not remove the notification from the UI immediately
-                        // if you want to indicate it's been read but still visible.
-                        // If you want to remove it:
+                        // Optionally remove the notification from the UI:
                         // event.target.closest('.notification').remove();
                         console.log(`Notification ${notificationId} marked as read.`);
                     } else {
@@ -200,10 +194,9 @@
                 button.addEventListener('click', (event) => {
                     const notificationId = parseInt(event.target.dataset.notificationId);
                     if (isNaN(notificationId)) return;
-                    // For this example, we'll just remove it from the UI.
-                    // You might want to send a request to the backend to mark it as dismissed permanently.
                     event.target.closest('.notification').remove();
                     console.log(`Notification ${notificationId} dismissed (UI only).`);
+                    // You might want to send a request to the backend to permanently dismiss.
                 });
             });
         }

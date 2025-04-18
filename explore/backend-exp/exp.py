@@ -1,17 +1,21 @@
-from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, Request
-from sqlalchemy import create_engine, Column, Integer,Boolean, String, Date, Text, DateTime, func, ForeignKey, desc, Table
+from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, Request , Response
+from sqlalchemy import create_engine, Column, Integer, Boolean, String, Date, Text, DateTime, func, ForeignKey, desc, Table
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, Dict, Optional
-from datetime import date, datetime , timedelta
+from datetime import date, datetime, timedelta
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, CheckConstraint, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Date
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
+from sqlalchemy.dialects.sqlite import DATE as SQLiteDATE
 import os
 import asyncio
 import uvicorn
@@ -19,6 +23,9 @@ import sqlite3
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import httpx
+import jwt
+from jwt.exceptions import DecodeError, ExpiredSignatureError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,34 +50,34 @@ def get_db():
 # --- Database Models ---
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    activity_score = Column(Integer)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    activity_score = Column(Integer, default=0)
     achievements = Column(Text)
-    alumni_gems = Column(Integer)
+    alumni_gems = Column(Integer, default=0)
     department = Column(String)
     profession = Column(String)
     alma_mater = Column(String)
-    interviews = Column(Text, nullable=True)
-    internships = Column(Text, nullable=True)
-    startups = Column(Text, nullable=True)
+    interviews = Column(Text)
+    internships = Column(Text)
+    startups = Column(Text)
     current_company = Column(String)
     milestones = Column(Text)
     advice = Column(Text)
     likes = Column(Integer, default=0)
-    badges = Column(Text, nullable=True)
-    solved = Column(Integer, nullable=True)
-    links = Column(Text, nullable=True)
+    badges = Column(Integer, default=0)
+    solved = Column(Integer, default=0)
+    links = Column(Integer, default=0)
 
-    connections = relationship("User", secondary="user_connections", primaryjoin="User.id==user_connections.c.user_id", secondaryjoin="User.id==user_connections.c.connected_user_id")
+    connections = relationship("UserConnection", foreign_keys="[UserConnection.user_id]", back_populates="user")
+    connected_users = relationship("UserConnection", foreign_keys="[UserConnection.connected_user_id]", back_populates="connected_user")
+    questions = relationship("Question", back_populates="user")
+    issues = relationship("UserIssue", back_populates="user")
+    notifications = relationship("Notification", back_populates="user") # Add this line
     applied_hackathons = relationship("AppliedHackathon", back_populates="user")
-user_connections = Table(
-    "user_connections",
-    Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.id")),
-    Column("connected_user_id", Integer, ForeignKey("users.id")),
-)
+
 
 class CareerFair(Base):
     __tablename__ = "career_fairs"
@@ -96,7 +103,7 @@ class Hackathon(Base):
     date = Column(Date)
     location = Column(String)
     description = Column(Text)
-    theme = Column(String)  # Added theme
+    theme = Column(String)   # Added theme
     prize_pool = Column(String) #added prize pool
     applications = relationship("AppliedHackathon", back_populates="hackathon")
 
@@ -120,20 +127,23 @@ class Question(Base):
     question_text = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     likes = Column(Integer, default=0)
+    user = relationship("User", back_populates="questions")
 
 class ChatContact(Base):
     __tablename__ = "chat_contacts"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-
+    messages = relationship("ChatMessage", back_populates="contact")
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
     contact_id = Column(Integer, ForeignKey("chat_contacts.id"))
-    sender = Column(String)    # 'me' or 'other'
+    sender = Column(String)     # 'me' or 'other'
     text = Column(String, nullable=True)
-    file_path = Column(String, nullable=True)    # Store file path
+    file_path = Column(String, nullable=True)     # Store file path
     timestamp = Column(DateTime, default=datetime.utcnow)
+    contact = relationship("ChatContact", back_populates="messages")
+
 
 class DailySparkQuestion(Base):
     __tablename__ = "daily_spark_questions"
@@ -142,6 +152,7 @@ class DailySparkQuestion(Base):
     role = Column(String)
     question = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+    answers = relationship("DailySparkAnswer", back_populates="question")
 
 class DailySparkAnswer(Base):
     __tablename__ = "daily_spark_answers"
@@ -150,8 +161,9 @@ class DailySparkAnswer(Base):
     user = Column(String)
     text = Column(Text)
     votes = Column(Integer, default=0)
+    question = relationship("DailySparkQuestion", back_populates="answers")
 
-class Job(Base):  # Added Job model
+class Job(Base):   # Added Job model
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
@@ -167,7 +179,7 @@ class Job(Base):  # Added Job model
 class SearchHistory(Base):
     __tablename__ = "search_history"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, index=True)  # Store user ID as string
+    user_id = Column(String, index=True)     # Store user ID as string
     search_term = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
@@ -205,6 +217,38 @@ class UserIssue(Base):
 
     user = relationship("User", back_populates="issues") # Assuming you add 'issues' relationship to User model
 
+class UserConnection(Base):
+    __tablename__ = "user_connections"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    connected_user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+
+    user = relationship("User", foreign_keys=[user_id], back_populates="connections")
+    connected_user = relationship("User", foreign_keys=[connected_user_id], back_populates="connected_users")
+
+# --- Utility Functions ---
+
+# In a real application, session management would be more robust,
+# potentially using a database or a dedicated session management library.
+# This is a very basic in-memory example for demonstration purposes.
+sessions = {}
+
+def create_session(db: Session, user: User):
+    session_id = str(uuid.uuid4())
+    sessions[session_id] = user.id
+    return session_id
+
+def get_user_from_session(db: Session, session_id: str):
+    user_id = sessions.get(session_id)
+    if user_id:
+        return db.query(User).filter(User.id == user_id).first()
+    return None
+
+def delete_session(session_id: str):
+    if session_id in sessions:
+        del sessions[session_id]
+
+# --- Pydantic Models for Request/Response ---
 class AlumniResponse(BaseModel):
     id: int
     name: str
@@ -416,6 +460,39 @@ profile_html_path = os.path.join(frontend_dir, "profile.html")
 static_dir = os.path.join(frontend_dir, "static")
 templates = Jinja2Templates(directory=frontend_dir)
 
+explore_templates = Jinja2Templates(directory=frontend_dir)
+
+# --- External Authentication Configuration ---
+EXP_BACKEND_URL = "http://localhost:5000"  # Replace with your exp.py backend URL
+JWT_SECRET_KEY = "your-secret-key"  # Replace with the actual secret key used by exp.py
+JWT_ALGORITHM = "HS256"  # Adjust if exp.py uses a different algorithm
+
+# Dependency to get the current logged-in user via Bearer token
+async def get_current_user(db: Session = Depends(get_db), authorization: Optional[str] = Header(None)):
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            user_id = payload.get("user_id")  # Adjust key based on your exp.py token
+            if user_id:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user:
+                    return user
+                else:
+                    raise HTTPException(status_code=404, detail="User not found")
+            else:
+                raise HTTPException(status_code=401, detail="Invalid token payload")
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except DecodeError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    return None
+
+@app.get("/explore.html", response_class=HTMLResponse)
+async def explore_page(request: Request, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    explore_items = db.query(User).all() # Fetch all users for exploration
+    return explore_templates.TemplateResponse("explore.html", {"request": request, "alumni": explore_items, "current_user": current_user})
+
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
@@ -426,7 +503,7 @@ def serve_file(file_path: str):
     else:
         logger.error(f"File not found: {file_path}")
         raise HTTPException(status_code=404, detail="File not found")
-    
+
 async def send_hackathon_reminders(db: Session):
     twenty_four_hours_from_now = datetime.utcnow() + timedelta(hours=24)
     upcoming_hackathons = db.query(Hackathon).filter(Hackathon.date <= twenty_four_hours_from_now, Hackathon.date > datetime.utcnow()).all()
@@ -456,7 +533,7 @@ async def send_hackathon_reminders(db: Session):
 # asyncio.create_task(send_hackathon_reminders(SessionLocal()))
 
 def create_new_hackathon_notifications(db: Session, hackathon: Hackathon):
-    users = db.query(User).all()  # Or filter based on interests
+    users = db.query(User).all()   # Or filter based on interests
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -468,7 +545,7 @@ def create_new_hackathon_notifications(db: Session, hackathon: Hackathon):
     db.commit()
 
 def create_new_job_notifications(db: Session, job: Job):
-    users = db.query(User).all()  # Or filter based on profession/department
+    users = db.query(User).all()   # Or filter based on profession/department
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -480,7 +557,7 @@ def create_new_job_notifications(db: Session, job: Job):
     db.commit()
 
 def create_new_internship_notifications(db: Session, internship: Internship):
-    users = db.query(User).all()  # Or filter based on department/interest
+    users = db.query(User).all()   # Or filter based on department/interest
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -573,11 +650,67 @@ async def serve_profile(request: Request):
 async def serve_connections():
     return serve_file(connections_html_path)
 
-@app.get("/notifications")
-async def get_notifications_page():
-    with open("frontend-exp/notifications.html", "r") as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content, status_code=200)
+@app.get("/notifications.html", response_class=FileResponse)
+async def serve_notifications_html():
+    return serve_file(os.path.join(frontend_dir, "notifications.html"))
+
+@app.get("/help.html", response_class=FileResponse)
+async def serve_help_html():
+    return serve_file(os.path.join(frontend_dir, "help.html"))
+
+@app.post("/login")
+async def login(request: Request, response: Response, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    async with httpx.AsyncClient() as client:
+        try:
+            auth_response = await client.post(
+                f"{EXP_BACKEND_URL}/auth/login",
+                json={"username": username, "password": password}
+            )
+            auth_response.raise_for_status()  # Raise an exception for bad status codes
+            auth_data = auth_response.json()
+
+            if "access_token" in auth_data:
+                access_token = auth_data["access_token"]
+                try:
+                    payload = jwt.decode(access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+                    user_id_from_token = payload.get("user_id") # Adjust key
+
+                    if user_id_from_token:
+                        user = db.query(User).filter(User.id == user_id_from_token).first()
+                        if not user:
+                            # Create a new user in your local DB if needed
+                            user = User(id=user_id_from_token, name=username, email=f"{username}@example.com") # Example
+                            db.add(user)
+                            db.commit()
+                            db.refresh(user)
+
+                        session_id = create_session(db, user)
+                        response.set_cookie(key="session_id", value=session_id, httponly=True)
+                        return {"message": "Login successful", "access_token": access_token} # Optionally return the token
+                    else:
+                        raise HTTPException(status_code=500, detail="User ID not found in token")
+
+                except jwt.exceptions.DecodeError:
+                    raise HTTPException(status_code=401, detail="Invalid token format")
+
+            else:
+                raise HTTPException(status_code=auth_response.status_code, detail=f"Authentication failed at external service: {auth_data.get('message', 'No details')}")
+
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=e.response.status_code if e.response else 500, detail=f"Authentication service error: {e}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Login error: {e}")
+
+# Example Logout Route (Conceptual)
+@app.post("/logout")
+async def logout(request: Request, response: Response):
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        delete_session(session_id)
+        response.delete_cookie(key="session_id")
+        return {"message": "Logout successful"}
+    else:
+        return {"message": "No active session"}
 
 # --- API Endpoints for Expert Q&A ---
 BASE_API_PATH = "/api"
@@ -588,8 +721,10 @@ async def get_popular_questions(db: Session = Depends(get_db)):
     return questions
 
 @app.post(f"{BASE_API_PATH}/questions", response_model=QuestionOut)
-async def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
-    db_question = Question(question_text=question.question_text, user_id=1)
+async def create_question(question: QuestionCreate, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    db_question = Question(question_text=question.question_text, user_id=current_user.id)
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
@@ -601,7 +736,9 @@ async def get_user_questions(user_id: int, db: Session = Depends(get_db)):
     return questions
 
 @app.post(f"{BASE_API_PATH}/questions/{{question_id}}/like")
-async def like_question(question_id: int, db: Session = Depends(get_db)):
+async def like_question(question_id: int, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     db_question = db.query(Question).filter(Question.id == question_id).first()
     if db_question:
         db_question.likes += 1
@@ -647,37 +784,46 @@ async def get_user(username: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-
-
 @app.get("/api/alumni/top-liked", response_model=Dict[str, List[AlumniResponse]])
 async def get_top_liked_alumni(db: Session = Depends(get_db)):
     """
-    Retrieves the top 5 liked alumni, grouped by department.  Handles cases where a department might have fewer than 5 alumni.
+    Retrieves the top 5 liked alumni, grouped by department. Handles cases where a department might have fewer than 5 alumni.
     """
     try:
-        # Query the top 5 liked alumni overall
-        top_alumni = db.query(User).order_by(desc(User.likes)).limit(5).all()
-        
+        # Query the top liked alumni overall
+        top_alumni = db.query(User).order_by(desc(User.likes)).all()
+
         # Group the alumni by department
         grouped_alumni: Dict[str, List[AlumniResponse]] = {}
         for alumni in top_alumni:
-            if alumni.department:  # Only process alumni with a department
+            if alumni.department:   # Only process alumni with a department
                 if alumni.department not in grouped_alumni:
                     grouped_alumni[alumni.department] = []
-                
-                #  Create an instance of AlumniResponse from the SQLAlchemy User object
+
+                # Create an instance of AlumniResponse from the SQLAlchemy User object
                 alumni_response = AlumniResponse(
                     id=alumni.id,
                     name=alumni.name,
                     profession=alumni.profession,
                     department=alumni.department,
                     likes=alumni.likes,
+                    alma_mater=alumni.alma_mater,
+                    interviews=alumni.interviews,
+                    internships=alumni.internships,
+                    startups=alumni.startups,
+                    current_company=alumni.current_company,
+                    milestones=alumni.milestones,
+                    advice=alumni.advice
                     # Populate other fields from the User model
                 )
                 grouped_alumni[alumni.department].append(alumni_response)
-        
+
+        # Sort each department's list by likes (descending) and take top 5
+        for dept in grouped_alumni:
+            grouped_alumni[dept] = sorted(grouped_alumni[dept], key=lambda x: x.likes, reverse=True)[:5]
+
         return grouped_alumni
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
@@ -690,7 +836,9 @@ async def get_alumni_details(alumni_id: int, db: Session = Depends(get_db)):
     return alumni
 
 @app.get(f"{BASE_API_PATH}/alumni/{{alumni_id}}/like")
-async def like_alumni(alumni_id: int, db: Session = Depends(get_db)):
+async def like_alumni(alumni_id: int, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     alumni = db.query(User).filter(User.id == alumni_id).first()
     if alumni:
         alumni.likes += 1
@@ -727,7 +875,10 @@ async def upload_file(
     contact_id: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user)
 ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
@@ -769,7 +920,7 @@ async def get_user_connections(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    connections = db.query(User).join(user_connections, (user_connections.c.connected_user_id == User.id)).filter(user_connections.c.user_id == user.id).all()
+    connections = db.query(User).join(UserConnection, (UserConnection.c.connected_user_id == User.id)).filter(UserConnection.c.user_id == user.id).all()
     return connections
 
 @app.get(f"{BASE_API_PATH}/users/{{username}}/suggestions", response_model=List[UserResponse])
@@ -781,17 +932,30 @@ async def get_user_suggestions(username: str, db: Session = Depends(get_db)):
     return suggestions
 
 @app.post(f"{BASE_API_PATH}/users/{{username}}/follow/{{suggestion_username}}")
-async def follow_user(username: str, suggestion_username: str, db: Session = Depends(get_db)):
+async def follow_user(username: str, suggestion_username: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user or current_user.name != username:
+        raise HTTPException(status_code=403, detail="Not authorized to follow as this user")
     user = db.query(User).filter(User.name == username).first()
     suggestion_user = db.query(User).filter(User.name == suggestion_username).first()
     if not user or not suggestion_user:
         raise HTTPException(status_code=404, detail="User not found")
-    user.connections.append(suggestion_user)
-    db.commit()
-    return {"message": f"Followed {suggestion_username}"}
+    # Check if already following
+    existing_connection = db.query(UserConnection).filter(
+        UserConnection.user_id == user.id,
+        UserConnection.connected_user_id == suggestion_user.id
+    ).first()
+    if not existing_connection:
+        new_connection = UserConnection(user_id=user.id, connected_user_id=suggestion_user.id)
+        db.add(new_connection)
+        db.commit()
+        return {"message": f"Followed {suggestion_username}"}
+    else:
+        raise HTTPException(status_code=400, detail=f"Already following {suggestion_username}")
 
 @app.post(f"{BASE_API_PATH}/users/{{username}}/edit")
-async def edit_user_profile(username: str, request: Request, db: Session = Depends(get_db)):
+async def edit_user_profile(username: str, request: Request, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user or current_user.name != username:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this profile")
     form_data = await request.form()
     user = db.query(User).filter(User.name == username).first()
     if not user:
@@ -831,9 +995,9 @@ async def get_top_liked_questions(db: Session = Depends(get_db)):
             answers=answers
         ))
     return result
-
 @app.post(f"{BASE_API_PATH}/daily-spark/submit")
-async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depends(get_db)):
+async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    user_identifier = current_user.name if current_user else "Anonymous"
     if "question" in data.text.lower():
         new_question = DailySparkQuestion(question=data.text)
         db.add(new_question)
@@ -841,13 +1005,15 @@ async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depend
         today_question = db.query(DailySparkQuestion).order_by(DailySparkQuestion.created_at.desc()).first()
         if not today_question:
             raise HTTPException(status_code=404, detail="Today's question not found")
-        new_answer = DailySparkAnswer(question_id=today_question.id, text=data.text, user="Anonymous")
+        new_answer = DailySparkAnswer(question_id=today_question.id, text=data.text, user=user_identifier)
         db.add(new_answer)
     db.commit()
     return {"message": "Submission successful"}
 
 @app.post(f"{BASE_API_PATH}/daily-spark/upvote/{{question_id}}/{{answer_id}}")
-async def upvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db)):
+async def upvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     answer = db.query(DailySparkAnswer).filter(DailySparkAnswer.id == answer_id, DailySparkAnswer.question_id == question_id).first()
     if not answer:
         raise HTTPException(status_code=404, detail="Answer not found")
@@ -856,7 +1022,9 @@ async def upvote_answer(question_id: int, answer_id: int, db: Session = Depends(
     return {"votes": answer.votes}
 
 @app.post(f"{BASE_API_PATH}/daily-spark/downvote/{{question_id}}/{{answer_id}}")
-async def downvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db)):
+async def downvote_answer(question_id: int, answer_id: int, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     answer = db.query(DailySparkAnswer).filter(DailySparkAnswer.id == answer_id, DailySparkAnswer.question_id == question_id).first()
     if not answer:
         raise HTTPException(status_code=404, detail="Answer not found")
@@ -975,7 +1143,9 @@ async def search(term: str, db: Session = Depends(get_db)):
     return results
 
 @app.get(f"{BASE_API_PATH}/users/{{username}}/notifications", response_model=List[NotificationOut])
-async def get_user_notifications(username: str, db: Session = Depends(get_db)):
+async def get_user_notifications(username: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user or current_user.name != username:
+        raise HTTPException(status_code=403, detail="Not authorized to view these notifications")
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -983,47 +1153,38 @@ async def get_user_notifications(username: str, db: Session = Depends(get_db)):
     return notifications
 
 @app.post(f"{BASE_API_PATH}/notifications/mark-read")
-async def mark_notifications_read(notification_data: NotificationMarkRead, db: Session = Depends(get_db)):
+async def mark_notifications_read(notification_data: NotificationMarkRead, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     for notification_id in notification_data.notification_ids:
-        notification = db.query(Notification).filter(Notification.id == notification_id).first()
+        notification = db.query(Notification).filter(Notification.id == notification_id, Notification.user_id == current_user.id).first()
         if notification:
             notification.is_read = True
     db.commit()
     return {"message": "Notifications marked as read"}
 
 @app.post("/api/search-history")
-async def save_search_history(user_id: str, search_term: str, db: Session = Depends(get_db)):
+async def save_search_history(search_term: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
     """
     Save a search term to the user's search history.
     """
-    db_search_history = SearchHistory(user_id=user_id, search_term=search_term)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    db_search_history = SearchHistory(user_id=str(current_user.id), search_term=search_term)
     db.add(db_search_history)
     db.commit()
     db.refresh(db_search_history)
     return {"message": "Search term saved"}
 
 @app.get("/api/search-history/{user_id}", response_model=List[SearchHistoryItem])
-async def get_search_history(user_id: str, db: Session = Depends(get_db)):
+async def get_search_history(user_id: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
     """
     Retrieve the search history for a specific user.
     """
+    if not current_user or str(current_user.id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this search history")
     history = db.query(SearchHistory).filter(SearchHistory.user_id == user_id).order_by(SearchHistory.timestamp.desc()).all()
     return history
-
-async def get_current_user(db: Session = Depends(get_db), authorization: Optional[str] = Header(None)):
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        # Define or import verify_token function
-        def verify_token(db, token):
-            # Example implementation: Replace with your actual token verification logic
-            user = db.query(User).filter(User.id == token).first()
-            if not user:
-                raise HTTPException(status_code=401, detail="Invalid token")
-            return user
-
-        user = verify_token(db, token)
-        return user
-    return None
 
 @app.post(f"{BASE_API_PATH}/help/submit-issue", response_model=UserIssueResponse)
 async def submit_user_issue(issue: UserIssueCreate, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user)):
@@ -1074,7 +1235,9 @@ app.add_middleware(
 # --- Main Execution ---
 async def main():
     await initialize_database()
-    uvicorn.run("exp:app", host="127.0.0.1", port=8000, reload=True)
+    config = uvicorn.Config("main:app", host="127.0.0.1", port=8000, reload=True)
+    server = uvicorn.Server(config)
+    await server.serve()
 
 if __name__ == "__main__":
     asyncio.run(main())

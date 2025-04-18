@@ -12,10 +12,13 @@ DROP TABLE IF EXISTS daily_spark_answers;
 DROP TABLE IF EXISTS jobs;
 DROP TABLE IF EXISTS search_history;
 DROP TABLE IF EXISTS features;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS applied_hackathons;
+DROP TABLE IF EXISTS user_issues;
 
 
 -- Create users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
@@ -34,86 +37,108 @@ CREATE TABLE users (
     likes INTEGER DEFAULT 0,
     badges INTEGER DEFAULT 0,
     solved INTEGER DEFAULT 0,
-    links INTEGER DEFAULT 0
+    links INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
+CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+CREATE INDEX IF NOT EXISTS idx_users_name ON users (name);
 
-CREATE TABLE user_connections (
+CREATE TABLE IF NOT EXISTS user_connections (
     user_id INTEGER,
     connected_user_id INTEGER,
     PRIMARY KEY (user_id, connected_user_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (connected_user_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_user_connections_user_id ON user_connections (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_connections_connected_user_id ON user_connections (connected_user_id);
 
-CREATE TABLE career_fairs (
+CREATE TABLE IF NOT EXISTS career_fairs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     date DATE,
     location TEXT,
-    description TEXT
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE internships (
+CREATE TABLE IF NOT EXISTS internships (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     company TEXT,
     start_date DATE,
     end_date DATE,
-    description TEXT
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE hackathons (
+CREATE TABLE IF NOT EXISTS hackathons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     date DATE,
     location TEXT,
     description TEXT,
     theme TEXT,
-    prize_pool TEXT
+    prize_pool TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE questions (
+CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     question_text TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     likes INTEGER DEFAULT 0,
+    updated_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_questions_user_id ON questions (user_id);
 
-CREATE TABLE chat_contacts (
+CREATE TABLE IF NOT EXISTS chat_contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT
+    name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE chat_messages (
+CREATE TABLE IF NOT EXISTS chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     contact_id INTEGER,
     sender TEXT,
     text TEXT,
     file_path TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
     FOREIGN KEY (contact_id) REFERENCES chat_contacts(id)
 );
+CREATE INDEX IF NOT EXISTS idx_chat_messages_contact_id ON chat_messages (contact_id);
 
-CREATE TABLE daily_spark_questions (
+CREATE TABLE IF NOT EXISTS daily_spark_questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company TEXT,
     role TEXT,
     question TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE daily_spark_answers (
+CREATE TABLE IF NOT EXISTS daily_spark_answers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     question_id INTEGER,
     user TEXT,
     text TEXT NOT NULL,
     votes INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
     FOREIGN KEY (question_id) REFERENCES daily_spark_questions(id)
 );
+CREATE INDEX IF NOT EXISTS idx_daily_spark_answers_question_id ON daily_spark_answers (question_id);
 
-CREATE TABLE jobs (
+CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     company TEXT,
@@ -123,26 +148,29 @@ CREATE TABLE jobs (
     date_posted DATE,
     type TEXT,
     experience TEXT,
-    imageUrl TEXT
+    imageUrl TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
 
-CREATE TABLE search_history (
+CREATE TABLE IF NOT EXISTS search_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT,
+    user_id INTEGER,
     search_term TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_search_history_user_id ON search_history (user_id);
 
-CREATE TABLE features (
+CREATE TABLE IF NOT EXISTS features (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
     url TEXT,
-    icon TEXT
+    icon TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME
 );
-
--- schema.sql
--- ... other CREATE TABLE statements ...
 
 CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,8 +180,10 @@ CREATE TABLE IF NOT EXISTS notifications (
     related_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN DEFAULT FALSE,
+    updated_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications (user_id);
 
 CREATE TABLE IF NOT EXISTS applied_hackathons (
     user_id INTEGER,
@@ -163,6 +193,8 @@ CREATE TABLE IF NOT EXISTS applied_hackathons (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (hackathon_id) REFERENCES hackathons(id)
 );
+CREATE INDEX IF NOT EXISTS idx_applied_hackathons_user_id ON applied_hackathons (user_id);
+CREATE INDEX IF NOT EXISTS idx_applied_hackathons_hackathon_id ON applied_hackathons (hackathon_id);
 
 CREATE TABLE IF NOT EXISTS user_issues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -172,8 +204,11 @@ CREATE TABLE IF NOT EXISTS user_issues (
     message TEXT NOT NULL,
     submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status TEXT DEFAULT 'pending', -- e.g., 'pending', 'in_progress', 'resolved'
+    updated_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_user_issues_user_id ON user_issues (user_id);
+
 -- Insert Sample Data
 INSERT INTO users (name, email, activity_score, achievements, alumni_gems, department, profession, alma_mater, interviews, internships, startups, current_company, milestones, advice, likes, badges, solved, links)
 VALUES
@@ -214,12 +249,12 @@ VALUES
     ('Bob'),
     ('Charlie');
 
-INSERT INTO chat_messages (contact_id, sender, text, file_path, timestamp)
+INSERT INTO chat_messages (contact_id, sender, text, file_path)
 VALUES
-    (1, 'me', 'Hello Alice!', NULL, '2024-02-20 10:00:00'),
-    (1, 'Alice', 'Hi John!', NULL, '2024-02-20 10:05:00'),
-    (2, 'me', 'How is the project going?', NULL, '2024-02-21 14:30:00'),
-    (2, 'Bob', 'It is going well', 'report.pdf', '2024-02-21 15:00:00');
+    (1, 'me', 'Hello Alice!', NULL),
+    (1, 'Alice', 'Hi John!', NULL),
+    (2, 'me', 'How is the project going?', NULL),
+    (2, 'Bob', 'It is going well', 'report.pdf');
 
 INSERT INTO daily_spark_questions (company, role, question)
 VALUES
@@ -240,9 +275,9 @@ VALUES
 
 INSERT INTO search_history (user_id, search_term)
 VALUES
-    ('user123', 'Software Engineer'),
-    ('user123', 'Data Science'),
-    ('user456', 'Web Development');
+    (1, 'Software Engineer'),
+    (1, 'Data Science'),
+    (2, 'Web Development');
 
 INSERT INTO features (name, description, url, icon)
 VALUES
@@ -250,3 +285,17 @@ VALUES
     ('Connections', 'Manage your connections', 'connections.html', 'people'),
     ('Jobs', 'Find job opportunities', 'career-fairs.html', 'briefcase'),
     ('Events', 'See upcoming events', 'explore-hackathons.html', 'calendar');
+
+INSERT INTO notifications (user_id, message, type, related_id)
+VALUES
+    (1, 'Jane Smith connected with you!', 'connection', 2),
+    (2, 'New hackathon "AI Challenge" announced!', 'hackathon', 1);
+
+INSERT INTO applied_hackathons (user_id, hackathon_id)
+VALUES
+    (1, 1),
+    (2, 1);
+
+INSERT INTO user_issues (user_id, name, email, message)
+VALUES
+    (3, 'Bob Johnson', 'bob.johnson@example.com', 'The job listings are not loading.');

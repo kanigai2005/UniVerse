@@ -77,7 +77,7 @@
         .search-bar-container {
             display: flex;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem; /* Reduced margin */
             gap: 1rem;
             max-width: 500px;
             margin-left: auto;
@@ -168,11 +168,42 @@
             background-color: #e0e0e0;
         }
 
+        #searchHistoryListContainer {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: none; /* Initially hidden */
+        }
+
+        #searchHistoryListContainer h3 {
+            color: #0a66c2;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #searchHistoryListContainer ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #searchHistoryListContainer li {
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        #searchHistoryListContainer li:last-child {
+            border-bottom: none;
+        }
+
         .todays-feed {
             background-color: #f9f9f9;
             padding: 1.5rem;
             border-radius: 8px;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem; /* Reduced margin */
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -209,19 +240,19 @@
             background-color: #e8f0fe;
             padding: 1.5rem;
             border-radius: 8px;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem; /* Reduced margin */
         }
 
         .event-section h2 {
             color: #0a66c2;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1rem; /* Reduced margin */
             font-size: 1.4rem;
         }
 
         .event-list-container {
             display: flex;
             overflow-x: auto;
-            gap: 1.2rem;
+            gap: 1rem; /* Reduced gap */
         }
 
         .event-card {
@@ -232,6 +263,11 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            margin-right: 0.5rem; /* Added margin */
+        }
+
+        .event-card:last-child {
+            margin-right: 0;
         }
 
         .event-card:hover {
@@ -240,7 +276,7 @@
         }
 
         .event-card h3 {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem; /* Reduced margin */
             color: #0a66c2;
             font-size: 1rem;
         }
@@ -253,13 +289,13 @@
         .features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1rem; /* Reduced gap */
+            margin-bottom: 1rem; /* Reduced margin */
         }
 
         .feature {
             background-color: white;
-            padding: 1.5rem;
+            padding: 1.2rem; /* Reduced padding */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -272,27 +308,27 @@
         }
 
         .feature i {
-            font-size: 2rem;
+            font-size: 1.8rem; /* Reduced size */
             color: #0a66c2;
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.6rem; /* Reduced margin */
         }
 
         .feature h3 {
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.4rem; /* Reduced margin */
             color: #2c3e50;
-            font-size: 1.1rem;
+            font-size: 1rem; /* Reduced size */
         }
 
         .feature p {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.8rem; /* Reduced size */
         }
 
         .footer {
             background-color: #2f4f4f;
             color: #e0e0e0;
             text-align: center;
-            padding: 1.5rem 0;
+            padding: 1rem 0; /* Reduced padding */
             box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
             font-size: 0.9rem;
         }
@@ -303,8 +339,8 @@
         <div class="nav-icons">
             <a href="home.html"><i class="fas fa-home"></i></a>
             <a href="explore.html"><i class="fas fa-compass"></i></a>
-            <a href="Notification page.html"><i class="fas fa-bell"></i></a>
-            <a href="Help Page.html"><i class="fas fa-question-circle"></i></a>
+            <a href="notifications.html"><i class="fas fa-bell"></i></a>
+            <a href="help.html"><i class="fas fa-question-circle"></i></a>
             <a href="profile.html"><i class="fas fa-user"></i></a>
             <a href="Login Page.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
         </div>
@@ -325,6 +361,12 @@
                 </div>
             </div>
             <button class="view-history-btn" onclick="viewSearchHistory()">View History</button>
+        </div>
+
+        <div id="searchHistoryListContainer">
+            <h3>Search History</h3>
+            <ul>
+                </ul>
         </div>
 
         <div class="todays-feed" id="todaysFeedContainer">
@@ -348,7 +390,6 @@
         <p>&copy; 2025 UniVerse. All rights reserved.</p>
     </footer>
 
-    <script src="static/home.js">
-            </script>
+    <script src="static/home.js"></script>
 </body>
 </html>

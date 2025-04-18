@@ -6,8 +6,7 @@ const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
 const searchResultsList = searchResults.querySelector('ul');
 let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
-let currentUser = 'user123'; // Replace with actual user ID.  You'd get this from your auth system.
-
+let currentUser = 'user123'; // Replace with actual user ID. You'd get this from your auth system.
 
 searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase();
@@ -62,7 +61,7 @@ function addToSearchHistory(userId, searchTerm) {
     })
     .catch(error => {
         console.error('Error saving search term:', error);
-        alert('Failed to save search term.  Please try again.'); // Inform the user.
+        alert('Failed to save search term. Please try again.'); // Inform the user.
     });
 }
 
@@ -73,85 +72,201 @@ document.addEventListener('click', (event) => {
 });
 
 function viewSearchHistory() {
+    const searchHistoryListContainer = document.getElementById('searchHistoryListContainer');
+    if (!searchHistoryListContainer) {
+        console.error('Search history container not found in HTML.');
+        return;
+    }
+    searchHistoryListContainer.innerHTML = ''; // Clear previous history
+
     fetch(`/api/search-history/${currentUser}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to retrieve search history');
+                throw new Error(`Failed to retrieve search history: ${response.status}`);
             }
             return response.json();
         })
         .then(history => {
-            if (history && history.length > 0) {
-                const historyItems = history.map(item => item.searchTerm).join('\n');
-                alert("Search History:\n" + historyItems);
+            console.log('Search History Data:', history); // **Crucial: Inspect the data**
+            if (history && Array.isArray(history)) {
+                const ul = document.createElement('ul');
+                history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item.searchTerm; // **Assuming 'searchTerm' is the correct property**
+                    ul.appendChild(li);
+                });
+                searchHistoryListContainer.appendChild(ul);
+                searchHistoryListContainer.style.display = 'block'; // Show the container
             } else {
-                alert("Your search history is empty.");
+                searchHistoryListContainer.innerHTML = '<p>Your search history is empty.</p>';
+                searchHistoryListContainer.style.display = 'block'; // Show the container
             }
         })
         .catch(error => {
             console.error('Error retrieving search history:', error);
-            alert("Failed to retrieve search history.");
+            searchHistoryListContainer.innerHTML = `<p>Failed to retrieve search history: ${error.message}</p>`;
+            searchHistoryListContainer.style.display = 'block'; // Show the container
         });
 }
-
-
-// Fetch Today's Feed
-fetch('/api/todays-feed')
-    .then(response => response.json())
-    .then(data => {
-        if (data && data.question) { // Check if data and data.question are valid
-            document.getElementById('dailySparkContent').innerHTML = `<p><strong>Daily Spark Question:</strong> ${data.data.question}</p>`;
-        } else {
-            document.getElementById('dailySparkContent').innerHTML = `<p>No daily spark question available today.</p>`;
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching today\'s feed:', error);
-        document.getElementById('dailySparkContent').innerHTML = `<p>Failed to load daily spark question.</p>`;
-    });
 
 // Fetch Upcoming Events
 fetch('/api/events')
     .then(response => response.json())
     .then(events => {
+        console.log('Events Data:', events); // For debugging
         const eventList = document.getElementById('eventList');
-        eventList.innerHTML = ''; // Clear previous content
-        if (events && Array.isArray(events)) { //check if events is valid
-            events.forEach(event => {
-                const eventCard = document.createElement('div');
-                eventCard.className = 'event-card';
-                eventCard.innerHTML = `<h3>${event.name}</h3><p>${event.data.description}</p>`;
-                eventList.appendChild(eventCard);
-            });
+        if (eventList) {
+            eventList.innerHTML = ''; // Clear previous content
+            if (events && Array.isArray(events)) {
+                events.forEach(event => {
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'event-card';
+                    let eventName = 'Upcoming Event'; // Default title
+                    if (event && typeof event === 'object') {
+                        if (event.hasOwnProperty('name')) {
+                            eventName = event.name;
+                        } else if (event.hasOwnProperty('title')) { // Check for 'title' as an alternative
+                            eventName = event.title;
+                        } else if (event.data && typeof event.data === 'object' && event.data.hasOwnProperty('name')) { // Check nested 'data.name'
+                            eventName = event.data.name;
+                        } else if (event.data && typeof event.data === 'object' && event.data.hasOwnProperty('title')) { // Check nested 'data.title'
+                            eventName = event.data.title;
+                        } else {
+                            console.warn('Event object is missing a recognizable title property:', event);
+                        }
+                    } else {
+                        console.warn('Invalid event object:', event);
+                    }
+                    const eventDescription = event.data && event.data.description ? event.data.description : 'No description available.';
+                    eventCard.innerHTML = `<h3>${eventName}</h3><p>${eventDescription}</p>`;
+                    eventList.appendChild(eventCard);
+                });
+            } else {
+                eventList.innerHTML = `<p>No upcoming events found.</p>`;
+            }
         } else {
-            eventList.innerHTML = `<p>No upcoming events found.</p>`;
+            console.error('Element with ID "eventList" not found.');
         }
     })
     .catch(error => {
         console.error('Error fetching events:', error);
-        document.getElementById('eventList').innerHTML = `<p>Failed to load events.</p>`;
+        const eventList = document.getElementById('eventList');
+        if (eventList) {
+            eventList.innerHTML = `<p>Failed to load events.</p>`;
+        }
     });
 
-// Fetch Features
+// Fetch Today's Feed
+// Fetch Today's Feed
+// Fetch Today's Feed
+fetch('/api/todays-feed')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Daily Spark Data:', data); // For debugging
+        const dailySparkContent = document.getElementById('dailySparkContent');
+        if (dailySparkContent) {
+            if (data && typeof data === 'object' && data.hasOwnProperty('question')) {
+                dailySparkContent.innerHTML = `<p><strong>Daily Spark Question:</strong> ${data.question}</p>`;
+            } else {
+                console.warn('Today\'s feed data is missing the "question" property or is not an object:', data);
+                dailySparkContent.innerHTML = `<p>No daily spark question available today.</p>`;
+            }
+        } else {
+            console.error('Element with ID "dailySparkContent" not found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching today\'s feed:', error);
+        const dailySparkContent = document.getElementById('dailySparkContent');
+        if (dailySparkContent) {
+            dailySparkContent.innerHTML = `<p>Failed to load daily spark question.</p>`;
+        }
+    });
+
+// Fetch Upcoming Events
+// Fetch Upcoming Events
+fetch('/api/events')
+    .then(response => response.json())
+    .then(events => {
+        console.log('Events Data:', events); // For debugging
+        const eventList = document.getElementById('eventList');
+        if (eventList) {
+            eventList.innerHTML = ''; // Clear previous content
+            if (events && Array.isArray(events)) {
+                events.forEach(item => {
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'event-card';
+                    let eventName = 'Upcoming Event'; // Default title
+
+                    if (item && typeof item === 'object' && item.hasOwnProperty('type') && item.hasOwnProperty('data') && typeof item.data === 'object') {
+                        if (item.type === 'internship' && item.data.hasOwnProperty('title')) {
+                            eventName = item.data.title;
+                        } else if (item.type === 'hackathon' && item.data.hasOwnProperty('name')) {
+                            eventName = item.data.name;
+                        } else if (item.type === 'job' && item.data.hasOwnProperty('title')) {
+                            eventName = item.data.title;
+                        } else {
+                            console.warn('Event data missing recognizable title for type:', item.type, item.data);
+                        }
+
+                        let eventDescription = item.data.description || 'No description available.';
+                        eventCard.innerHTML = `<h3>${eventName}</h3><p>${eventDescription}</p>`;
+                        eventList.appendChild(eventCard);
+                    } else {
+                        console.warn('Invalid event item structure:', item);
+                    }
+                });
+            } else {
+                eventList.innerHTML = `<p>No upcoming events found.</p>`;
+            }
+        } else {
+            console.error('Element with ID "eventList" not found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching events:', error);
+        const eventList = document.getElementById('eventList');
+        if (eventList) {
+            eventList.innerHTML = `<p>Failed to load events.</p>`;
+        }
+    });
+    
+// Fetch Features (No changes needed based on previous code)
 fetch('/api/features')
     .then(response => response.json())
     .then(features => {
+        console.log('Features Data:', features); // For debugging
         const featuresContainer = document.getElementById('featuresContainer');
-        featuresContainer.innerHTML = ''; // Clear previous content.
-        if (features && Array.isArray(features)) { // Check if features is an array
-            features.forEach(feature => {
-                const featureElement = document.createElement('div');
-                featureElement.className = 'feature';
-                featureElement.onclick = () => navigateTo(feature.url); // Assuming each feature has a 'url'
-                featureElement.innerHTML = `<i class="${feature.icon}"></i><h3>${feature.name}</h3><p>${feature.description}</p>`;
-                featuresContainer.appendChild(featureElement);
-            });
+        if (featuresContainer) {
+            featuresContainer.innerHTML = ''; // Clear previous content.
+            if (features && Array.isArray(features)) {
+                features.forEach(feature => {
+                    const featureElement = document.createElement('div');
+                    featureElement.className = 'feature';
+                    featureElement.onclick = () => navigateTo(feature.url); // Assuming each feature has a 'url'
+                    featureElement.innerHTML = `<i class="${feature.icon}"></i><h3>${feature.name}</h3><p>${feature.description}</p>`;
+                    featuresContainer.appendChild(featureElement);
+                });
+            } else {
+                console.warn('/api/features did not return an array:', features);
+                featuresContainer.innerHTML = `<p>Failed to load features.</p>`;
+            }
         } else {
-            console.warn('/api/features did not return an array:', features);
-            featuresContainer.innerHTML = `<p>Failed to load features.</p>`;
+            console.error('Element with ID "featuresContainer" not found.');
         }
     })
     .catch(error => {
         console.error('Error fetching features:', error);
-        document.getElementById('featuresContainer').innerHTML = `<p>Failed to load features.</p>`;
+        const featuresContainer = document.getElementById('featuresContainer');
+        if (featuresContainer) {
+            featuresContainer.innerHTML = `<p>Failed to load features.</p>`;
+        }
     });
+
+// Example of how you might trigger viewSearchHistory (you'll need a button in your HTML)
+// document.addEventListener('DOMContentLoaded', () => {
+//     const viewHistoryButton = document.getElementById('viewSearchHistoryButton');
+//     if (viewHistoryButton) {
+//         viewHistoryButton.addEventListener('click', viewSearchHistory);
+//     }
+// });
