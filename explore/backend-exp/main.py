@@ -14,8 +14,9 @@ import secrets
 from datetime import timedelta
 from sqlalchemy.sql import func
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn  # Import uvicorn here
 
-# Load environment variables (consider using a .env file for sensitive data)
+# Load environment variables
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///universe.db")
 
 # Database setup
@@ -38,7 +39,7 @@ Base.metadata.create_all(bind=engine)
 # FastAPI app setup
 app = FastAPI()
 
-# CORS middleware (adjust origins as needed for production)
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -56,7 +57,7 @@ templates = Jinja2Templates(directory=frontend_dir)
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Models
+# Models (same as before)
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
@@ -88,7 +89,7 @@ class ResetPasswordRequest(BaseModel):
             raise ValueError("Password must be at least 8 characters long")
         return value
 
-# Database Dependency
+# Database Dependency (same as before)
 def get_db():
     db = SessionLocal()
     try:
@@ -96,7 +97,7 @@ def get_db():
     finally:
         db.close()
 
-# --- Function to get the current logged-in user (for integration with exp.py) ---
+# --- Function to get the current logged-in user ID (for integration with exp.py) ---
 async def get_logged_in_user_id_for_exp(request: Request, db: Session = Depends(get_db)):
     """
     This is a simplified example. In a real application, you would use
@@ -115,7 +116,7 @@ async def get_logged_in_user_id_for_exp(request: Request, db: Session = Depends(
             return str(user.id)  # Return the user ID as a string
     return None
 
-# --- Routes ---
+# --- Routes (same as before) ---
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, error: str = None, message: str = None):
     return templates.TemplateResponse("login.html", {"request": request, "error": error, "message": message})
@@ -132,12 +133,12 @@ async def login(
         params = {"error": "Invalid username or password"}
         return RedirectResponse(url=f"/?{urlencode(params)}", status_code=302)
 
-    # Redirect to the home page served by exp.py
-    return RedirectResponse(url="http://localhost:8001/home", status_code=302)
+    # Redirect to the home page served by exp.py, passing the username
+    return RedirectResponse(url=f"http://localhost:8001/home?username={username}", status_code=302)
 
 @app.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
-    # In a real application, you would check if the user is authenticated
+    # In a real application, you would securely verify the user's session
     return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/register", response_class=HTMLResponse)
@@ -225,3 +226,7 @@ async def read_user(user_id: int, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+if __name__ == "__main__":
+    print("About to start Uvicorn for main.py...")
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

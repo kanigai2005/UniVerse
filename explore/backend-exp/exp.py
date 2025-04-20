@@ -31,12 +31,16 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+
+
 # --- Database Setup ---
 DATABASE_URL = f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'explore.db')}"
 logger.info(f"Database URL: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+Base.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
@@ -136,9 +140,9 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
     contact_id = Column(Integer, ForeignKey("chat_contacts.id"))
-    sender = Column(String)    # 'me' or 'other'
+    sender = Column(String)     # 'me' or 'other'
     text = Column(String, nullable=True)
-    file_path = Column(String, nullable=True)    # Store file path
+    file_path = Column(String, nullable=True)     # Store file path
     timestamp = Column(DateTime, default=datetime.utcnow)
     contact = relationship("ChatContact", back_populates="messages")
 
@@ -161,7 +165,7 @@ class DailySparkAnswer(Base):
     votes = Column(Integer, default=0)
     question = relationship("DailySparkQuestion", back_populates="answers")
 
-class Job(Base):  # Added Job model
+class Job(Base):   # Added Job model
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
@@ -177,7 +181,7 @@ class Job(Base):  # Added Job model
 class SearchHistory(Base):
     __tablename__ = "search_history"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, index=True)  # Store user ID as string
+    user_id = Column(String, index=True)   # Store user ID as string
     search_term = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
@@ -309,7 +313,7 @@ class HackathonOut(BaseModel):
     prize_pool: Optional[str] = None
 
     class Config:
-        from_attributes = True  # Use this instead of orm_mode in Pydantic v2
+        from_attributes = True   # Use this instead of orm_mode in Pydantic v2
 
 
 # --- Pydantic Models for Request/Response ---
@@ -475,7 +479,7 @@ async def send_hackathon_reminders(db: Session):
 # asyncio.create_task(send_hackathon_reminders(SessionLocal()))
 
 def create_new_hackathon_notifications(db: Session, hackathon: Hackathon):
-    users = db.query(User).all()  # Or filter based on interests
+    users = db.query(User).all()   # Or filter based on interests
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -487,7 +491,7 @@ def create_new_hackathon_notifications(db: Session, hackathon: Hackathon):
     db.commit()
 
 def create_new_job_notifications(db: Session, job: Job):
-    users = db.query(User).all()  # Or filter based on profession/department
+    users = db.query(User).all()   # Or filter based on profession/department
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -499,7 +503,7 @@ def create_new_job_notifications(db: Session, job: Job):
     db.commit()
 
 def create_new_internship_notifications(db: Session, internship: Internship):
-    users = db.query(User).all()  # Or filter based on department/interest
+    users = db.query(User).all()   # Or filter based on department/interest
     for user in users:
         notification = Notification(
             user_id=user.id,
@@ -541,9 +545,14 @@ async def serve_home_html():
     return serve_file(home_html_path)
 
 @app.get("/home", response_class=HTMLResponse)
-async def home(request: Request):
-    # You might need to handle authentication here in exp.py
-    return templates.TemplateResponse("home.html", {"request": request})
+async def home(request: Request, username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if user:
+        logged_in_user_id = user.id
+        print(f"[exp.py] Serving home for user ID: {logged_in_user_id}")
+        return templates.TemplateResponse("home.html", {"request": request, "user_id": logged_in_user_id})
+    else:
+        return HTMLResponse("User not found.", status_code=404)
 
 @app.get("/dailyspark.html", response_class=FileResponse)
 async def serve_daily_spark():
@@ -587,7 +596,10 @@ async def serve_chat_html():
 
 @app.get("/profile.html", response_class=HTMLResponse)
 async def serve_profile(request: Request):
-    return templates.TemplateResponse("profile.html", {"request": request})
+    # You might need to fetch user-specific data based on LOGGED_IN_USER_ID here
+    logged_in_user_id = os.environ.get("LOGGED_IN_USER_ID")
+    logger.info(f"[exp.py] Serving profile for user ID: {logged_in_user_id}")
+    return templates.TemplateResponse("profile.html", {"request": request, "user_id": logged_in_user_id})
 
 @app.get("/connection.html", response_class=FileResponse)
 async def serve_connections():
@@ -610,8 +622,9 @@ async def get_popular_questions(db: Session = Depends(get_db)):
     return questions
 
 @app.post(f"{BASE_API_PATH}/questions", response_model=QuestionOut)
-async def create_question(question: QuestionCreate, db: Session = Depends(get_db), current_user_id: Optional[int] = None): # Expecting user ID
-    user_id = current_user_id if current_user_id else 1 # Default to 1 if not provided
+async def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
+    logged_in_user_id = os.environ.get("LOGGED_IN_USER_ID")
+    user_id = int(logged_in_user_id) if logged_in_user_id else 1 # Default to 1 if not available
     db_question = Question(question_text=question.question_text, user_id=user_id)
     db.add(db_question)
     db.commit()
@@ -682,7 +695,7 @@ async def get_top_liked_alumni(db: Session = Depends(get_db)):
         # Group the alumni by department
         grouped_alumni: Dict[str, List[AlumniResponse]] = {}
         for alumni in top_alumni:
-            if alumni.department:  # Only process alumni with a department
+            if alumni.department:   # Only process alumni with a department
                 if alumni.department not in grouped_alumni:
                     grouped_alumni[alumni.department] = []
 
@@ -854,8 +867,9 @@ async def get_top_liked_questions(db: Session = Depends(get_db)):
     return result
 
 @app.post(f"{BASE_API_PATH}/daily-spark/submit")
-async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depends(get_db), current_user_id: Optional[int] = None):
-    user = f"User-{current_user_id}" if current_user_id else "Anonymous"
+async def submit_question_or_answer(data: DailySparkSubmit, db: Session = Depends(get_db)):
+    logged_in_user_id = os.environ.get("LOGGED_IN_USER_ID")
+    user = f"User-{logged_in_user_id}" if logged_in_user_id else "Anonymous"
     if "question" in data.text.lower():
         new_question = DailySparkQuestion(question=data.text)
         db.add(new_question)
@@ -889,9 +903,9 @@ async def downvote_answer(question_id: int, answer_id: int, db: Session = Depend
 # --- New API Endpoints for Hackathons, Feed, and Jobs ---
 
 @app.get("/api/todays-feed", response_model=DailySparkQuestionOut)
-async def get_todays_question(db: Session = Depends(get_db)):
+async def get_todays_question_feed(db: Session = Depends(get_db)):
     """
-    Retrieve today's Daily Spark question.
+    Retrieve today's Daily Spark question for the feed.
     """
     today_question = db.query(DailySparkQuestion).order_by(DailySparkQuestion.created_at.desc()).first()
     if not today_question:
@@ -907,7 +921,7 @@ async def get_todays_question(db: Session = Depends(get_db)):
 
 
 @app.get(f"{BASE_API_PATH}/events", response_model=List[dict])
-async def get_todays_feed(db: Session = Depends(get_db)):
+async def get_todays_feed_events(db: Session = Depends(get_db)):
     #  "Today's feed" is subjective.  Here's a basic approach:
     #  1.  Recent Internships
     #  2.  Recent Hackathons
@@ -969,7 +983,7 @@ async def get_todays_feed(db: Session = Depends(get_db)):
 
 
 @app.get("/api/features", response_model=List[FeatureOut])
-async def get_features(db: Session = Depends(get_db)):
+async def get_features_list(db: Session = Depends(get_db)):
     """
     Retrieve all features.
     """
@@ -977,7 +991,7 @@ async def get_features(db: Session = Depends(get_db)):
     return features
 
 @app.get("/api/search", response_model=List[SearchResult])
-async def search(term: str, db: Session = Depends(get_db)):
+async def search_resources(term: str, db: Session = Depends(get_db)):
     """
     Search for resources (users, events, jobs, etc.) based on a term.
     """
@@ -998,7 +1012,7 @@ async def search(term: str, db: Session = Depends(get_db)):
     return results
 
 @app.get(f"{BASE_API_PATH}/users/{{username}}/notifications", response_model=List[NotificationOut])
-async def get_user_notifications(username: str, db: Session = Depends(get_db)):
+async def get_user_notifications_list(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1006,16 +1020,16 @@ async def get_user_notifications(username: str, db: Session = Depends(get_db)):
     return notifications
 
 @app.post(f"{BASE_API_PATH}/notifications/mark-read")
-async def mark_notifications_read(notification_data: NotificationMarkRead, db: Session = Depends(get_db)):
+async def mark_notifications_as_read(notification_data: NotificationMarkRead, db: Session = Depends(get_db)):
     for notification_id in notification_data.notification_ids:
         notification = db.query(Notification).filter(Notification.id == notification_id).first()
         if notification:
-            notification.is_read = 1  # Assuming 1 represents True in your DB
+            notification.is_read = 1   # Assuming 1 represents True in your DB
     db.commit()
     return {"message": "Notifications marked as read"}
 
 @app.post("/api/search-history")
-async def save_search_history(
+async def save_user_search_history(
     search_term: str,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(lambda db: get_current_user(db)) # Simplified dependency
@@ -1033,7 +1047,7 @@ async def save_search_history(
         raise HTTPException(status_code=401, detail="Not authenticated")
 
 @app.get("/api/search-history", response_model=List[SearchHistoryItem])
-async def get_search_history(db: Session = Depends(get_db), current_user: Optional[User] = Depends(lambda db: get_current_user(db))):
+async def get_user_search_history(db: Session = Depends(get_db), current_user: Optional[User] = Depends(lambda db: get_current_user(db))):
     """
     Retrieve the search history for the current user.
     """
@@ -1049,18 +1063,20 @@ async def get_current_user(db: Session = Depends(get_db), authorization: Optiona
         # --- Placeholder for Token Verification ---
         # In a real application, you would verify the token against your authentication system.
         # For this example, we'll just try to find a user with the token as their ID.
-        try:
-            user = db.query(User).filter(User.id == int(token)).first()
-            return user
-        except ValueError:
-            return None
-        except Exception as e:
-            logger.error(f"Error during token verification: {e}")
-            return None
+        logged_in_user_id_str = os.environ.get("LOGGED_IN_USER_ID")
+        if logged_in_user_id_str:
+            try:
+                user = db.query(User).filter(User.id == int(logged_in_user_id_str)).first()
+                return user
+            except ValueError:
+                return None
+            except Exception as e:
+                logger.error(f"Error during fake token verification: {e}")
+                return None
     return None
 
 @app.post(f"{BASE_API_PATH}/help/submit-issue", response_model=UserIssueResponse)
-async def submit_user_issue(issue: UserIssueCreate, db: Session = Depends(get_db), current_user: Optional[User] = Depends(lambda db: get_current_user(db))):
+async def submit_user_issue_report(issue: UserIssueCreate, db: Session = Depends(get_db), current_user: Optional[User] = Depends(lambda db: get_current_user(db))):
     user_id = current_user.id if current_user else None
     db_issue = UserIssue(
         user_id=user_id,
