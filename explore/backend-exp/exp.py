@@ -262,9 +262,9 @@ class UserResponse(BaseModel):
     milestones: str
     advice: str
     likes: int
-    badges: Optional[str] = None
+    badges: Optional[int] = None
     solved: Optional[int] = None
-    links: Optional[str] = None
+    links: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -595,12 +595,14 @@ async def serve_chat_html():
     return serve_file(chat_html_path)
 
 @app.get("/profile.html", response_class=HTMLResponse)
-async def serve_profile(request: Request):
-    # You might need to fetch user-specific data based on LOGGED_IN_USER_ID here
-    logged_in_user_id = os.environ.get("LOGGED_IN_USER_ID")
-    logger.info(f"[exp.py] Serving profile for user ID: {logged_in_user_id}")
-    return templates.TemplateResponse("profile.html", {"request": request, "user_id": logged_in_user_id})
-
+async def serve_profile(request: Request, username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.name == username).first()
+    if user:
+        logger.info(f"[exp.py] Serving profile for user ID: {user.id}")
+        return templates.TemplateResponse("profile.html", {"request": request, "user_id": user.id})
+    else:
+        return HTMLResponse("User not found.", status_code=404)
+    
 @app.get("/connection.html", response_class=FileResponse)
 async def serve_connections():
     return serve_file(connections_html_path)
@@ -676,8 +678,8 @@ async def get_leaderboard(db: Session = Depends(get_db)):
         for user in users
     ]
 
-@app.get(f"{BASE_API_PATH}/user/{{username}}", response_model=UserResponse)
-async def get_user(username: str, db: Session = Depends(get_db)):
+@app.get(f"{BASE_API_PATH}/users/{{username}}", response_model=UserResponse)
+async def get_user_profile(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -803,8 +805,9 @@ async def get_user_connections(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    connections = db.query(User).join(UserConnection, (UserConnection.c.connected_user_id == User.id)).filter(UserConnection.c.user_id == user.id).all()
-    return connections
+    # Use the relationship to find connected users
+    connected_users = [conn.connected_user for conn in user.connections]
+    return connected_users
 
 @app.get(f"{BASE_API_PATH}/users/{{username}}/suggestions", response_model=List[UserResponse])
 async def get_user_suggestions(username: str, db: Session = Depends(get_db)):
@@ -820,7 +823,7 @@ async def follow_user(username: str, suggestion_username: str, db: Session = Dep
     suggestion_user = db.query(User).filter(User.name == suggestion_username).first()
     if not user or not suggestion_user:
         raise HTTPException(status_code=404, detail="User not found")
-    user.connections.append(suggestion_user)
+    user.connections.append(UserConnection(connected_user=suggestion_user))
     db.commit()
     return {"message": f"Followed {suggestion_username}"}
 

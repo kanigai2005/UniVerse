@@ -8,6 +8,22 @@ const searchResultsList = searchResults.querySelector('ul');
 let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
 let currentUser = 'user123'; // Replace with actual user ID. You'd get this from your auth system.
 
+document.addEventListener('DOMContentLoaded', () => {
+    const profileLink = document.querySelector('.top-nav a[href="profile.html"]');
+    const loggedInUserName = localStorage.getItem('username');
+
+    if (profileLink) {
+        if (loggedInUserName) {
+            profileLink.href = `/profile.html?username=${encodeURIComponent(loggedInUserName)}`;
+        } else {
+            // If no username, you might want to disable the link or redirect to login
+            profileLink.href = '/login.html'; // Or your login page URL
+        }
+    } else {
+        console.error('Profile link not found in the top navigation.');
+    }
+});
+
 searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase();
     fetch(`/api/search?term=${searchTerm}`) // Assuming you have an API endpoint for search
@@ -157,8 +173,6 @@ fetch('/api/events')
     });
 
 // Fetch Today's Feed
-// Fetch Today's Feed
-// Fetch Today's Feed
 fetch('/api/todays-feed')
     .then(response => response.json())
     .then(data => {
@@ -183,54 +197,8 @@ fetch('/api/todays-feed')
         }
     });
 
-// Fetch Upcoming Events
-// Fetch Upcoming Events
-fetch('/api/events')
-    .then(response => response.json())
-    .then(events => {
-        console.log('Events Data:', events); // For debugging
-        const eventList = document.getElementById('eventList');
-        if (eventList) {
-            eventList.innerHTML = ''; // Clear previous content
-            if (events && Array.isArray(events)) {
-                events.forEach(item => {
-                    const eventCard = document.createElement('div');
-                    eventCard.className = 'event-card';
-                    let eventName = 'Upcoming Event'; // Default title
+// Fetch Upcoming Events (Redundant fetch removed)
 
-                    if (item && typeof item === 'object' && item.hasOwnProperty('type') && item.hasOwnProperty('data') && typeof item.data === 'object') {
-                        if (item.type === 'internship' && item.data.hasOwnProperty('title')) {
-                            eventName = item.data.title;
-                        } else if (item.type === 'hackathon' && item.data.hasOwnProperty('name')) {
-                            eventName = item.data.name;
-                        } else if (item.type === 'job' && item.data.hasOwnProperty('title')) {
-                            eventName = item.data.title;
-                        } else {
-                            console.warn('Event data missing recognizable title for type:', item.type, item.data);
-                        }
-
-                        let eventDescription = item.data.description || 'No description available.';
-                        eventCard.innerHTML = `<h3>${eventName}</h3><p>${eventDescription}</p>`;
-                        eventList.appendChild(eventCard);
-                    } else {
-                        console.warn('Invalid event item structure:', item);
-                    }
-                });
-            } else {
-                eventList.innerHTML = `<p>No upcoming events found.</p>`;
-            }
-        } else {
-            console.error('Element with ID "eventList" not found.');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching events:', error);
-        const eventList = document.getElementById('eventList');
-        if (eventList) {
-            eventList.innerHTML = `<p>Failed to load events.</p>`;
-        }
-    });
-    
 // Fetch Features (No changes needed based on previous code)
 fetch('/api/features')
     .then(response => response.json())
