@@ -53,57 +53,77 @@
             border-radius: 10px;
             max-width: 500px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none; /* Initially hidden */
         }
 
-        form input, form button {
+        #add-internship h2 {
+            margin-top: 0;
+        }
+
+        #add-internship label {
             display: block;
-            width: 90%;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #add-internship input[type="text"],
+        #add-internship input[type="url"],
+        #add-internship textarea {
+            display: block;
+            width: calc(100% - 22px);
             padding: 10px;
-            margin: 10px auto;
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            box-sizing: border-box;
         }
 
-        form button {
+        #add-internship button {
             background: #555555;
             color: white;
             border: none;
             cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
         }
 
-        form button:hover {
+        #add-internship button:hover {
             background: #444444;
         }
 
         /* Featured Internships */
-        #featured-internships {
+        #internship-listings {
             max-width: 90%;
             margin: 20px auto;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 20px;
         }
 
-        .internship-box {
+        #internships-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .internship-item {
             background: white;
             padding: 15px;
-            width: 250px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             cursor: pointer;
-            text-align: center;
+            text-align: left;
         }
 
-        .internship-box:hover {
+        .internship-item:hover {
             background: #e3e3e3;
         }
 
-        .internship-box img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            margin-bottom: 10px;
+        .internship-item h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
         }
 
         /* Popup styles */
@@ -119,7 +139,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             width: 90%;
             max-width: 400px;
-            text-align: center;
+            text-align: left;
             z-index: 1000;
             animation: fadeIn 0.3s ease-in-out;
         }
@@ -165,7 +185,7 @@
         }
 
         #popup-link {
-            display: inline-block;
+            display: block;
             margin-top: 15px;
             padding: 10px;
             background: #555;
@@ -173,10 +193,25 @@
             text-decoration: none;
             border-radius: 5px;
             font-weight: bold;
+            text-align: center;
         }
 
         #popup-link:hover {
             background: #333;
+        }
+
+        #add-internship-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        #add-internship-button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
@@ -188,14 +223,34 @@
 </header>
 
 <main>
+    <button id="add-internship-button">Add Internship</button>
+
     <section id="add-internship">
-        <h2>Add an Internship</h2>
+        <h2>Suggest a New Internship</h2>
         <form id="internship-form">
-            <input type="text" id="company" placeholder="Company Name" required>
-            <input type="text" id="role" placeholder="Internship Role" required>
-            <input type="text" id="location" placeholder="Location" required>
-            <input type="url" id="link" placeholder="Application Link" required>
-            <button type="submit">Submit</button>
+            <label for="company">Company Name:</label>
+            <input type="text" id="new-company" placeholder="Company Name" required>
+
+            <label for="role">Internship Role:</label>
+            <input type="text" id="new-role" placeholder="Internship Role" required>
+
+            <label for="location">Location:</label>
+            <input type="text" id="new-location" placeholder="Location" required>
+
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="new-start-date" required>
+
+            <label for="end_date">End Date:</label>
+            <input type="date" id="new-end-date" required>
+
+            <label for="description">Description:</label>
+            <textarea id="new-description" placeholder="Internship Description"></textarea>
+
+            <label for="link">Application Link:</label>
+            <input type="url" id="new-link" placeholder="Application Link" required>
+
+            <button type="button" id="submit-new-internship">Submit for Review</button>
+            <button type="button" onclick="document.getElementById('add-internship').style.display='none';">Cancel</button>
         </form>
     </section>
 
@@ -224,7 +279,6 @@
         <button id="submit-application">Submit Application</button>
     </div>
 </div>
-
 
 <script src="static/internship.js"></script>
 

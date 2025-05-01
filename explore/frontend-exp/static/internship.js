@@ -20,13 +20,13 @@ async function loadInternships() {
                 <p>Company: ${internship.company}</p>
                 <p>Start Date: ${new Date(internship.start_date).toLocaleDateString()}</p>
                 <p>End Date: ${new Date(internship.end_date).toLocaleDateString()}</p>
+                ${internship.link ? `<p><a href="${internship.link}" target="_blank">Apply Here</a></p>` : ''}
             `;
             container.appendChild(internshipItem);
         });
 
         console.log("Calling addInternshipClickListeners");
         addInternshipClickListeners();
-        addSearchAndFilter();
 
     } catch (error) {
         console.error("Error loading internships:", error);
@@ -53,6 +53,7 @@ function addInternshipClickListeners() {
                 <p>Start Date: ${new Date(internshipData.start_date).toLocaleDateString()}</p>
                 <p>End Date: ${new Date(internshipData.end_date).toLocaleDateString()}</p>
                 <p>Description: ${internshipData.description || 'No description available.'}</p>
+                <a id="popup-link" href="${internshipData.link}" target="_blank">Apply Here</a>
                 <button id="apply-button">Apply Now</button>
                 <div id="application-form" style="display:none;">
                     <input type="text" id="name" placeholder="Your Name">
@@ -97,25 +98,56 @@ function addInternshipClickListeners() {
     });
 }
 
-function addSearchAndFilter() {
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-
-    if (searchButton) {
-        searchButton.addEventListener('click', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            filterItems(searchTerm);
-        });
-    }
-}
-
-function filterItems(searchTerm) {
-    const internshipItems = document.querySelectorAll('#internships-list .internship-item');
-
-    internshipItems.forEach(item => {
-        const itemText = item.textContent.toLowerCase();
-        item.style.display = itemText.includes(searchTerm) ? 'block' : 'none';
-    });
-}
-
 document.addEventListener('DOMContentLoaded', loadInternships);
+
+document.getElementById('add-internship-button').addEventListener('click', () => {
+    document.getElementById('add-internship').style.display = 'block';
+});
+
+document.getElementById('submit-new-internship').addEventListener('click', async () => {
+    const company = document.getElementById('new-company').value;
+    const role = document.getElementById('new-role').value;
+    const location = document.getElementById('new-location').value;
+    const startDate = document.getElementById('new-start-date').value;
+    const endDate = document.getElementById('new-end-date').value;
+    const description = document.getElementById('new-description').value;
+    const link = document.getElementById('new-link').value;
+
+    if (!company || !role || !location || !startDate || !endDate || !link) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    const newInternship = {
+        company: company,
+        title: role,
+        location: location,
+        start_date: startDate,
+        end_date: endDate,
+        description: description,
+        url: link // Assuming 'url' in your backend model for application link
+    };
+
+    try {
+        const response = await fetch('/api/internships', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newInternship),
+        });
+
+        if (response.ok) {
+            alert('Internship submitted for verification!');
+            document.getElementById('add-internship').style.display = 'none';
+            // Optionally, reload the internships list
+            // loadInternships();
+        } else {
+            const errorData = await response.json();
+            alert(`Failed to submit internship: ${errorData.detail || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error submitting new internship:', error);
+        alert('Error submitting internship. Please try again.');
+    }
+});

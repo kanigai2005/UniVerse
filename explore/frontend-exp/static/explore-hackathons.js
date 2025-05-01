@@ -1,99 +1,123 @@
-// static/explore-hackathons.js
-async function loadHackathons() {
+const hackathonSearchInput = document.getElementById('hackathon-search-input');
+const hackathonSearchButton = document.getElementById('hackathon-search-button');
+const hackathonForm = document.getElementById('hackathon-form');
+const currentHackathonsList = document.getElementById('current-hackathons-list');
+const hackathonDetailsModal = document.getElementById('hackathon-details-modal');
+const modalCloseBtn = document.querySelector('.close-modal');
+const modalTitle = document.querySelector('.modal-header h2');
+const modalBody = document.querySelector('.modal-body p');
+const modalRegisterBtn = document.querySelector('.hackathon-register-btn');
+
+
+let hackathons = []; // Store fetched hackathons
+
+
+// Function to fetch hackathons from the API
+async function fetchHackathons() {
     try {
-        const response = await fetch("/api/hackathons");
+        const response = await fetch('/api/hackathons'); // Use the correct API endpoint
         if (!response.ok) {
             throw new Error(`Failed to fetch hackathons: ${response.status}`);
         }
-        const hackathons = await response.json();
-        const container = document.getElementById("hackathons-list");
-
-        container.innerHTML = ""; // Clear existing content
-
-        hackathons.forEach(hackathon => {
-            const hackathonItem = document.createElement("li");
-            hackathonItem.classList.add("hackathon-item");
-            hackathonItem.setAttribute("data-hackathon", JSON.stringify(hackathon));
-            hackathonItem.innerHTML = `
-                <h3>${hackathon.name}</h3>
-                <p>Date: ${hackathon.date}</p>
-                <p>Location: ${hackathon.location}</p>
-            `;
-            container.appendChild(hackathonItem);
-        });
-
-        addHackathonClickListeners();
-
+        const data = await response.json();
+        hackathons = data; // Store fetched data
+        renderHackathons(); // Render the list
     } catch (error) {
-        console.error("Error loading hackathons:", error);
-        document.getElementById("hackathons-list").innerHTML = "<p>Error loading hackathons. Please try again later.</p>";
+        console.error('Error fetching hackathons:', error);
+        alert('Failed to load hackathons. Please check console for errors.');
     }
 }
 
-function addHackathonClickListeners() {
-    const popupDescription = document.getElementById('popup-description');
-    if (!popupDescription) return; // Ensure popup exists
-
-    document.querySelectorAll('.hackathon-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const hackathonData = JSON.parse(item.getAttribute('data-hackathon'));
-            popupDescription.innerHTML = `
-                <h3>${hackathonData.name} - Description</h3>
-                <p>${hackathonData.description}</p>
-                <button id="register-button">Register</button>
-                <div id="registration-form" style="display:none;">
-                    <input type="text" id="name" placeholder="Your Name">
-                    <input type="email" id="email" placeholder="Your Email">
-                    <button id="submit-registration">Submit</button>
-                </div>
-            `;
-            popupDescription.style.display = 'block';
-
-            popupDescription.addEventListener('mouseleave', () => {
-                popupDescription.style.display = 'none';
-            }, { once: true });
-
-            const registerButton = document.getElementById('register-button');
-            if (registerButton) {
-                registerButton.addEventListener('click', () => {
-                    const registrationForm = document.getElementById('registration-form');
-                    if (registrationForm) {
-                        registrationForm.style.display = 'block';
-                    }
-                });
-            }
-
-            const submitRegistrationButton = document.getElementById('submit-registration');
-            if (submitRegistrationButton) {
-                submitRegistrationButton.addEventListener('click', () => {
-                    const name = document.getElementById('name').value;
-                    const email = document.getElementById('email').value;
-                    alert(`Registration submitted for ${hackathonData.name}!\nName: ${name}\nEmail: ${email}`);
-                    const registrationForm = document.getElementById('registration-form');
-                    if (registrationForm) {
-                        registrationForm.style.display = 'none';
-                    }
-                });
-            }
-        });
+// Function to render hackathons list
+function renderHackathons() {
+    currentHackathonsList.innerHTML = ''; // Clear previous content
+    hackathons.forEach(hackathon => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('hackathon-card');
+        listItem.innerHTML = `
+            <h2 class="hackathon-name">${hackathon.name}</h2>
+            <p class="hackathon-date">Date: ${new Date(hackathon.date).toLocaleDateString()}</p>
+            <p class="hackathon-location">Location: ${hackathon.location}</p>
+            <p class="hackathon-description">${hackathon.description}</p>
+            <a href="${hackathon.url}" class="hackathon-register-btn" target="_blank" rel="noopener noreferrer">Register Now</a>
+        `;
+        listItem.addEventListener('click', () => showHackathonDetails(hackathon.id));
+        currentHackathonsList.appendChild(listItem);
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadHackathons);
+// Function to show hackathon details in modal
+function showHackathonDetails(hackathonId) {
+    const hackathon = hackathons.find(h => h.id === hackathonId);
+    if (hackathon) {
+        modalTitle.textContent = hackathon.name;
+        modalBody.textContent = hackathon.description;
+        modalRegisterBtn.href = hackathon.url;
+        hackathonDetailsModal.style.display = 'flex';
+    }
+}
 
-document.getElementById('search-button').addEventListener('click', () => {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const hackathonItems = Array.from(document.querySelectorAll('.hackathon-item'));
-
-    hackathonItems.forEach(item => {
-        const hackathonData = JSON.parse(item.getAttribute('data-hackathon'));
-        const name = hackathonData.name.toLowerCase();
-        const location = hackathonData.location.toLowerCase();
-
-        if (name.includes(searchTerm) || location.includes(searchTerm)) {
-            item.style.display = 'block';
-        } else {
-            item.style.display = 'none';
-        }
-    });
+// Event listener for closing the modal
+modalCloseBtn.addEventListener('click', () => {
+    hackathonDetailsModal.style.display = 'none';
 });
+
+// Event listener for clicking outside the modal
+window.addEventListener('click', (event) => {
+    if (event.target === hackathonDetailsModal) {
+        hackathonDetailsModal.style.display = 'none';
+    }
+});
+
+
+
+// Handle hackathon submission
+hackathonForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const hackathon = {
+        name: document.getElementById('hackathon-name').value,
+        location: document.getElementById('hackathon-location').value,
+        date: document.getElementById('hackathon-date').value,
+        link: document.getElementById('hackathon-link').value,
+        description: document.getElementById('hackathon-description').value,
+        theme: document.getElementById('hackathon-theme').value,
+        prize_pool: document.getElementById('hackathon-prize_pool').value,
+        url: document.getElementById('hackathon-link').value,
+    };
+
+    try {
+        const response = await fetch('/api/hackathons/unverified', { // Use the correct API endpoint
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(hackathon)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to add hackathon: ${response.status} - ${errorText}`);
+        }
+
+        // Reset form after submission
+        hackathonForm.reset();
+        alert('Hackathon submitted for review.');
+        await fetchHackathons(); //refresh the list
+
+    } catch (error) {
+        console.error('Error adding hackathon:', error);
+        alert('Failed to submit hackathon. Please check console for errors.');
+    }
+});
+
+hackathonSearchButton.addEventListener('click', () => {
+    const searchTerm = hackathonSearchInput.value.toLowerCase();
+    const filteredHackathons = hackathons.filter(hackathon =>
+        hackathon.name.toLowerCase().includes(searchTerm) ||
+        hackathon.location.toLowerCase().includes(searchTerm)
+    );
+    hackathons = filteredHackathons;
+    renderHackathons();
+});
+
+// Fetch hackathons on page load
+fetchHackathons();

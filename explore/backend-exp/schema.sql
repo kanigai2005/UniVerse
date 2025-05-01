@@ -18,10 +18,14 @@ DROP TABLE IF EXISTS user_issues;
 
 
 -- Create users table
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    username TEXT unique NOT NULL,
     email TEXT UNIQUE NOT NULL,
+    hashed_password TEXT, -- Added password field
+    is_student BOOLEAN DEFAULT TRUE, -- Added is_student field
+    is_alumni BOOLEAN DEFAULT FALSE, -- Added is_alumni field
+    is_admin BOOLEAN DEFAULT FALSE, -- Added is_admin field
     activity_score INTEGER DEFAULT 0,
     achievements TEXT,
     alumni_gems INTEGER DEFAULT 0,
@@ -42,7 +46,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
-CREATE INDEX IF NOT EXISTS idx_users_name ON users (name);
+CREATE INDEX IF NOT EXISTS idx_users_name ON users (username);
 
 CREATE TABLE IF NOT EXISTS user_connections (
     user_id INTEGER,
@@ -60,6 +64,7 @@ CREATE TABLE IF NOT EXISTS career_fairs (
     date DATE,
     location TEXT,
     description TEXT,
+    url TEXT, -- Added url field
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME
 );
@@ -71,6 +76,7 @@ CREATE TABLE IF NOT EXISTS internships (
     start_date DATE,
     end_date DATE,
     description TEXT,
+    url TEXT, -- Added url field
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME
 );
@@ -83,6 +89,7 @@ CREATE TABLE IF NOT EXISTS hackathons (
     description TEXT,
     theme TEXT,
     prize_pool TEXT,
+    url TEXT, -- Added url field
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME
 );
@@ -149,6 +156,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     type TEXT,
     experience TEXT,
     imageUrl TEXT,
+    url TEXT, -- Added url field
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME
 );
@@ -210,12 +218,12 @@ CREATE TABLE IF NOT EXISTS user_issues (
 CREATE INDEX IF NOT EXISTS idx_user_issues_user_id ON user_issues (user_id);
 
 -- Insert Sample Data
-INSERT INTO users (name, email, activity_score, achievements, alumni_gems, department, profession, alma_mater, interviews, internships, startups, current_company, milestones, advice, likes, badges, solved, links)
+INSERT INTO users (username, email, hashed_password, is_student, is_alumni, is_admin, activity_score, achievements, alumni_gems, department, profession, alma_mater, interviews, internships, startups, current_company, milestones, advice, likes, badges, solved, links)
 VALUES
-    ('John Doe', 'john.doe@example.com', 100, 'Published a paper', 10, 'Computer Science', 'Software Engineer', 'University of Tech', 'Google, Amazon', 'Microsoft', 'MyStartup', 'TechCorp', 'Founded a company', 'Work hard!', 5, 2, 10, 3),
-    ('Jane Smith', 'jane.smith@example.com', 120, 'Won a hackathon', 15, 'Electrical Engineering', 'Data Scientist', 'State College', 'Facebook', 'Tesla', NULL, 'DataCo', 'Led a project', 'Be curious!', 8, 3, 15, 5),
-    ('Bob Johnson', 'bob.johnson@example.com', 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1),
-    ('sri','sri@gmail.com', 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1);
+    ('John Doe', 'john.doe@example.com', 'password123', FALSE, TRUE, FALSE, 100, 'Published a paper', 10, 'Computer Science', 'Software Engineer', 'University of Tech', 'Google, Amazon', 'Microsoft', 'MyStartup', 'TechCorp', 'Founded a company', 'Work hard!', 5, 2, 10, 3),
+    ('Jane Smith', 'jane.smith@example.com', 'securepass', TRUE, FALSE, FALSE, 120, 'Won a hackathon', 15, 'Electrical Engineering', 'Data Scientist', 'State College', 'Facebook', 'Tesla', NULL, 'DataCo', 'Led a project', 'Be curious!', 8, 3, 15, 5),
+    ('Bob Johnson', 'bob.johnson@example.com', 'test1234', FALSE, TRUE, TRUE, 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1),
+    ('sri', 'sri@gmail.com', 'sripass', TRUE, FALSE, FALSE, 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1);
 
 INSERT INTO user_connections (user_id, connected_user_id)
 VALUES
@@ -223,20 +231,20 @@ VALUES
     (1, 3),
     (2, 3);
 
-INSERT INTO career_fairs (name, date, location, description)
+INSERT INTO career_fairs (name, date, location, description, url)
 VALUES
-    ('Tech Career Fair', '2024-03-10', 'Tech Hall', 'Meet top tech companies'),
-    ('Engineering Expo', '2024-04-15', 'City Center', 'Explore engineering opportunities');
+    ('Tech Career Fair', '2026-03-10', 'Tech Hall', 'Meet top tech companies', 'https://example.com/tech-career-fair'),
+    ('Engineering Expo', '2026-04-15', 'City Center', 'Explore engineering opportunities', 'https://example.com/engineering-expo');
 
-INSERT INTO internships (title, company, start_date, end_date, description)
+INSERT INTO internships (title, company, start_date, end_date, description, url)
 VALUES
-    ('Software Engineering Intern', 'Google', '2024-05-20', '2024-08-15', 'Work on a real-world project'),
-    ('Data Science Intern', 'Facebook', '2024-06-01', '2024-09-01', 'Analyze large datasets');
+    ('Software Engineering Intern', 'Google', '2024-05-20', '2024-08-15', 'Work on a real-world project', 'https://careers.google.com/internships'),
+    ('Data Science Intern', 'Facebook', '2024-06-01', '2024-09-01', 'Analyze large datasets', 'https://www.metacareers.com/internships');
 
-INSERT INTO hackathons (name, date, location, description, theme, prize_pool)
+INSERT INTO hackathons (name, date, location, description, theme, prize_pool, url)
 VALUES
-    ('Hackathon X', '2024-07-01', 'Online', 'Build innovative solutions', 'AI', '$10000'),
-    ('CodeFest', '2024-08-01', 'University Campus', '24-hour coding challenge', 'Web Development', '$5000');
+    ('Hackathon X', '2026-07-01', 'Online', 'Build innovative solutions', 'AI', '$10000', 'https://example.com/hackathon-x'),
+    ('CodeFest', '2026-08-01', 'University Campus', '24-hour coding challenge', 'Web Development', '$5000', 'https://example.com/codefest');
 
 INSERT INTO questions (user_id, question_text)
 VALUES
@@ -268,11 +276,11 @@ VALUES
     (1, 'Bob Johnson', 'A tricky off-by-one error caused a lot of problems.', 5),
     (2, 'John Doe', 'I had to clean a dataset with missing values and outliers.', 12);
 
-INSERT INTO jobs (title, company, location, description, salary, date_posted, type, experience, imageUrl)
+INSERT INTO jobs (title, company, location, description, salary, date_posted, type, experience, imageUrl, url)
 VALUES
-    ('Software Engineer', 'TechCorp', 'New York, NY', 'Develop cutting-edge applications', '$120,000 - $150,000', '2024-02-15', 'Full-time', '2+ years', 'https://example.com/techcorp.png'),
-    ('Data Scientist', 'DataCo', 'San Francisco, CA', 'Build machine learning models', '$110,000 - $140,000', '2024-02-10', 'Full-time', '1+ years', 'https://example.com/dataco.png'),
-    ('Web Developer', 'WebDev Solutions', 'Austin, TX', 'Create responsive web applications', '$80,000 - $100,000', '2024-02-01', 'Full-time', '1+ years', null);
+    ('Software Engineer', 'TechCorp', 'New York, NY', 'Develop cutting-edge applications', '$120,000 - $150,000', '2026-02-15', 'Full-time', '2+ years', 'https://example.com/techcorp.png', 'https://example.com/techcorp-jobs/123'),
+    ('Data Scientist', 'DataCo', 'San Francisco, CA', 'Build machine learning models', '$110,000 - $140,000', '2026-02-10', 'Full-time', '1+ years', 'https://example.com/dataco.png', 'https://example.com/dataco-careers/456'),
+    ('Web Developer', 'WebDev Solutions', 'Austin, TX', 'Create responsive web applications', '$80,000 - $100,000', '2026-02-01', 'Full-time', '1+ years', null, 'https://webdevsolutions.com/careers/789');
 
 INSERT INTO search_history (user_id, search_term)
 VALUES
@@ -282,8 +290,8 @@ VALUES
 
 INSERT INTO features (name, description, url, icon)
 VALUES
-    ('Profile', 'View and edit your profile', '/profile.html', 'person-circle'),
-    ('Connections', 'Manage your connections', 'connections.html', 'people'),
+    ('Profile', 'View and edit your profile', 'profile.html', 'person-circle'),
+    ('Connections', 'Manage your connections', 'connection.html', 'people'),
     ('Jobs', 'Find job opportunities', 'career-fairs.html', 'briefcase'),
     ('Events', 'See upcoming events', 'explore-hackathons.html', 'calendar');
 

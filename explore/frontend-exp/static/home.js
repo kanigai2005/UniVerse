@@ -126,7 +126,7 @@ function viewSearchHistory() {
 }
 
 // Fetch Upcoming Events
-fetch('/api/events')
+fetch('/api/feed/events')
     .then(response => response.json())
     .then(events => {
         console.log('Events Data:', events); // For debugging
@@ -173,7 +173,7 @@ fetch('/api/events')
     });
 
 // Fetch Today's Feed
-fetch('/api/todays-feed')
+fetch('/api/daily-spark/today')
     .then(response => response.json())
     .then(data => {
         console.log('Daily Spark Data:', data); // For debugging

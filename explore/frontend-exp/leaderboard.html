@@ -3,148 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard & Recognition</title>
+    <title>Shining Alumni: The Gemstone Gallery</title>
     <style>
-        /* Your CSS styles here */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background: #f4f4f4;
+            background: linear-gradient(135deg, #6a1b9a, #4a148c); /* Deep purple gradient */
+            color: #fff;
             text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 60px; /* Space for header */
         }
 
         .back-icon {
             font-size: 40px;
-            color: black;
+            color: #eee;
             text-decoration: none;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            margin-right: 10px;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            transition: color 0.3s ease;
         }
 
-        .header-container {
-            display: flex;
-            align-items: center;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            justify-content: flex-start;
+        .back-icon:hover {
+            color: #fff;
         }
 
-        .header-container h1 {
-            flex-grow: 1;
-            text-align: center;
+        header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px 0;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
             margin: 0;
-        }
-
-        h1, h2 {
-            margin-bottom: 10px;
-            margin-top: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         main {
-            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            margin-top: 80px; /* Adjust based on header height */
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .section {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            border-radius: 10px;
-            max-width: 600px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        #leaderboard {
+            margin-bottom: 30px;
         }
 
-        .list {
+        #leaderboard h2 {
+            font-size: 2em;
+            font-weight: 400;
+            color: #fdd835; /* Gold color */
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #leaderboard-list {
             list-style: none;
             padding: 0;
         }
 
-        .list li {
-            background: #e3e3e3;
-            margin: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
+        #leaderboard-list li {
+            background: rgba(255, 255, 255, 0.15);
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-left: 5px solid #fdd835; /* Highlight color */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer; /* Indicate sortability */
+        }
+
+        #leaderboard-list li:nth-child(odd) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #leaderboard-list li:hover {
+            transform: scale(1.02);
+        }
+
+        .leaderboard-item-details {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .leader-info {
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .leader-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #eee;
+        }
+
+        .leader-details {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+
+        .gem-count {
+            font-size: 1.5em;
+            color: #fdd835;
+            font-weight: bold;
+            margin-left: 20px;
+            min-width: 80px; /* Ensure consistent spacing */
+            text-align: right;
         }
 
         .view-profile-btn {
-            background-color: #007bff;
-            color: white;
+            background-color: #fdd835;
+            color: #4a148c;
             border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
+            padding: 10px 15px;
+            border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
-            font-size: inherit;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-left: 20px;
         }
 
         .view-profile-btn:hover {
-            background-color: #0056b3;
+            background-color: #e6af2e;
         }
 
-        .badge-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+        #refresh-leaderboard-button {
+            background-color: #fdd835;
+            color: #4a148c;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .badge {
-            background: #ffcc00;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-            font-weight: bold;
+        #refresh-leaderboard-button:hover {
+            background-color: #e6af2e;
+        }
+
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 0.8em;
+            color: #aaa;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            main {
+                width: 95%;
+                padding: 20px;
+            }
+
+            #leaderboard h2 {
+                font-size: 1.8em;
+            }
+
+            #leaderboard-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px;
+            }
+
+            .gem-count {
+                margin-left: 0;
+                margin-top: 10px;
+                text-align: left;
+            }
+
+            .view-profile-btn {
+                margin-top: 10px;
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .leaderboard-item-details {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
 
-    <header class="header-container">
+    <header>
         <a href="explore.html" class="back-icon">⬅️</a>
-        <h1>Leaderboard & Recognition</h1>
+        <h1>Shining Alumni: The Gemstone Gallery</h1>
     </header>
 
     <main>
-        <section class="section" id="leaderboard">
-            <h2>🏆 Mentorship Leaderboard</h2>
-            <table id="leaderboard-table">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Activity Score</th>
-                        <th>Achievements</th>
-                        <th>Alumni Gems</th>
-                        <th>Profile</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-            <button id="refresh-leaderboard-button">Refresh Leaderboard</button>
-        </section>
-
-        <section class="section" id="job-recognition">
-            <h2>🎉 Job Referral Recognition</h2>
-            <ul class="list" id="job-referral-list">
-            </ul>
-        </section>
-
-        <section class="section" id="badges">
-            <h2>🎖 Contributor Badges</h2>
-            <div class="badge-container" id="badge-container">
-            </div>
+        <section id="leaderboard">
+            <h2>✨ Top Collectors of Alumni Gems ✨</h2>
+            <ul id="leaderboard-list">
+                </ul>
+            <button id="refresh-leaderboard-button">Refresh Gallery</button>
         </section>
     </main>
 
-    <script src="static/leaderboard.js">
-            </script>
+    <script src="static/leaderboard.js"></script>
 </body>
 </html>

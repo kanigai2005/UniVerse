@@ -1,136 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Career Fairs</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Career Fairs & Jobs - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+
+        :root {
+            --main-bg: #e6e1e1;
+            --primary-color: #0a66c2;
+            --card-bg: white;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --card-hover-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            --text: #333;
+        }
+
         body {
-            font-family: 'Trebuchet MS', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: white;
-            color: #333;
+            background-color: var(--main-bg);
+            color: var(--text);
+            padding-top: 4rem;
+            padding-bottom: 2rem;
+            font-size: 0.9rem;
         }
 
-        
-        .back-icon {
-            font-size: 40px; /* Adjust icon size if needed */
-            color: black; /* Icon color */
-            text-decoration: none; /* Remove underline */
-            cursor: pointer; /* Show pointer cursor on hover */
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically align */
-        }
-
-        .header-container {
+        nav.top-nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: #2f4f4f;
+            padding: 0.6rem;
             display: flex;
-            align-items: center;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            justify-content: space-between;
+            justify-content: space-around;
+            z-index: 10;
         }
 
-        .header-title {
-            margin: 0;
-            flex-grow: 1;
+        nav.top-nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        header {
             text-align: center;
+            padding: 0.8rem 0;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
         }
 
         .container {
-            width: 80%;
-            margin: 20px auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            width: 92%;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        section {
+            background-color: var(--card-bg);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        input, button, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        li {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        li:hover {
+            box-shadow: var(--card-hover-shadow);
         }
 
         .search-container {
-            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            margin-top: 0.5rem;
+            align-items: center; /* Vertically align items */
         }
 
-        .search-container input[type="text"] {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 70%;
+        .search-container input {
+            flex: 1;
+            min-width: 200px; /* Ensure input doesn't get too small */
         }
 
         .search-container button {
-            padding: 8px 15px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            /* width: auto;  Adjust button width to content */
+            padding: 8px 16px; /* Give it some horizontal padding */
         }
 
-        #career-fairs-list, #job-listings-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            list-style: none;
-            padding: 0;
-        }
-
-        .fair-item, .job-item {
-            border: 1px solid #ddd;
+        #current-job-openings {
+            background-color: #fff;
             padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
+            border-radius: 10px;
         }
 
-        .fair-item:hover, .job-item:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        #current-job-openings ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .fair-item h3, .job-item h3 {
-            margin-bottom: 5px;
+        #current-job-openings a {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
         }
 
-        #popup-description {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            display: none;
+        #current-job-openings a:hover {
+            text-decoration: underline;
+        }
+
+        .back-icon {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            font-size: 1.4rem;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="header-container">
-        <a href="explore.html" class="back-icon">⬅️</a>
-        <h1 class="header-title">Career Fairs</h1>
-        <div></div>
-    </div>
-    
+
+    <nav class="top-nav">
+        <a href="#"><i class="fas fa-home"></i></a>
+        <a href="#"><i class="fas fa-compass"></i></a>
+        <a href="#"><i class="fas fa-briefcase"></i></a>
+        <a href="#"><i class="fas fa-user"></i></a>
+    </nav>
+
+    <header>
+        <h1>🎓 Career Fairs & Job Listings</h1>
+        <p>Discover opportunities and share listings with your peers.</p>
+    </header>
+
     <div class="container">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search Career Fairs...">
-            <button id="search-button">Search</button>
-            <button id="upcoming-button">Upcoming Fairs</button>
-        </div>
-        
-        <h2>Career Fairs List</h2>
-        <ul id="career-fairs-list">
-            </ul>
+        <section>
+            <h2>Search Career Fairs</h2>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search upcoming career fairs..." />
+                <button id="search-button">Search</button>
+            </div>
+        </section>
 
-        <div id="popup-description"></div>
+        <section>
+            <h2>Add a Career Fair</h2>
+            <form id="career-fair-form">
+                <input type="text" id="cf-name" placeholder="Fair Name" required />
+                <input type="text" id="cf-location" placeholder="Location" required />
+                <input type="date" id="cf-date" required />
+                <textarea id="cf-description" placeholder="Fair Description" required></textarea>
+                <input type="url" id="cf-link" placeholder="More Info / Registration Link" required />
+                <button type="submit">Submit</button>
+            </form>
+        </section>
 
-        <h2>Job Listings</h2>
-        <ul id="job-listings-list">
-            </ul>
+        <section>
+            <h2>Career Fairs List</h2>
+            <ul id="career-fairs-list"></ul>
+        </section>
+
+        <section>
+            <h2>Search Job Listings</h2>
+            <div class="search-container">
+                <input type="text" id="job-listings-search-input" placeholder="Search Job Listings..." />
+                <button id="job-listings-search-button">Search</button>
+            </div>
+        </section>
+
+        <section>
+            <h2>Add a Job Listing</h2>
+            <form id="job-listing-form">
+                <input type="text" id="job-title" placeholder="Job Title" required />
+                <input type="text" id="job-company" placeholder="Company" required />
+                <input type="text" id="job-location" placeholder="Location" required />
+                <input type="date" id="job-post-date" required />
+                <textarea id="job-description" placeholder="Job Description" required></textarea>
+                <input type="text" id="job-salary" placeholder="Salary" />
+                <input type="text" id="job-type" placeholder="Job Type" />
+                <input type="text" id="job-experience" placeholder="Experience Required" />
+                <input type="url" id="job-image-url" placeholder="Image URL" />
+                <input type="url" id="job-link" placeholder="More Info / Apply Link" required />
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+
+        <section id="current-job-openings">
+            <h2>Current Job Openings</h2>
+            <ul id="current-jobs-list">
+                </ul>
+        </section>
     </div>
 
-    <script src="static/career-fairs.js"></script>
+    <script src="static/career-fairs.js">
+        
+    </script>
+
 </body>
 </html>
