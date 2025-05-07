@@ -3,76 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shining Alumni: The Gemstone Gallery</title>
+    <title>Leaderboard - UniVerse</title> <!-- Updated Title -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Dark Theme inspired by Screenshot */
+        :root {
+            --bg-dark: #1a1a1a; /* Dark background */
+            --nav-bg: #2f2f2f; /* Darker navbar */
+            --card-bg: #2a2a2a; /* Dark card background */
+            --card-hover-bg: #3a3a3a;
+            --text-primary: #e0e0e0; /* Light primary text */
+            --text-secondary: #a0a0a0; /* Lighter secondary text */
+            --accent-color: #2f4f4f; /* Light blue accent */
+            --link-hover: #90caf9;
+            --border-color: #444;
+            --button-bg: #64b5f6;
+            --button-text: #1a1a1a;
+            --button-hover-bg: #42a5f5;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #6a1b9a, #4a148c); /* Deep purple gradient */
-            color: #fff;
-            text-align: center;
-            min-height: 100vh;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+            padding-top: 60px; /* Space for fixed navbar */
+            padding-bottom: 50px; /* Space for fixed footer */
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #2f4f4f;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: 60px; /* Space for header */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .back-icon {
-            font-size: 40px;
-            color: #eee;
+        .navbar a {
+            color: var(--text-primary);
             text-decoration: none;
-            cursor: pointer;
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            transition: color 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+         .navbar a i {
+             font-size: 1.1em;
+         }
+
+        .navbar a:hover {
+            background-color: #444; /* Darker hover */
+            color: var(--link-hover);
         }
 
-        .back-icon:hover {
-            color: #fff;
+        /* Main Content Area */
+        main {
+            flex-grow: 1; /* Allow main content to fill space */
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto; /* Add margin from top */
+            padding: 20px;
         }
 
         header {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px 0;
-            width: 100%;
-            position: fixed;
-            top: 0;
-            z-index: 10;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            font-weight: 300;
-            letter-spacing: 1.5px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        main {
-            width: 90%;
-            max-width: 800px;
-            margin-top: 80px; /* Adjust based on header height */
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        #leaderboard {
+            text-align: center;
             margin-bottom: 30px;
         }
 
+        header h1 {
+            color: var(--accent-color);
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* Leaderboard Section */
+        #leaderboard {
+             background-color: var(--card-bg);
+             padding: 25px;
+             border-radius: 8px;
+             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+
         #leaderboard h2 {
-            font-size: 2em;
-            font-weight: 400;
-            color: #fdd835; /* Gold color */
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.8em;
+            font-weight: 500;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
         }
 
         #leaderboard-list {
@@ -81,31 +117,33 @@
         }
 
         #leaderboard-list li {
-            background: rgba(255, 255, 255, 0.15);
-            margin: 15px 0;
-            padding: 20px;
-            border-radius: 10px;
+            background: var(--nav-bg); /* Slightly lighter than main bg */
+            margin: 10px 0;
+            padding: 15px 20px;
+            border-radius: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 5px solid #fdd835; /* Highlight color */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer; /* Indicate sortability */
-        }
-
-        #leaderboard-list li:nth-child(odd) {
-            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s ease-in-out;
         }
 
         #leaderboard-list li:hover {
-            transform: scale(1.02);
+             background-color: var(--card-hover-bg);
         }
 
         .leaderboard-item-details {
             display: flex;
             align-items: center;
             flex-grow: 1;
+            gap: 15px; /* Gap between elements */
+        }
+
+        .leader-rank { /* Added for Rank# */
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--text-secondary);
+            min-width: 30px;
         }
 
         .leader-info {
@@ -114,120 +152,159 @@
         }
 
         .leader-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #eee;
+            font-size: 1.1em;
+            font-weight: 600; /* Bold but not black */
+            margin-bottom: 3px;
+            color: var(--text-primary);
+            cursor: pointer; /* Indicate clickable for profile */
         }
+         .leader-name:hover {
+             color: var(--link-hover);
+         }
 
         .leader-details {
-            font-size: 0.9em;
-            color: #ccc;
-            margin-bottom: 5px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 0;
         }
+        .leader-details span { margin-right: 10px; }
 
-        .gem-count {
-            font-size: 1.5em;
-            color: #fdd835;
-            font-weight: bold;
-            margin-left: 20px;
-            min-width: 80px; /* Ensure consistent spacing */
+        .score-section {
             text-align: right;
+            min-width: 120px; /* Ensure scores align */
+            margin-left: 15px;
         }
 
-        .view-profile-btn {
-            background-color: #fdd835;
-            color: #4a148c;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
+        .gem-count, .activity-score {
+            font-size: 1.1em;
+            color: var(--accent-color);
+            font-weight: bold;
+            display: block; /* Stack scores */
+            margin-bottom: 3px;
+        }
+         .activity-score {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-weight: normal;
+         }
+
+
+        .view-profile-btn { /* Hidden for now, click name instead */
+            display: none;
+        }
+
+        .sort-controls {
+             text-align: center;
+             margin-bottom: 20px;
+        }
+        .sort-controls button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            font-size: 0.9em;
             cursor: pointer;
-            text-decoration: none;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
-            margin-left: 20px;
+            background-color: #444;
+            border: 1px solid #555;
+        }
+         .sort-controls button.active {
+             background-color: var(--accent-color);
+             color: var(--button-text);
+             border-color: var(--accent-color);
+             font-weight: bold;
+         }
+         .sort-controls button:hover:not(.active) {
+              background-color: #555;
+         }
+         .sort-indicator {
+             display: inline-block;
+             margin-left: 4px;
+             font-size: 0.8em;
+         }
+
+
+        /* Footer Styles */
+        .footer {
+            background-color: var(--nav-bg); /* Match navbar */
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9em;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
         }
 
-        .view-profile-btn:hover {
-            background-color: #e6af2e;
+        /* Loading/Error */
+        .loading, .error-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-style: italic;
         }
+        .error-message { color: #ff8a80; }
 
-        #refresh-leaderboard-button {
-            background-color: #fdd835;
-            color: #4a148c;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        #refresh-leaderboard-button:hover {
-            background-color: #e6af2e;
-        }
-
-        .sort-indicator {
-            display: inline-block;
-            margin-left: 5px;
-            font-size: 0.8em;
-            color: #aaa;
-        }
 
         /* Responsive adjustments */
-        @media (max-width: 600px) {
-            main {
-                width: 95%;
-                padding: 20px;
-            }
+        @media (max-width: 700px) {
+            .navbar a span { display: none; } /* Hide text on small screens */
+            .navbar a i { font-size: 1.3em; }
+            .navbar { justify-content: space-evenly;}
 
-            #leaderboard h2 {
-                font-size: 1.8em;
-            }
-
-            #leaderboard-list li {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 15px;
-            }
-
-            .gem-count {
-                margin-left: 0;
-                margin-top: 10px;
-                text-align: left;
-            }
-
-            .view-profile-btn {
-                margin-top: 10px;
-                width: 100%;
-                margin-left: 0;
-            }
-
-            .leaderboard-item-details {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+            main { width: 100%; padding: 10px; box-sizing: border-box; margin-top: 10px;}
+            #leaderboard { padding: 15px; }
+            #leaderboard h2 { font-size: 1.5em; }
+            #leaderboard-list li { flex-direction: column; align-items: stretch; }
+            .leaderboard-item-details { flex-direction: row; /* Keep rank/name/details together */ gap: 10px; margin-bottom: 10px; }
+            .score-section { text-align: left; margin-left: 0; margin-top: 5px; }
         }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <a href="explore.html" class="back-icon">⬅️</a>
-        <h1>Shining Alumni: The Gemstone Gallery</h1>
-    </header>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/home" title="Home"><i class="fas fa-home"></i><span> Home</span></a>
+        <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i><span> Explore</span></a>
+        <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i><span> Notifications</span></a>
+        <a href="/help.html" title="Help"><i class="fas fa-question-circle"></i><span> Help</span></a>
+        <!-- JS updates href -->
+        <a href="/profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span> Profile</span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span> Logout</span></a>
+    </nav>
 
     <main>
+        <header>
+            <h1>🏆 Leaderboard 🏆</h1>
+        </header>
+
         <section id="leaderboard">
-            <h2>✨ Top Collectors of Alumni Gems ✨</h2>
+            <h2>Top Alumni Contributors</h2>
+            <div class="sort-controls">
+                Sort by:
+                <button id="sort-gems" data-sortkey="alumni_gems">Alumni Gems <span class="sort-indicator"></span></button>
+                <button id="sort-activity" data-sortkey="activity_score">Activity Score <span class="sort-indicator"></span></button>
+                <button id="sort-name" data-sortkey="username">Name <span class="sort-indicator"></span></button>
+            </div>
             <ul id="leaderboard-list">
-                </ul>
-            <button id="refresh-leaderboard-button">Refresh Gallery</button>
+                <!-- Leaderboard items will be loaded here -->
+                <p class="loading">Loading leaderboard...</p>
+            </ul>
+            <!-- Refresh button removed as sorting provides dynamic updates -->
+            <!-- <button id="refresh-leaderboard-button">Refresh Gallery</button> -->
         </section>
     </main>
 
-    <script src="static/leaderboard.js"></script>
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <!-- Embedded JavaScript -->
+    <script src="static/leaderboard.js">
+       
+    </script>
+
 </body>
 </html>

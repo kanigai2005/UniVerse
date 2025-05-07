@@ -1,9 +1,22 @@
+// --- Utility: Simple HTML Escaping ---
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') { return unsafe === null || unsafe === undefined ? '' : unsafe; }
+    return unsafe
+         .replace(/&/g, "&")
+         .replace(/</g, "<")
+         .replace(/>/g, ">")
+         .replace(/"/g, "")
+         .replace(/'/g, "'");
+}
+
+// --- Profile Page Logic ---
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Alumni Roadmaps DOM Loaded");
     // --- Element References ---
     const searchInput = document.getElementById('searchInput');
     const resetButton = document.getElementById('resetButton');
     const roadmapModal = document.getElementById('roadmap-modal');
-    const closeButton = document.querySelector('#roadmap-modal .close-button'); // More specific selector
+    const closeButton = document.querySelector('#roadmap-modal .close-button');
     const roadmapsContainer = document.getElementById("roadmaps-dynamic-container");
     const modalName = document.getElementById('modal-name');
     const modalProfession = document.getElementById('modal-profession');
@@ -16,262 +29,314 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalAdvice = document.getElementById('modal-advice');
 
     // --- State ---
-    let allAlumniData = {}; // Store the structured data fetched initially
-
-    // --- Initial Load ---
-    loadTopLikedAlumni();
+    let allAlumniList = [];
+    let currentFilteredAndGroupedData = {};
+    let myLikedAlumniIds = new Set();
 
     // --- Event Listeners ---
     if (resetButton) {
         resetButton.addEventListener('click', () => {
-            searchInput.value = '';
-            // Re-render using the originally fetched full data
-            populateRoadmaps(allAlumniData);
+            if (searchInput) searchInput.value = '';
+            console.log("Reset button clicked.");
+            // Apply filter with empty term (shows all)
+            filterAndGroupAlumni('');
         });
-    } else {
-        console.error("Reset button not found");
-    }
+    } else { console.error("Reset button not found"); }
 
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            closeModal();
-        });
-    } else {
-        console.error("Modal close button not found");
-    }
+    if (closeButton) { closeButton.addEventListener('click', closeModal); }
+    else { console.error("Modal close button not found"); }
 
-    // Close modal if clicking outside the content area
     if (roadmapModal) {
         roadmapModal.addEventListener('click', (event) => {
-            // Check if the click is directly on the modal background, not its children
-            if (event.target === roadmapModal) {
-                closeModal();
-            }
+            if (event.target === roadmapModal) { closeModal(); }
         });
-    } else {
-        console.error("Roadmap modal container not found");
-    }
-
+    } else { console.error("Roadmap modal container not found"); }
 
     if (searchInput) {
+        // Use 'input' for immediate feedback as user types
         searchInput.addEventListener('input', function () {
-            filterAlumni(this.value);
+            // Debounce slightly to avoid filtering on every single keystroke (optional but good practice)
+            // Simple debounce implementation:
+            clearTimeout(searchInput.debounceTimer);
+            searchInput.debounceTimer = setTimeout(() => {
+                 filterAndGroupAlumni(this.value);
+            }, 250); // Adjust delay as needed (e.g., 250-500ms)
         });
-    } else {
-        console.error("Search input not found");
-    }
+    } else { console.error("Search input not found"); }
 
 
     // --- Core Functions ---
 
-    async function fetchTopLikedAlumni() {
-        console.log("Fetching top liked alumni...");
+    async function fetchAllAlumni() {
+        console.log("Fetching ALL alumni data for Roadmaps...");
+        if (!roadmapsContainer) return [];
         try {
-            // Use the correct API endpoint defined in exp.py
-            const response = await fetch("/api/alumni/top-liked");
+            const response = await fetch("/api/alumni");
             if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`, await response.text());
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP error ${response.status}: ${errorText}`);
             }
             const data = await response.json();
-            console.log("Fetched top liked alumni data:", data);
+            if (!Array.isArray(data)) throw new Error("Invalid data format received.");
+            console.log(`Fetched ${data.length} total alumni.`);
             return data;
         } catch (error) {
-            console.error("Error fetching top liked alumni:", error);
-            if (roadmapsContainer) {
-                 roadmapsContainer.innerHTML = "<p class='error-message'>Failed to load alumni roadmaps. Please try again later.</p>";
-            }
-            return {}; // Return empty object on failure
+            console.error("Error fetching all alumni:", error);
+            if(roadmapsContainer) roadmapsContainer.innerHTML = `<p style="color: var(--error-color); text-align: center;">Failed to load alumni roadmaps: ${error.message}. Please try again later.</p>`;
+            return [];
         }
+    }
+
+    async function fetchMyLikedAlumni() {
+        console.log("Fetching liked alumni IDs...");
+        try {
+            const response = await fetch("/api/alumni/me/liked");
+            if (!response.ok) { console.warn(`Failed to fetch liked IDs: ${response.status}`); return new Set(); }
+            const likedIdsArray = await response.json();
+            if (!Array.isArray(likedIdsArray)) { console.warn("Invalid format for liked IDs."); return new Set(); }
+            console.log("Fetched liked alumni IDs:", likedIdsArray);
+            myLikedAlumniIds = new Set(likedIdsArray);
+        } catch (error) { console.error("Error fetching liked alumni IDs:", error); myLikedAlumniIds = new Set(); }
     }
 
     async function fetchAlumniDetails(alumniId) {
         console.log(`Fetching details for alumni ID: ${alumniId}`);
-        // IMPORTANT: Assumes you created a '/api/alumni/{alumni_id}' GET endpoint in exp.py
         try {
-            // *** Add Authentication headers if needed ***
-            // const headers = getAuthHeaders(); // Implement getAuthHeaders() if using tokens/sessions
-            // const response = await fetch(`/api/alumni/${alumniId}`, { headers });
-            const response = await fetch(`/api/alumni/${alumniId}`); // No auth headers shown here
-
+            const response = await fetch(`/api/alumni/${alumniId}`);
             if (!response.ok) {
-                 console.error(`HTTP error fetching details! status: ${response.status}`, await response.text());
-                 throw new Error(`HTTP error! status: ${response.status}`);
+                 const errorText = await response.text();
+                 console.error(`HTTP error fetching details! status: ${response.status}`, errorText);
+                 alert(`Could not load details. Server returned status ${response.status}.`);
+                 return null;
             }
             const data = await response.json();
-            console.log("Fetched alumni details:", data);
             return data;
         } catch (error) {
             console.error("Error fetching alumni details:", error);
-            alert("Could not load alumni details."); // User feedback
+            alert(`Could not load alumni details: ${error.message}`);
             return null;
         }
     }
 
+    function groupAlumniByDepartment(alumniList) {
+        const grouped = {};
+        if (!Array.isArray(alumniList)) { console.error("Cannot group non-array:", alumniList); return {}; }
+        alumniList.forEach(alumni => {
+            if (!alumni || typeof alumni !== 'object') { console.warn("Skipping invalid alumni object:", alumni); return; }
+            const dept = alumni.department || "Other";
+            if (!grouped[dept]) grouped[dept] = [];
+            grouped[dept].push(alumni);
+        });
+        return grouped; // Return grouped data
+    }
+
     function createRoadmapCard(alumni) {
+        if (!alumni || !alumni.id || !alumni.username) { console.warn("Invalid alumni data for card:", alumni); return null; } // Return null if data invalid
+
         const card = document.createElement('div');
         card.classList.add('roadmap-card');
-        // Use username for initials and display name
-        const initials = alumni.username.substring(0, 2).toUpperCase();
+        const usernameStr = String(alumni.username || '');
+        const initials = usernameStr.substring(0, 2).toUpperCase();
+        const isLiked = myLikedAlumniIds.has(alumni.id);
+        const likedClass = isLiked ? 'liked' : '';
+        const buttonTitle = isLiked ? `You liked ${escapeHtml(alumni.username)}` : `Like ${escapeHtml(alumni.username)}`;
+        // Determine if button should be disabled from the start
+        const buttonDisabled = isLiked ? 'disabled' : '';
+
         card.innerHTML = `
             <div class="avatar">${initials}</div>
-            <div class="name">${alumni.username}</div>
-            <div class="profession">${alumni.profession || 'N/A'}</div>
+            <div class="name">${escapeHtml(alumni.username)}</div>
+            <div class="profession">${escapeHtml(alumni.profession || 'N/A')}</div>
             <div class="card-footer">
-                 <button class="like-button" data-alumni-id="${alumni.id}">Like</button>
-                 <span class="likes-count">Likes: ${alumni.likes}</span>
+                 <button class="like-button ${likedClass}" data-alumni-id="${alumni.id}" title="${buttonTitle}" ${buttonDisabled}>
+                    <span class="like-icon">${isLiked ? '❤️' : '👍'}</span> 
+                    <span class="likes-count" id="likes-count-${alumni.id}">${alumni.likes ?? 0}</span>
+                 </button>
             </div>
         `;
-
-        // Add click listener to the card itself (excluding the button)
         card.addEventListener('click', (event) => {
-            if (!event.target.classList.contains('like-button')) {
-                openRoadmapModal(alumni.id); // Use the ID to fetch details
-            }
+            if (!event.target.closest('.like-button')) { openRoadmapModal(alumni.id); }
         });
-
-        // Add click listener specifically to the like button
         const likeButton = card.querySelector('.like-button');
         if (likeButton) {
             likeButton.addEventListener('click', (event) => {
-                event.stopPropagation(); // Prevent card click event from firing
-                likeAlumni(alumni.id, likeButton); // Pass button for potential UI update
+                event.stopPropagation();
+                // Check disabled attribute instead of class for click prevention
+                if (!likeButton.disabled) {
+                     likeAlumni(alumni.id, likeButton);
+                } else {
+                    console.log(`Like button for ${alumni.id} is disabled (already liked).`);
+                }
             });
         }
-
         return card;
     }
 
     function populateRoadmaps(groupedAlumni) {
-        if (!roadmapsContainer) {
-            console.error("Roadmaps container element not found!");
-            return;
-        };
-        roadmapsContainer.innerHTML = ""; // Clear previous content
+        console.log("Populating roadmaps...");
+        if (!roadmapsContainer) { console.error("Roadmaps container not found!"); return; }
+        roadmapsContainer.innerHTML = ""; // Clear previous
 
-        if (Object.keys(groupedAlumni).length === 0) {
-             roadmapsContainer.innerHTML = "<p>No alumni roadmaps found.</p>";
+        if (!groupedAlumni || Object.keys(groupedAlumni).length === 0) {
+             roadmapsContainer.innerHTML = "<p>No alumni roadmaps found matching criteria.</p>";
+             console.log("No grouped alumni data to display.");
              return;
         }
 
-        // Sort departments alphabetically (optional)
         const sortedDepartments = Object.keys(groupedAlumni).sort();
+        console.log("Departments to render:", sortedDepartments);
 
-        // for (const department in groupedAlumni) { // Original order
-        for (const department of sortedDepartments) { // Sorted order
+        for (const department of sortedDepartments) {
             const alumniList = groupedAlumni[department];
-            if (alumniList.length > 0) { // Only create section if there are alumni
+            if (Array.isArray(alumniList) && alumniList.length > 0) {
+                 // *** Sort alumni within this department by likes ***
+                 console.log(`Sorting ${alumniList.length} alumni in department: ${department}`);
+                 alumniList.sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0)); // Descending likes
+                 console.log(`Likes after sort (first 5):`, alumniList.slice(0, 5).map(a => a.likes));
+
+
                  const section = document.createElement('section');
                  section.classList.add('roadmap-section');
-                 // Create a safe class name from department
-                 const departmentClass = department.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-$/, '');
+                 const departmentClass = department.toLowerCase().replace(/[^a-z0-9-_]+/g, '-').replace(/-$/, '');
                  section.innerHTML = `
-                     <h3 class="section-heading">${department} Roadmaps</h3>
-                     <div class="roadmap-list ${departmentClass}-roadmaps"></div>
+                     <h3 class="section-heading">${escapeHtml(department)} Roadmaps</h3>
+                     <div class="roadmap-list ${escapeHtml(departmentClass)}-roadmaps"></div>
                  `;
                  roadmapsContainer.appendChild(section);
-                 const listContainer = section.querySelector(`.${departmentClass}-roadmaps`);
-                 alumniList.forEach(alumni => {
-                     listContainer.appendChild(createRoadmapCard(alumni));
-                 });
+                 const listContainer = section.querySelector(`.${escapeHtml(departmentClass)}-roadmaps`);
+                 if (listContainer) {
+                     alumniList.forEach(alumni => {
+                         const card = createRoadmapCard(alumni);
+                         if (card) listContainer.appendChild(card); // Append valid cards
+                     });
+                 } else { console.error(`Could not find list container for class: ${departmentClass}-roadmaps`); }
+            } else {
+                console.log(`Skipping empty or invalid alumni list for department: ${department}`);
             }
         }
+        console.log("Roadmaps population complete.");
     }
 
-    async function loadTopLikedAlumni() {
-        const data = await fetchTopLikedAlumni();
-        allAlumniData = data; // Store the full data for filtering
-        populateRoadmaps(data); // Initial population
+    async function initializePage() {
+        await fetchMyLikedAlumni(); // Fetch liked status FIRST
+        allAlumniList = await fetchAllAlumni(); // Then fetch all alumni
+        if (allAlumniList.length > 0) {
+            currentFilteredAndGroupedData = groupAlumniByDepartment(allAlumniList);
+            populateRoadmaps(currentFilteredAndGroupedData); // Initial render (will be sorted by likes)
+        }
     }
 
     async function openRoadmapModal(alumniId) {
         const alumniData = await fetchAlumniDetails(alumniId);
-        if (!alumniData || !roadmapModal) return; // Exit if data fetch failed or modal doesn't exist
-
-        // Populate modal - Use username, handle nulls gracefully
-        modalName.textContent = alumniData.username || 'N/A';
-        modalProfession.textContent = `Profession: ${alumniData.profession || 'N/A'}`;
-        modalAlmaMater.textContent = `Alma Mater: ${alumniData.alma_mater || 'N/A'}`;
-        modalInterviews.textContent = `Interviews: ${alumniData.interviews || 'N/A'}`;
-        modalInternships.textContent = `Internships: ${alumniData.internships || 'N/A'}`;
-        modalStartups.textContent = `Startups: ${alumniData.startups || 'N/A'}`;
-        modalCurrentCompany.textContent = `Current Company: ${alumniData.current_company || 'N/A'}`;
-        modalMilestones.textContent = `Milestones: ${alumniData.milestones || 'N/A'}`;
-        modalAdvice.textContent = `Advice: ${alumniData.advice || 'N/A'}`;
-
-        // Display the modal
-        roadmapModal.style.display = 'block'; // Use 'block' or 'flex' depending on CSS
+        if (!alumniData || !roadmapModal || !modalName) { return; }
+        // ... (rest of modal population logic is likely okay) ...
+        modalName.textContent = escapeHtml(alumniData.username || 'N/A');
+        modalProfession.textContent = escapeHtml(alumniData.profession || 'N/A');
+        modalAlmaMater.textContent = `Alma Mater: ${escapeHtml(alumniData.alma_mater || 'N/A')}`;
+        modalCurrentCompany.textContent = `Current Company: ${escapeHtml(alumniData.current_company || 'N/A')}`;
+        modalInterviews.innerHTML = `<strong>Interview Experiences:</strong><br>${escapeHtml(alumniData.interviews || 'Not shared').replace(/\n/g, '<br>')}`;
+        modalInternships.innerHTML = `<strong>Internship Experiences:</strong><br>${escapeHtml(alumniData.internships || 'Not shared').replace(/\n/g, '<br>')}`;
+        modalStartups.innerHTML = `<strong>Startup Ventures:</strong><br>${escapeHtml(alumniData.startups || 'Not shared').replace(/\n/g, '<br>')}`;
+        modalMilestones.innerHTML = `<strong>Milestones:</strong><br>${escapeHtml(alumniData.milestones || 'Not shared').replace(/\n/g, '<br>')}`;
+        modalAdvice.innerHTML = `<strong>Advice:</strong><br>${escapeHtml(alumniData.advice || 'Not shared').replace(/\n/g, '<br>')}`;
+        roadmapModal.style.display = 'flex';
     }
 
     function closeModal() {
-         if (roadmapModal) {
-             roadmapModal.style.display = 'none';
-         }
+         if (roadmapModal) roadmapModal.style.display = 'none';
     }
 
     async function likeAlumni(alumniId, buttonElement) {
-        console.log(`Liking alumni ID: ${alumniId}`);
-        // IMPORTANT: Assumes you created a '/api/alumni/{alumni_id}/like' POST endpoint
+        console.log(`Attempting to like alumni ID: ${alumniId}`);
+        if (!buttonElement) return;
+        buttonElement.disabled = true; // Disable button during request
+
         try {
-            // *** Add Authentication headers if needed ***
-            // const headers = getAuthHeaders();
-            // const response = await fetch(`/api/alumni/${alumniId}/like`, { method: 'POST', headers });
-            const response = await fetch(`/api/alumni/${alumniId}/like`, {
-                method: 'POST', // Use POST for actions that change state
-            });
+            const response = await fetch(`/api/alumni/${alumniId}/like`, { method: 'POST' });
+            const resultData = await response.json(); // Try to parse JSON regardless of status for error detail
 
             if (!response.ok) {
-                console.error(`HTTP error liking alumni! status: ${response.status}`, await response.text());
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const updatedData = await response.json(); // Expecting { likes: new_count }
-            console.log("Like successful, updated data:", updatedData);
-
-            // Find the card containing the button that was clicked
-            const card = buttonElement.closest('.roadmap-card');
-            if (card) {
-                 const likesElement = card.querySelector('.likes-count');
-                 if (likesElement) {
-                     likesElement.textContent = `Likes: ${updatedData.likes}`; // Update text content
-                 } else {
-                     console.warn("Could not find likes count element to update in card.");
+                 let errorMsg = `Like failed: ${resultData.detail || `Status ${response.status}`}`;
+                 if (response.status === 401 || response.status === 307) errorMsg = "Session expired. Please log in again to like.";
+                 // Handle case where backend says "Already liked" (though button should be disabled)
+                 if (response.status === 200 && resultData.message === "Already liked.") {
+                      console.warn(`Like request sent for already liked user ${alumniId}, backend confirmed.`);
+                      // Ensure button state is correct and exit
+                      buttonElement.classList.add('liked');
+                      const iconSpan = buttonElement.querySelector('.like-icon'); if (iconSpan) iconSpan.textContent = '❤️';
+                      buttonElement.disabled = true; // Keep it disabled
+                      return; // No further state update needed
                  }
-            } else {
-                 console.warn("Could not find parent card for the like button.");
+                 throw new Error(errorMsg);
             }
-            // Optionally disable the button or change its appearance after liking
-            // buttonElement.disabled = true;
-            // buttonElement.textContent = 'Liked';
+
+            console.log("Like API call successful:", resultData);
+
+            // --- Update UI and State ---
+            const likesElement = buttonElement.querySelector('.likes-count');
+            if (likesElement) likesElement.textContent = `${resultData.likes}`;
+
+            // Visually update the button to 'liked' state
+            buttonElement.classList.add('liked');
+            const iconSpan = buttonElement.querySelector('.like-icon'); if (iconSpan) iconSpan.textContent = '❤️';
+            buttonElement.disabled = true; // Keep button disabled after successful like
+            buttonElement.title = `You liked this alumni`;
+
+            // Update the global liked set
+            myLikedAlumniIds.add(alumniId);
+
+            // Update master list data
+            const indexInAll = allAlumniList.findIndex(a => a && a.id === alumniId);
+            if (indexInAll > -1) allAlumniList[indexInAll].likes = resultData.likes;
+
+            // Update currently displayed grouped data
+            for (const dept in currentFilteredAndGroupedData) {
+                 if (Array.isArray(currentFilteredAndGroupedData[dept])) {
+                      const indexInGroup = currentFilteredAndGroupedData[dept].findIndex(a => a && a.id === alumniId);
+                      if (indexInGroup > -1) { currentFilteredAndGroupedData[dept][indexInGroup].likes = resultData.likes; break; }
+                 }
+            }
+
+            // Re-render the list to apply sorting based on the new like count
+            // Use the current search term to maintain filtering state
+            console.log("Re-rendering list after like...");
+            filterAndGroupAlumni(searchInput ? searchInput.value : '');
 
         } catch (error) {
             console.error("Error liking alumni:", error);
-            alert("Failed to record like."); // User feedback
+            alert(`Failed to record like: ${error.message}`);
+            // Re-enable button only on error
+            buttonElement.disabled = false;
         }
     }
 
-
-    function filterAlumni(searchTerm) {
-        const lowerSearchTerm = searchTerm.toLowerCase().trim();
-        const filteredData = {};
+    // Filters master list, then groups and renders (including sorting)
+    function filterAndGroupAlumni(searchTerm) {
+        const lowerSearchTerm = (searchTerm || '').toLowerCase().trim();
+        let filteredList;
+        console.log(`Filtering alumni with term: "${lowerSearchTerm}"`); // Log search term
 
         if (!lowerSearchTerm) {
-             // If search term is empty, show all original data
-             populateRoadmaps(allAlumniData);
-             return;
-        }
-
-        for (const department in allAlumniData) {
-            const matchingAlumni = allAlumniData[department].filter(alumni => {
-                // Search in username and profession
-                const searchStr = `${alumni.username} ${alumni.profession || ''}`.toLowerCase();
+             filteredList = allAlumniList; // Use full list if search is empty
+        } else {
+             filteredList = allAlumniList.filter(alumni => {
+                // Robustly check properties before searching
+                const username = (alumni?.username || '').toLowerCase();
+                const profession = (alumni?.profession || '').toLowerCase();
+                const department = (alumni?.department || '').toLowerCase();
+                const company = (alumni?.current_company || '').toLowerCase();
+                const searchStr = `${username} ${profession} ${department} ${company}`;
                 return searchStr.includes(lowerSearchTerm);
             });
-            // Only include department if it has matching alumni
-            if (matchingAlumni.length > 0) {
-                 filteredData[department] = matchingAlumni;
-            }
         }
-        populateRoadmaps(filteredData); // Populate with filtered results
+        console.log(`Found ${filteredList.length} alumni after filtering.`);
+        // Group the *filtered* results
+        currentFilteredAndGroupedData = groupAlumniByDepartment(filteredList);
+        // Re-render the roadmaps section - populateRoadmaps will sort the groups internally
+        populateRoadmaps(currentFilteredAndGroupedData);
     }
-});
+
+    // --- Initial Load ---
+    initializePage(); // Fetch liked status, then all alumni, group, sort, and display
+
+}); // End DOMContentLoaded

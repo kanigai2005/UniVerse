@@ -3,247 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniVerse Profile - Dynamic</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>UniVerse Profile</title> <!-- JS will update this -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* --- Basic Styles --- */
+        :root {
+            --top-nav-bg: #283e4a; /* Darker blue-gray */
+            --top-nav-text: #e0e6eb;
+            --top-nav-hover-bg: #3c5362;
+            --main-bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-primary: #1d2129;
+            --text-secondary: #606770;
+            --link-primary: #0073b1; /* Primary action color */
+            --accent-color: #0073b1;
+            --footer-bg: var(--top-nav-bg);
+            --footer-text: var(--top-nav-text);
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.07);
+            --success-color: #4CAF50;
+            --error-color: #d32f2f;
+            --input-border: #ccd0d5;
+            --button-text: white;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            font-size: 15px;
+            padding-top: 60px; /* Space for fixed navbar */
+            padding-bottom: 50px; /* Space for fixed footer */
         }
 
-        .top-nav {
-            background: #2f4f4f;
-            padding: 25px 35px;
+        /* --- Navbar Styles --- */
+        .navbar {
+            background-color: var(--top-nav-bg);
+            padding: 0 20px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            font-size: 26px;
-        }
-
-        .top-nav a {
-            color: #e0e0e0;
-            text-decoration: none;
-            padding: 18px 25px;
-            border-radius: 10px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-
-        .top-nav a i {
-            font-size: 30px;
-            margin-right: 8px;
-        }
-
-        .top-nav a:hover {
-            background-color: #486363;
-        }
-
-        .profile-container {
-            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 950px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 60px;
-            margin: 60px auto;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
+            box-sizing: border-box;
+            height: 60px;
         }
+        .navbar a {
+            color: var(--top-nav-text); text-decoration: none; padding: 8px 12px;
+            border-radius: 6px; transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 0.95rem; display: flex; align-items: center; gap: 6px; font-weight: 500;
+        }
+        .navbar a i { font-size: 1.1em; }
+        .navbar a:hover { background-color: var(--top-nav-hover-bg); color: #ffffff; }
 
+        /* --- Profile Container & Header --- */
+        .profile-container {
+            background-color: var(--card-bg); width: 90%; max-width: 850px; margin: 30px auto;
+            border-radius: 10px; box-shadow: var(--card-shadow); padding: 25px 30px;
+        }
         .profile-header {
-            text-align: center;
-            padding-bottom: 60px;
-            border-bottom: 3px solid #e0e0e0;
+            text-align: center; padding-bottom: 20px; border-bottom: 1px solid #e9ecef;
+            margin-bottom: 25px; position: relative;
         }
-
         .profile-pic-icon {
-            font-size: 180px;
-            color: #0077b5;
-            margin-bottom: 30px;
+            width: 120px; height: 120px; border-radius: 50%; background-color: #e9ecef;
+            color: var(--link-primary); display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px auto; font-size: 50px; border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
-        .profile-name {
-            font-size: 40px;
-            font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
-            margin-bottom: 15px;
+        /* Uncomment and use if you have actual images
+        img.profile-pic-display {
+             width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+             margin: 0 auto 15px auto; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        */
+        .profile-name { font-size: 1.8em; font-weight: 600; margin-bottom: 5px; color: var(--text-primary); }
+        .profile-title { font-size: 1.05em; color: var(--text-secondary); margin-bottom: 15px; }
 
-        .profile-title {
-            font-size: 28px;
-            color: #666;
-            margin-bottom: 30px;
-        }
-
+        /* --- Profile Info Grid (Stats) --- */
         .profile-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 35px;
-            padding: 60px 0;
-            border-bottom: 3px solid #e0e0e0;
-            font-size: 22px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px 10px; padding: 20px 0; border-bottom: 1px solid #e9ecef;
+            margin-bottom: 25px; text-align: center;
         }
+        .info-item i { font-size: 1.8em; color: var(--accent-color); margin-bottom: 6px; }
+        .info-item strong { display: block; font-weight: 500; font-size: 0.8em; color: var(--text-secondary); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-item p { margin: 0; font-size: 1.3em; color: var(--text-primary); font-weight: 600; }
 
-        .info-item {
-            text-align: center;
-        }
+        /* --- Profile Details Sections --- */
+        .profile-details { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e9ecef; }
+        .profile-details:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .profile-details h3 { margin-top: 0; margin-bottom: 18px; font-size: 1.3em; font-weight: 600; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; display: inline-block; }
+        .profile-details h3 i { margin-right: 10px; }
+        .profile-details > p, .profile-details > span { color: var(--text-secondary); line-height: 1.7; margin-bottom: 10px; font-size: 0.95em; }
+        .profile-details > p > strong, .profile-details > span > strong { color: var(--text-primary); font-weight: 600; margin-right: 6px; }
+        .profile-details .multi-line-text { display: block; white-space: pre-wrap; margin-top: 5px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #e9ecef; }
 
-        .info-item i {
-            font-size: 45px;
-            color: #0077b5;
-            margin-bottom: 15px;
-        }
-
-        .info-item strong {
-            display: block;
-            font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
-            margin-bottom: 15px;
-        }
-
-        .info-item p {
-            margin: 0;
-            color: #333;
-        }
-
+        /* --- Profile Actions --- */
         .profile-actions {
-            text-align: center;
-            padding: 60px 0;
-            border-bottom: 3px solid #e0e0e0;
-            display: flex;
-            justify-content: center; /* Center the buttons horizontally */
-            gap: 20px; /* Add some gap between the buttons */
+            text-align: center; padding: 20px 0 0 0; margin-top: 20px;
+            display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;
         }
+        .profile-actions button, .profile-actions a button {
+            background-color: var(--primary-color); color: var(--button-text); padding: 10px 22px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; font-weight: 500;
+            transition: background-color 0.2s ease, transform 0.1s ease; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .profile-actions button:hover:not(:disabled), .profile-actions a button:hover:not(:disabled) {
+            background-color: #005f94; transform: translateY(-1px);
+        }
+        .profile-actions a { text-decoration: none; display: inline-flex; } /* Ensure link takes button size */
+        .profile-actions #network-button { background-color: var(--success-color); } /* Style for network button */
+        .profile-actions #network-button:hover { background-color: #2f4f4f; }
+        #edit-profile-button { display: none; /* JS shows this */ }
+        #network-link { display: none; /* JS shows this */}
 
-        .profile-actions button {
-            background-color: #0077b5;
-            color: white;
-            padding: 30px 60px;
-            border: none;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 26px;
-            width: 80%; /* Make buttons take up 80% of their container */
-            max-width: 300px; /* Limit the maximum width of the buttons */
-        }
-        .profile-actions button:hover{
-            background-color: #005086;
-        }
 
-        .achievements-section {
-            padding-top: 60px;
-            font-size: 22px;
-        }
+        /* --- Edit Profile Popup Styles --- */
+        #edit-profile-popup { /* ... keep popup styles from previous example ... */ }
 
-        .achievements-section h3 {
-            font-size: 32px;
-            font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
-            margin-bottom: 30px;
-            color: #333;
-        }
+        /* --- Footer Styles --- */
+        .footer { background-color: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 15px 0; font-size: 0.85em; margin-top: 30px; box-shadow: 0 -1px 3px rgba(0,0,0,0.1); }
 
-        .achievement-item {
-            padding: 30px;
-            border-bottom: 3px solid #e0e0e0;
-            color: #333;
-        }
-
-        .time-machine {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 30px;
-            font-size: 22px;
-        }
-
-        .time-machine .time-item {
-            padding: 15px 30px;
-            border-radius: 15px;
-            cursor: pointer;
-            color: #333;
-        }
-
-        .time-machine .active {
-            font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
-            text-decoration: underline;
-        }
-
-        @media (max-width: 950px) {
-            .profile-actions button {
-                width: 90%;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="top-nav">
-        <a href="home.html"><i class="fas fa-home"></i></a>
-        <a href="explore.html"><i class="fas fa-compass"></i></a>
-        <a href="notifications.html.html"><i class="fas fa-bell"></i></a>
-        <a href="help.html"><i class="fas fa-question-circle"></i></a>
-        <a href="profile.html"><i class="fas fa-user"></i></a>
-        <a href="login.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
-    </div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/home" title="Home"><i class="fas fa-home"></i> </a>
+        <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i> </a>
+        <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i> </a>
+        <a href="/help.html" title="Help"><i class="fas fa-question-circle"></i></a>
+        <a href="#" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i></a> <!-- JS updates href -->
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+    </nav>
 
-    <div class="profile-container">
+    <div class="profile-container" id="profile-container-main">
+        <!-- Profile Header -->
         <div class="profile-header">
-            <i class="fas fa-user profile-pic-icon"></i>
-            <h2 class="profile-name" id="profile-name">John Doe</h2>
-            <p class="profile-title" id="profile-title">Alumni of [University Name]</p>
+            <div class="profile-pic-icon"><i class="fas fa-user"></i></div>
+            <!-- Use <img> if you have URLs:
+            <img src="/static/images/default-avatar.png" alt="Profile Picture" class="profile-pic-display" id="profile-pic-display">
+             -->
+            <h2 class="profile-name" id="profile-username">Loading...</h2>
+            <p class="profile-title" id="profile-title">Loading details...</p>
         </div>
 
+        <!-- Profile Stats Grid -->
         <div class="profile-info">
-            <div class="info-item">
-                <i class="fas fa-trophy"></i> <strong>Rank</strong>
-                <p id="profile-rank">#5</p>
-            </div>
-            <div class="info-item">
-                <i class="fas fa-gem"></i> <strong>Almagems</strong>
-                <p id="profile-almagems">1250</p>
-            </div>
-            <div class="info-item">
-                <i class="fas fa-shield-alt"></i> <strong>Badges</strong>
-                <p id="profile-badges">5</p>
-            </div>
-            <div class="info-item">
-                <i class="fas fa-puzzle-piece"></i> <strong>Solved</strong>
-                <p id="profile-solved">75</p>
-            </div>
-            <div class="info-item">
-                <i class="fas fa-users"></i> <strong>Links</strong>
-                <p id="profile-links">250</p>
-            </div>
+            <div class="info-item"> <i class="fas fa-chart-line"></i> <strong>Activity</strong> <p id="profile-activity">--</p> </div>
+            <div class="info-item"> <i class="fas fa-gem"></i> <strong>Almagems</strong> <p id="profile-almagems">--</p> </div>
+            <div class="info-item"> <i class="fas fa-medal"></i> <strong>Badges</strong> <p id="profile-badges">--</p> </div>
+            <div class="info-item"> <i class="fas fa-check-circle"></i> <strong>Solved</strong> <p id="profile-solved">--</p> </div>
+            <div class="info-item"> <i class="fas fa-users"></i> <strong>Connections</strong> <p id="profile-links">--</p> </div>
         </div>
 
-        <div class="time-machine">
-            <div class="time-item active">M</div>
-            <div class="time-item active">T</div>
-            <div class="time-item">W</div>
-            <div class="time-item active">T</div>
-            <div class="time-item">F</div>
+        <!-- Profile Details Sections -->
+        <div class="profile-details">
+            <h3><i class="fas fa-briefcase"></i> Professional Info</h3>
+            <span><strong>Profession:</strong> <span id="profile-profession">--</span></span>
+            <span><strong>Current Company:</strong> <span id="profile-company">--</span></span>
+            <span><strong>Department:</strong> <span id="profile-department">--</span></span>
+            <span><strong>Alma Mater:</strong> <span id="profile-alma-mater">--</span></span>
+         </div>
+
+         <div class="profile-details">
+            <h3><i class="fas fa-book-reader"></i> Experiences & Advice</h3>
+            <p><strong>Interview Experiences:</strong><br><span id="profile-interviews" class="multi-line-text">--</span></p>
+            <p><strong>Internship Experiences:</strong><br><span id="profile-internships" class="multi-line-text">--</span></p>
+            <p><strong>Startup Ventures:</strong><br><span id="profile-startups" class="multi-line-text">--</span></p>
+            <p><strong>Milestones:</strong><br><span id="profile-milestones" class="multi-line-text">--</span></p>
+            <p><strong>Advice:</strong><br><span id="profile-advice" class="multi-line-text">--</span></p>
         </div>
 
+         <div class="profile-details">
+            <h3><i class="fas fa-star"></i> Achievements</h3>
+            <span id="profile-achievements" class="multi-line-text">--</span>
+        </div>
+
+        <!-- Profile Actions -->
         <div class="profile-actions">
-            <button id="edit-profile-button">Edit Profile</button>
-            <a href="connection.html"><button id="connect-button">Connect</button></a>
+            <!-- Only shown via JS if viewing own profile -->
+            <button id="edit-profile-button" style="display: none;"><i class="fas fa-edit"></i> Edit Profile</button>
+            <!-- Always shown, text/link adjusted by JS -->
+            <a href="/connection.html" id="network-link" style="display: none;">
+                <button id="network-button"><i class="fas fa-users"></i> My Network</button>
+            </a>
         </div>
+    </div> <!-- End profile-container -->
 
-        <div class="achievements-section">
-            <h3>Achievements</h3>
-            <div class="achievement-item" id="achievement-1">Completed 50 coding challenges.</div>
-            <div class="achievement-item" id="achievement-2">Connected with 100+ alumni.</div>
-            <div class="achievement-item" id="achievement-3">Achieved top 10 rank.</div>
-        </div>
-    </div>
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
 
+    <!-- Embedded JSON data from backend -->
+    <script id="profile-data-script" type="application/json">
+        {{ profile_data_json | safe if profile_data_json else 'null' }}
+    </script>
+    <script id="profile-flags-script" type="application/json">
+        { "is_own_profile": {{ is_own_profile | tojson | safe if is_own_profile is defined else 'false' }} }
+    </script>
+
+    <!-- Link external JavaScript file -->
     <script src="static/profile.js"></script>
+
 </body>
 </html>

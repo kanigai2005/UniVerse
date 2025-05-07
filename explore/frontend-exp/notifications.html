@@ -3,206 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications</title>
+    <title>Notifications - UniVerse</title> <!-- Consistent Title -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f3f2ef;
-            margin: 0;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            background-color: white;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-icons {
-            display: flex;
-            justify-content: space-around;
-            flex-grow: 1;
-        }
-
-        .nav-icons a {
-            color: #666;
-            font-size: 22px;
-            text-decoration: none;
-        }
-
-        .container {
-            width: 80%;
-            margin: 30px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 2em;
-            margin-bottom: 25px;
-            border-bottom: 3px solid #ddd;
-            padding-bottom: 15px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .notification {
-            border: none;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            background-color: white;
-            transition: transform 0.3s ease;
-        }
-
-        .notification:hover {
-            transform: translateY(-5px);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-        }
-
-        .action-buttons i {
-            font-size: 1.6em;
-            cursor: pointer;
-            padding: 12px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            color: #3498db;
-        }
-
-        .action-buttons i:hover {
-            background-color: rgba(52, 152, 219, 0.2);
-            color: #2980b9;
-        }
-        .notification:nth-child(even) {
-            background-color: #f8f8f8;
-        }
-
+        /* Basic styles - Consider moving to a shared CSS file */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f2ef; margin: 0; }
+        .navbar { display: flex; justify-content: space-around; background-color: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar a { color: #666; font-size: 22px; text-decoration: none; padding: 10px 15px; border-radius: 5px; transition: background-color 0.2s; }
+        .navbar a:hover { background-color: #eee; }
+        .container { width: 90%; max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section-title { font-size: 1.8em; margin-bottom: 20px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .notification-list { list-style: none; padding: 0; }
+        .notification-list li { border-bottom: 1px solid #eee; padding: 15px 10px; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+        .notification-list li:last-child { border-bottom: none; }
+        .notification-list li:hover { background-color: #f9f9f9; }
+        .notification-list li span { flex-grow: 1; margin-right: 15px; color: #555; }
+        .notification-actions button { background: none; border: none; cursor: pointer; color: #2f4f4f; font-size: 1.1em; margin-left: 10px; padding: 5px; }
+        .notification-actions button:hover { color: #2f4f4f; }
+        .notification-actions .mark-read.read { color: #2f4f4f; cursor: default; } /* Style for already read */
+        .no-notifications { color: #777; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
+    <!-- Navbar - SHOULD BE DYNAMICALLY UPDATED -->
     <nav class="navbar">
-        <div class="nav-icons">
-            <a href="Home Page.html"><i class="fas fa-home"></i></a>
-            <a href="Explore Page.html"><i class="fas fa-compass"></i></a>
-            <a href="Notification page.html"><i class="fas fa-bell"></i></a>
-            <a href="Help Page.html"><i class="fas fa-question-circle"></i></a>
-            <a href="Profile Page.html"><i class="fas fa-user"></i></a>
-            <a href="Login Page.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
+         <!-- Use a common navigation include or JS function to generate this -->
+        <a href="/home"><i class="fas fa-home"></i></a>
+        <a href="/explore.html"><i class="fas fa-compass"></i></a>
+        <a href="/notifications.html"><i class="fas fa-bell"></i></a>
+        <a href="/help.html"><i class="fas fa-question-circle"></i></a>
+        <!-- Profile link needs dynamic username -->
+        <a href="/profile.html" id="nav-profile-link"><i class="fas fa-user"></i></a>
+        <!-- Logout link points to backend logout route -->
+        <a href="/logout" id="logout-link"><i class="fas fa-sign-out-alt"></i></a>
     </nav>
+
     <div class="container">
         <h2 class="section-title">Notifications</h2>
+        <ul class="notification-list" id="notification-list-container">
+            <!-- Notifications will be loaded here -->
+            <li id="loading-notifications">Loading notifications...</li>
+        </ul>
+         <button id="mark-all-read" style="margin-top: 20px; padding: 8px 15px; cursor: pointer;">Mark All Read</button>
     </div>
+<script>
+    const notificationListContainer = document.getElementById('notification-list-container');
+    const markAllReadButton = document.getElementById('mark-all-read');
+    const loadingIndicator = document.getElementById('loading-notifications');
 
-    <script>
-        async function fetchNotifications() {
-            const username = getLoggedInUsername();
-            if (!username) {
-                console.error("Username not found.");
-                return;
-            }
-            const response = await fetch(`/api/users/${username}/notifications`);
+    async function fetchNotifications() {
+        try {
+            // Fetch notifications for the logged-in user (identified by cookie)
+            const response = await fetch(`/api/notifications`, {
+                credentials: 'include'
+            });
+
+            loadingIndicator?.remove(); // Remove loading indicator
+
             if (!response.ok) {
-                console.error("Failed to fetch notifications:", response.status);
-                return;
+                // Handle auth errors specifically (redirect handled by require_user_from_cookie)
+                if (response.status === 401 || response.status === 307) {
+                    console.warn("User not authenticated, cannot fetch notifications.");
+                    notificationListContainer.innerHTML = '<li class="no-notifications">Please log in to see notifications.</li>';
+                     markAllReadButton.style.display = 'none'; // Hide button if not logged in
+                    // Redirect might happen automatically from backend depending on require_user_from_cookie
+                    return;
+                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+
             const notifications = await response.json();
             displayNotifications(notifications);
+
+        } catch (error) {
+            console.error("Failed to fetch notifications:", error);
+            notificationListContainer.innerHTML = `<li class="no-notifications">Error loading notifications: ${error.message}. Please try again.</li>`;
+             markAllReadButton.style.display = 'none';
+        }
+    }
+
+    function displayNotifications(notifications) {
+        notificationListContainer.innerHTML = ''; // Clear previous content
+
+        if (!Array.isArray(notifications) || notifications.length === 0) {
+            notificationListContainer.innerHTML = '<li class="no-notifications">No new notifications.</li>';
+             markAllReadButton.style.display = 'none';
+            return;
         }
 
-        function displayNotifications(notifications) {
-            const container = document.querySelector('.container');
-            // Clear any existing notifications
-            const existingNotifications = container.querySelectorAll('.notification');
-            existingNotifications.forEach(n => n.remove());
+         markAllReadButton.style.display = 'block'; // Show button if there are notifications
 
-            if (notifications.length === 0) {
-                const noNotifications = document.createElement('p');
-                noNotifications.textContent = "No new notifications.";
-                container.appendChild(noNotifications);
-                return;
+        notifications.forEach(notification => {
+            const li = document.createElement('li');
+            li.dataset.notificationId = notification.id; // Store ID for later use
+
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = notification.message;
+            if (notification.is_read) {
+                li.style.opacity = '0.6'; // Visually indicate read notifications
             }
 
-            notifications.forEach(notification => {
-                const notificationDiv = document.createElement('div');
-                notificationDiv.classList.add('notification');
-                notificationDiv.innerHTML = `
-                    <span>${notification.message}</span>
-                    <div class="action-buttons">
-                        <i class="fas fa-check mark-read" data-notification-id="${notification.id}"></i>
-                        <i class="fas fa-times dismiss-notification" data-notification-id="${notification.id}"></i>
-                    </div>
-                `;
-                container.appendChild(notificationDiv);
+            const actionsDiv = document.createElement('div');
+            actionsDiv.classList.add('notification-actions');
+
+            // Mark Read Button (only if not already read)
+            if (!notification.is_read) {
+                const markReadButton = document.createElement('button');
+                markReadButton.title = "Mark as read";
+                markReadButton.classList.add('mark-read');
+                markReadButton.innerHTML = '<i class="fas fa-check"></i>';
+                markReadButton.onclick = () => markNotificationRead(notification.id, markReadButton, li);
+                actionsDiv.appendChild(markReadButton);
+            } else {
+                 const readIndicator = document.createElement('span');
+                 readIndicator.innerHTML = '<i class="fas fa-check-double" style="color: green;" title="Read"></i>';
+                 readIndicator.style.marginRight = '10px';
+                 actionsDiv.appendChild(readIndicator);
+            }
+
+            li.appendChild(messageSpan);
+            li.appendChild(actionsDiv);
+            notificationListContainer.appendChild(li);
+        });
+    }
+
+    async function markNotificationRead(notificationId, buttonElement, listItemElement) {
+         if (!notificationId) return;
+
+        try {
+             const response = await fetch('/api/notifications/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ notification_ids: [notificationId] }),
             });
 
-            // Add event listeners to the new action buttons
-            addNotificationEventListeners();
+            if (!response.ok) {
+                // Handle auth errors
+                 if (response.status === 401 || response.status === 307) {
+                     alert("Session expired. Please log in again.");
+                     window.location.href = '/'; // Redirect to login
+                     return;
+                 }
+                const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                throw new Error(errorData.detail || `HTTP Error: ${response.status}`);
+            }
+
+            console.log(`Notification ${notificationId} marked as read.`);
+            // Update UI: change button, fade item
+            buttonElement.remove(); // Remove the check button
+            listItemElement.style.opacity = '0.6';
+
+            // Add a permanent "read" indicator if needed
+            const actionsDiv = listItemElement.querySelector('.notification-actions');
+            if(actionsDiv) {
+                const readIndicator = document.createElement('span');
+                readIndicator.innerHTML = '<i class="fas fa-check-double" style="color: green;" title="Read"></i>';
+                readIndicator.style.marginRight = '10px';
+                actionsDiv.prepend(readIndicator); // Add it before other actions if any
+            }
+
+
+        } catch(error) {
+             console.error("Failed to mark notification as read:", error);
+             alert(`Failed to mark notification as read: ${error.message}`);
         }
+    }
 
-        function getLoggedInUsername() {
-            // **IMPORTANT: Adapt this function to your actual authentication mechanism.**
-            // This example tries to read from localStorage with the key 'username'.
-            return localStorage.getItem('username');
-        }
+    async function markAllNotificationsRead() {
+         const unreadNotificationElements = notificationListContainer.querySelectorAll('li:not([style*="opacity: 0.6"])'); // Find unread items
+         const unreadIds = Array.from(unreadNotificationElements).map(li => parseInt(li.dataset.notificationId)).filter(id => !isNaN(id));
 
-        function addNotificationEventListeners() {
-            const markReadButtons = document.querySelectorAll('.mark-read');
-            markReadButtons.forEach(button => {
-                button.addEventListener('click', async (event) => {
-                    const notificationId = parseInt(event.target.dataset.notificationId);
-                    if (isNaN(notificationId)) return;
+         if (unreadIds.length === 0) {
+             alert("No unread notifications to mark.");
+             return;
+         }
 
-                    const response = await fetch('/api/notifications/mark-read', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ notification_ids: [notificationId] }),
-                    });
+         try {
+             const response = await fetch('/api/notifications/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ notification_ids: unreadIds }),
+             });
 
-                    if (response.ok) {
-                        event.target.classList.remove('fa-check');
-                        event.target.classList.add('fa-check-double');
-                        event.target.style.color = 'green';
-                        event.target.removeEventListener('click', arguments.callee);
+             if (!response.ok) {
+                  if (response.status === 401 || response.status === 307) {
+                      alert("Session expired. Please log in again.");
+                      window.location.href = '/'; return;
+                  }
+                const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                throw new Error(errorData.detail || `HTTP Error: ${response.status}`);
+             }
 
-                        // Optionally remove the notification from the UI:
-                        // event.target.closest('.notification').remove();
-                        console.log(`Notification ${notificationId} marked as read.`);
-                    } else {
-                        console.error("Failed to mark notification as read:", response.status);
-                        alert("Failed to mark notification as read.");
-                    }
-                });
-            });
+             console.log(`Marked ${unreadIds.length} notifications as read.`);
+             // Update UI for all marked items
+             unreadNotificationElements.forEach(li => {
+                 li.style.opacity = '0.6';
+                 const button = li.querySelector('.mark-read');
+                 const actionsDiv = li.querySelector('.notification-actions');
+                 if (button) button.remove();
+                  if(actionsDiv) { // Add read indicator if not already there
+                     if (!actionsDiv.querySelector('.fa-check-double')) {
+                         const readIndicator = document.createElement('span');
+                         readIndicator.innerHTML = '<i class="fas fa-check-double" style="color: green;" title="Read"></i>';
+                         readIndicator.style.marginRight = '10px';
+                         actionsDiv.prepend(readIndicator);
+                     }
+                 }
+             });
+             markAllReadButton.disabled = true; // Optionally disable after marking all
 
-            const dismissButtons = document.querySelectorAll('.dismiss-notification');
-            dismissButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const notificationId = parseInt(event.target.dataset.notificationId);
-                    if (isNaN(notificationId)) return;
-                    event.target.closest('.notification').remove();
-                    console.log(`Notification ${notificationId} dismissed (UI only).`);
-                    // You might want to send a request to the backend to permanently dismiss.
-                });
-            });
-        }
+         } catch(error) {
+              console.error("Failed to mark all notifications as read:", error);
+              alert(`Failed to mark all notifications as read: ${error.message}`);
+         }
+    }
 
-        // Call fetchNotifications when the page loads
-        document.addEventListener('DOMContentLoaded', fetchNotifications);
+    // Event listener for Mark All Read button
+    markAllReadButton.addEventListener('click', markAllNotificationsRead);
+
+    // Initial fetch on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Navbar update should be handled by the included navbar.js
+        // Make sure navbar.js defines and exports this function if used across pages
+        fetchNotifications();
+    });
+
+
     </script>
 </body>
 </html>

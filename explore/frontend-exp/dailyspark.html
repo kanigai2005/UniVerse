@@ -5,306 +5,358 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💡 Daily Spark - UniVerse</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Optional: Link to a shared external CSS file -->
+    <!-- <link rel="stylesheet" href="/static/css/styles.css"> -->
     <style>
-        /* Your existing CSS styles here */
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
-
+        /* Basic Styles */
         :root {
             --top-nav-bg: #2f4f4f;
             --top-nav-text: #e0e0e0;
             --top-nav-hover-bg: #486363;
-            --side-panel-bg: #34495e;
-            --side-panel-text: #ecf0f1;
-            --side-panel-hover-bg: #2c3e50;
-            --main-bg: #e6e1e1;
+            --main-bg: #f0f2f5; /* Lighter background */
+            --card-bg: #ffffff;
             --text-primary: #333;
-            --link-primary: #0a66c2;
-            --card-bg: white;
-            --card-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-            --card-hover-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            --text-secondary: #555;
+            --link-primary: #0077b5;
+            --accent-color: #0077b5;
             --footer-bg: #2f4f4f;
             --footer-text: #e0e0e0;
-            --cloud-bg: #e0f7fa;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --vote-color: #6c757d;
+            --vote-hover-up: #28a745;
+            --vote-hover-down: #dc3545;
+            --input-border: #ccc;
         }
 
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
             background-color: var(--main-bg);
             color: var(--text-primary);
             line-height: 1.6;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            font-size: 15px;
-            padding-top: 4rem;
-            padding-bottom: 3rem;
+            font-size: 15px; /* Base font size */
+            padding-top: 70px; /* Space for fixed navbar */
+            padding-bottom: 60px; /* Space for fixed footer */
         }
 
-        .top-nav {
+        /* Navbar Styles */
+        .navbar {
             background-color: var(--top-nav-bg);
-            padding: 0.8rem;
+            padding: 10px 20px; /* Adjusted padding */
             display: flex;
-            justify-content: space-around;
+            justify-content: space-around; /* Even distribution */
             align-items: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            z-index: 10;
+            z-index: 1000;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
+            width: 100%;
+            box-sizing: border-box; /* Include padding in width */
         }
 
-        .top-nav a {
+        .navbar a {
             color: var(--top-nav-text);
             text-decoration: none;
-            padding: 0.6rem 0.8rem;
-            border-radius: 6px;
+            padding: 8px 12px; /* Smaller padding */
+            border-radius: 5px;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            font-size: 1.2rem;
+            font-size: 1rem; /* Slightly smaller font */
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Smaller gap */
         }
+         .navbar a i {
+             font-size: 1.1em; /* Adjust icon size */
+         }
 
-        .top-nav a:hover {
+        .navbar a:hover {
             background-color: var(--top-nav-hover-bg);
             transform: scale(1.03);
         }
 
+        /* Header Styles */
         header {
-            background: none;
-            color: var(--top-nav-text);
             padding: 20px 0;
             text-align: center;
             margin-bottom: 20px;
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
 
         header h1 {
-            color: var(--link-primary);
+            color: var(--accent-color);
             text-align: center;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 2.5em;
+            font-family: 'Montserrat', sans-serif; /* Assuming Montserrat is loaded or use fallback */
+            font-size: 2.2em;
             margin-bottom: 5px;
+            font-weight: 700;
         }
 
         header p {
-            color: var(--text-primary);
+            color: var(--text-secondary);
             text-align: center;
             font-size: 1.1em;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        #todays-question {
-            background-color: var(--cloud-bg);
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            position: relative;
+        /* Container and Card Styles */
+        .container {
+            width: 95%;
+            max-width: 850px;
+            margin: 20px auto;
         }
 
-        #todays-question h2 {
-            color: var(--link-primary);
-            text-align: center;
-        }
-
-        #current-question {
-            margin-top: 10px;
-        }
-
-        #answer-submission-panel {
+        .card {
             background-color: var(--card-bg);
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
             box-shadow: var(--card-shadow);
         }
 
-        #answer-submission-panel h2 {
-            color: var(--link-primary);
-            text-align: left;
+        .card h2 {
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.6em;
         }
 
-        #past-questions h2 {
-            color: var(--link-primary);
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        label {
+        /* Form Styles */
+        .card label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.95em;
         }
 
-        textarea {
-            width: calc(100% - 12px);
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
+        .card input[type="text"],
+        .card textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
             box-sizing: border-box;
-            min-height: 80px;
-            width: 90%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
+            font-size: 1em;
+            font-family: inherit; /* Inherit body font */
         }
 
-        button {
-            background-color: var(--link-primary);
+        .card textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .card button[type="submit"] {
+            background-color: var(--accent-color);
             color: white;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 1em;
-            margin-right: 10px;
-            transition: background-color 0.3s ease;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
         }
 
-        button:hover {
+        .card button[type="submit"]:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .card button[type="submit"]:hover:not(:disabled) {
             background-color: #0056b3;
         }
 
-        #past-questions {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: var(--card-shadow);
+        .status-message {
+            margin-top: 10px;
+            font-size: 0.9em;
+            min-height: 1.2em; /* Prevent layout shift */
+        }
+        .status-message.success { color: var(--success-color); }
+        .status-message.error { color: var(--error-color); }
+
+        /* Specific Section Styles */
+        #post-question-panel {
+            display: none; /* Hidden by default, shown for alumni via JS */
+            border-left: 5px solid var(--accent-color);
         }
 
+        #todays-question-display {
+            text-align: center;
+        }
+
+        #current-question .question-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        #current-question .question-info span { margin-right: 15px;}
+        #current-question p strong { font-size: 1.15em; color: #333; }
+
+        /* Past Questions Styles */
+        #past-questions h2 { text-align: left; }
+
         .past-question-item {
-            border: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
             padding: 15px;
             margin-bottom: 15px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
+            border-radius: 5px;
+            background-color: #fdfdfd;
         }
 
         .past-question-header {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 8px;
         }
 
         .past-question-text {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: #333;
         }
 
-        .past-answers-container {
-            margin-top: 10px;
-            padding-left: 15px;
-            border-left: 2px solid #ccc;
+        .past-answers-container h3 {
+            font-size: 1em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            font-weight: 600;
         }
 
         .past-answer-item {
-            background-color: #e9ecef;
-            padding: 10px;
-            margin-bottom: 8px;
+            background-color: #f1f3f5; /* Light gray for answers */
+            padding: 12px;
+            margin-bottom: 10px;
             border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 0.95em;
             display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
             align-items: center;
             justify-content: space-between;
+            gap: 10px;
         }
+        .past-answer-item span { flex-grow: 1; word-break: break-word; } /* Allow text wrapping */
+        .past-answer-item strong { color: #333; }
 
+        .vote-buttons { white-space: nowrap; /* Keep buttons together */ }
         .vote-buttons button {
-            background-color: transparent;
+            background: none;
             border: none;
-            padding: 5px;
-            font-size: 1.2em;
+            font-size: 1.3em; /* Slightly larger icons */
             cursor: pointer;
-            margin-left: 5px;
-            color: #6c757d;
+            color: var(--vote-color);
+            padding: 0 4px; /* Minimal padding */
+            vertical-align: middle; /* Align icons nicely */
+            transition: color 0.2s;
         }
+        .vote-buttons button.upvote:hover { color: var(--vote-hover-up); }
+        .vote-buttons button.downvote:hover { color: var(--vote-hover-down); }
+        .vote-count { font-weight: bold; margin: 0 5px; color: #333; vertical-align: middle; }
 
-        .vote-buttons button:hover {
-            color: #28a745;
-        }
+        /* Utility Classes */
+        .loading, .no-data, .error { text-align: center; color: var(--text-secondary); padding: 15px; font-style: italic; }
+        .error { color: var(--error-color); font-style: normal; font-weight: bold;}
 
-        .vote-buttons button:last-child:hover {
-            color: #dc3545;
-        }
-
-        .vote-count {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin: 0 5px;
-        }
-
+        /* Footer Styles */
         .footer {
             background-color: var(--footer-bg);
             color: var(--footer-text);
             text-align: center;
-            padding: 0.9rem 0;
-            font-size: 0.9rem;
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+            padding: 10px 0;
+            font-size: 0.85em;
             position: fixed;
             bottom: 0;
             left: 0;
-            right: 0;
-            z-index: 10;
-        }
-
-        body {
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-
-        #todays-question, #answer-submission-panel, #past-questions {
-            width: 95%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            margin-bottom: 20px;
+            width: 100%;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <nav class="top-nav">
-        <a href="home.html"><i class="fas fa-home"></i></a>
-        <a href="explore.html"><i class="fas fa-compass"></i></a>
-        <a href="notifications.html"><i class="fas fa-bell"></i></a>
-        <a href="help.html"><i class="fas fa-question-circle"></i></a>
-        <a href="profile.html"><i class="fas fa-user"></i></a>
-        <a href="login.html" id="logout"><i class="fas fa-sign-out-alt"></i></a>
+    <!-- Navbar - Links will be updated by JS -->
+    <nav class="navbar">
+        <a href="/home"><i class="fas fa-home"></i> Home</a>
+        <a href="/explore.html"><i class="fas fa-compass"></i> Explore</a>
+        <a href="/notifications.html"><i class="fas fa-bell"></i> Notifications</a>
+        <a href="/help.html"><i class="fas fa-question-circle"></i> Help</a>
+        <a href="#" id="nav-profile-link"><i class="fas fa-user"></i> Profile</a> <!-- Href set by JS -->
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
-    <header>
-        <h1> 💡 Daily Spark</h1>
-        <p>Share interview experiences and help each other prepare.</p>
-    </header>
 
-    <section id="todays-question">
-        <h2>Today's Question</h2>
-        <div id="current-question">
+    <div class="container">
+        <header>
+            <h1> 💡 Daily Spark</h1>
+            <p>Share interview questions and experiences. Help others prepare!</p>
+        </header>
+
+        <!-- Section for Alumni to Post Question (Initially Hidden) -->
+        <section id="post-question-panel" class="card">
+            <h2>Post Today's Spark (Alumni Only)</h2>
+            <form id="post-question-form">
+                <div>
+                    <label for="new-question-text">Interview Question:</label>
+                    <textarea id="new-question-text" name="question_text" rows="3" required placeholder="Enter the interview question..."></textarea>
+                </div>
+                <div>
+                    <label for="new-question-company">Company (Optional):</label>
+                    <input type="text" id="new-question-company" name="company" placeholder="e.g., Google, Microsoft">
+                </div>
+                <div>
+                    <label for="new-question-role">Role (Optional):</label>
+                    <input type="text" id="new-question-role" name="role" placeholder="e.g., Software Engineer, Data Scientist">
+                </div>
+                <button type="submit">Post Question</button>
+                <p id="post-question-status" class="status-message"></p>
+            </form>
+        </section>
+
+        <!-- Section displaying Today's Question -->
+        <section id="todays-question-display" class="card">
+            <h2>Today's Question</h2>
+            <div id="current-question">
+                <p class="loading">Loading today's question...</p>
             </div>
-    </section>
+        </section>
 
-    <section id="answer-submission-panel">
-        <h2>Submit Your Answer/Question</h2>
-        <form id="submit-answer-form">
-            <label for="answer-text">Your Answer/Question:</label><br>
-            <textarea id="answer-text" name="answer-text" rows="5" required></textarea><br><br>
-            <button type="submit">Submit</button>
-        </form>
-    </section>
+        <!-- Section for Submitting Answer -->
+        <section id="answer-submission-panel" class="card">
+            <h2>Submit Your Answer</h2>
+            <form id="submit-answer-form">
+                <label for="answer-text">Your Answer:</label>
+                <textarea id="answer-text" name="answer-text" rows="5" required placeholder="Share your approach or experience..." disabled></textarea>
+                <button type="submit" disabled>Submit Answer</button>
+                 <p id="submit-answer-status" class="status-message"></p>
+            </form>
+        </section>
 
-    <section id="past-questions">
-        <h2>Top 5 Liked Questions</h2>
-        <div id="past-question-list">
+        <!-- Section for Past Top Questions -->
+        <section id="past-questions" class="card">
+            <h2>Top 5 Liked Questions & Answers</h2>
+            <div id="past-question-list">
+                <p class="loading">Loading top questions...</p>
             </div>
-    </section>
+        </section>
+    </div>
 
+    <!-- Shared Footer -->
     <footer class="footer">
-        &copy; 2025 UniVerse. All rights reserved.
+        © 2025 UniVerse. All rights reserved.
     </footer>
 
+    <!-- Inline JavaScript -->
     <script src="static/dailyspark.js">
-        </script>
+        // --- Utility: Simple HTML Escaping ---
+        
+    </script>
+
 </body>
 </html>

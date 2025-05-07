@@ -120,6 +120,25 @@
             color: #555;
         }
 
+        /* Add this inside the <style> tag in alumni-roadmaps.html */
+
+.like-button.liked {
+    background-color: #d1ecf1; /* Light blue background */
+    color: #0c5460; /* Darker blue text */
+    border: 1px solid #bee5eb; /* Light blue border */
+    cursor: default; /* Indicate it's not clickable anymore */
+}
+
+.like-button.liked:hover {
+    /* Optional: Prevent hover effect */
+    background-color: #d1ecf1;
+}
+
+.like-button .like-icon {
+    /* Style for the icon span if needed */
+    margin-right: 3px;
+}
+
         @media (max-width: 768px) {
             .roadmap-list .roadmap-card {
                 width: 48%;

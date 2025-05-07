@@ -3,284 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alumni Internship Listings</title>
+    <title>Internship Listings - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* Basic Styles */
+        :root {
+            --top-nav-bg: #2f4f4f;
+            --top-nav-text: #e0e0e0;
+            --top-nav-hover-bg: #486363;
+            --main-bg: #f0f2f5; /* Lighter background */
+            --card-bg: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --link-primary: #2f4f4f; /* Changed primary link color */
+            --accent-color: #2f4f4f;
+            --footer-bg: #2f4f4f;
+            --footer-text: #e0e0e0;
+            --card-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            --success-color:#2f4f4f;
+            --error-color: #dc3545;
+            --input-border: #ccc;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Montserrat', sans-serif;
             margin: 0;
-            padding: 0;
-            background: #f4f4f4;
-            text-align: center;
-        }
-
-        .back-icon {
-            font-size: 40px;
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
             display: flex;
-            align-items: center;
-            margin-right: 10px; /* Add space between icon and heading */
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 15px; /* Base font size */
+            /* Adjust padding-top to accommodate BOTH header and navbar if they are separate fixed elements */
+            /* If only navbar is fixed: padding-top: 70px; */
+             /* If header replaces navbar or only header is fixed, use its height */
+             padding-top: 60px; /* Adjust based on final fixed header height */
+            padding-bottom: 60px; /* Space for fixed footer */
         }
 
-        .header-container {
-            display: flex;
-            align-items: center;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            justify-content: flex-start; /* Align items to the left */
-        }
-
-        .header-container h1 {
-        flex-grow: 1; /* Allow heading to take up remaining space */
-        text-align: center; /* Center the heading text */
-        margin: 0; /* Remove default margins */
-    }
-        h1, h2 {
-            margin-bottom: 10px;
-        }
-
-        main {
-            padding: 20px;
-        }
-
-        /* Add an Internship Form */
-        #add-internship {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            border-radius: 10px;
-            max-width: 500px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: none; /* Initially hidden */
-        }
-
-        #add-internship h2 {
-            margin-top: 0;
-        }
-
-        #add-internship label {
-            display: block;
-            text-align: left;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        #add-internship input[type="text"],
-        #add-internship input[type="url"],
-        #add-internship textarea {
-            display: block;
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-
-        #add-internship button {
-            background: #555555;
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        #add-internship button:hover {
-            background: #444444;
-        }
-
-        /* Featured Internships */
-        #internship-listings {
-            max-width: 90%;
-            margin: 20px auto;
-            gap: 20px;
-        }
-
-        #internships-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            list-style: none;
-            padding: 0;
-        }
-
-        .internship-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .internship-item:hover {
-            background: #e3e3e3;
-        }
-
-        .internship-item h3 {
-            margin-top: 0;
-            margin-bottom: 5px;
-        }
-
-        /* Popup styles */
-        .popup {
-            display: none;
+         /* --- Top Navigation --- */
+         nav.navbar {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            width: 90%;
-            max-width: 400px;
-            text-align: left;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -55%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: red;
-            color: white;
-            border: none;
-            font-size: 18px;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            background: darkred;
-        }
-
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
+            top: 0; /* Stick to top */
             left: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            background: var(--top-nav-bg);
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            display: flex;
+            justify-content: space-around; /* Distribute items */
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000; /* Ensure it's on top */
+            box-sizing: border-box; /* Include padding in width */
+            height: 60px; /* Explicit height */
         }
+
+        nav.navbar a {
+            color: #2f4f4f;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem; /* Padding for links */
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Space between icon and text */
+            font-size: 0.95rem;
+        }
+         nav.navbar a i {
+             font-size: 1.1em; /* Icon size */
+         }
+         nav.navbar a span {
+             display: inline-block; /* Keep text on same line */
+         }
+
+        nav.navbar a:hover {
+            background-color: var(--top-nav-hover-bg);
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            padding: 20px;
+            max-width: 1100px; /* Allow wider content */
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 20px; /* Space below fixed navbar */
+        }
+
+        h1, h2 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            text-align: center; /* Center headings */
+            font-weight: 600;
+        }
+        h1 { font-size: 1.8em; margin-bottom: 25px; color: var(--accent-color); }
+        h2 { font-size: 1.5em; color: var(--text-primary); margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+
+
+        /* Add Internship Controls/Form Styles */
+        #add-internship-controls { text-align: center; margin-bottom: 30px; }
+        #add-internship-button {
+             background: var(--accent-color);
+             color: white;
+             border: none;
+             padding: 12px 25px;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 1.05em;
+             font-weight: 600;
+             transition: background-color 0.2s ease;
+         }
+        #add-internship-button:hover { background: #2f4f4f; }
+
+        #add-internship {
+             background: var(--card-bg);
+             padding: 30px;
+             margin: 30px auto;
+             border-radius: 8px;
+             max-width: 650px; /* Slightly wider form */
+             box-shadow: var(--card-shadow);
+             display: none; /* Hidden by default */
+             border: 1px solid #ddd;
+         }
+        #add-internship h2 { margin-top: 0; color: var(--accent-color); text-align: center; font-size: 1.4em;}
+        #add-internship label {
+             display: block;
+             text-align: left;
+             margin-bottom: 6px; /* Spacing */
+             font-weight: 600; /* Bolder labels */
+             color: var(--text-secondary);
+             font-size: 0.9em;
+         }
+        #add-internship input[type="text"],
+        #add-internship input[type="url"],
+        #add-internship input[type="date"],
+        #add-internship textarea {
+             display: block;
+             width: 100%;
+             padding: 10px;
+             margin-bottom: 18px; /* More space below inputs */
+             border: 1px solid var(--input-border);
+             border-radius: 4px;
+             box-sizing: border-box;
+             font-size: 1em;
+             font-family: inherit;
+         }
+        #add-internship textarea { min-height: 100px; resize: vertical; }
+        #add-internship .form-actions { text-align: right; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;}
+        #add-internship .form-actions button {
+             padding: 10px 20px;
+             font-size: 0.95em;
+             font-weight: 600;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             transition: background-color 0.2s ease;
+         }
+        #submit-new-internship { background-color: var(--success-color); color: white; }
+        #submit-new-internship:hover { background-color: #2f4f4f; }
+        #submit-new-internship:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #add-internship .cancel-button { background-color: #6c757d; color: white; }
+        #add-internship .cancel-button:hover { background-color: #5a6268; }
+
+        /* Internship Listings Styles */
+        #internship-listings { margin: 30px auto; }
+        #internship-listings h2 { text-align: center; color: #333; font-size: 1.6em;}
+
+        #internships-list {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust minmax */
+             gap: 25px; /* More gap */
+             list-style: none;
+             padding: 0;
+         }
+
+        .internship-item {
+             background: var(--card-bg);
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: var(--card-shadow);
+             cursor: pointer;
+             text-align: left;
+             border: 1px solid #eee;
+             transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+             display: flex; /* Use flexbox for better internal layout */
+             flex-direction: column; /* Stack content vertically */
+             justify-content: space-between; /* Push link to bottom */
+         }
+        .internship-item:hover { box-shadow: var(--card-hover-shadow); transform: translateY(-4px); }
+        .internship-item h3 { margin-top: 0; margin-bottom: 8px; color: var(--link-primary); font-size: 1.25em; font-weight: 600;}
+        .internship-item p { margin: 6px 0; font-size: 0.95em; color: var(--text-secondary); }
+        .internship-item strong { color: var(--text-primary); }
+        .internship-item .dates { font-size: 0.9em; color: #777; margin-top: 10px; display: block;}
+        .internship-item a.view-posting-link {
+             color: var(--link-primary);
+             text-decoration: none;
+             font-weight: 600;
+             display: inline-block; /* Or block if needed */
+             margin-top: 15px; /* More space above link */
+             align-self: flex-start; /* Align link to start if needed */
+             font-size: 0.9em;
+             padding: 5px 0; /* Add padding for easier clicking */
+         }
+        .internship-item a.view-posting-link:hover { text-decoration: underline; }
+
+        /* Popup styles */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 1040; }
+        .popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; text-align: left; z-index: 1050; animation: fadeInScale 0.3s ease-out; color: var(--text-primary); }
+        @keyframes fadeInScale { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
+        .popup h2 { margin-top: 0; color: var(--link-primary); font-size: 1.5em; margin-bottom: 15px; }
+        .popup p { margin: 10px 0; line-height: 1.6; color: #444; }
+        .popup strong { color: #111; }
+        .popup #popup-description-text {
+             white-space: pre-wrap; /* Preserve line breaks */
+             display: block;
+             background-color: #f8f9fa;
+             padding: 15px; /* More padding */
+             border-radius: 4px;
+             border: 1px solid #eee;
+             margin-top: 8px;
+             max-height: 200px; /* Limit height if description is very long */
+             overflow-y: auto; /* Allow scrolling for long descriptions */
+             font-size: 0.95em;
+         }
+
+        .close-btn {
+             position: absolute;
+             top: 12px;
+             right: 15px;
+             background: transparent; /* Remove background */
+             color: #aaa; /* Lighter color */
+             border: none;
+             font-size: 28px; /* Larger X */
+             font-weight: bold;
+             cursor: pointer;
+             transition: color 0.2s;
+             padding: 0; /* Remove padding */
+             line-height: 1; /* Ensure X aligns well */
+         }
+        .close-btn:hover { color: var(--error-color); } /* Red on hover */
 
         #popup-link {
-            display: block;
-            margin-top: 15px;
-            padding: 10px;
-            background: #555;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-        }
+             display: block;
+             width: fit-content; /* Size to content */
+             margin: 25px auto 10px auto; /* Center and add spacing */
+             padding: 12px 25px; /* Larger button */
+             background: var(--link-primary);
+             color: white;
+             text-decoration: none;
+             border-radius: 5px;
+             font-weight: bold;
+             text-align: center;
+             transition: background-color 0.2s;
+             font-size: 1em;
+         }
+        #popup-link:hover { background: #2f4f4f; }
 
-        #popup-link:hover {
-            background: #333;
-        }
+        /* Placeholder/Error styles */
+        .loading, .error-message, .no-data { text-align:center; padding: 30px; color: var(--text-secondary); font-style: italic; font-size: 1.1em; }
+        .error-message { color: var(--error-color); font-weight: bold;}
 
-        #add-internship-button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
+        /* Footer Styles (Keep as before or adjust) */
+        .footer { background-color: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 15px 0; font-size: 0.9em; /* position: fixed; */ /* Comment out if content long */ bottom: 0; left: 0; width: 100%; box-shadow: 0 -1px 3px rgba(0,0,0,0.1); margin-top: 30px; /* Add space if not fixed */ }
 
-        #add-internship-button:hover {
-            background: #0056b3;
-        }
     </style>
 </head>
 <body>
 
-<header class="header-container">
-    <a href="explore.html" class="back-icon">⬅️</a>
-    <h1>Internship Listings</h1>
-</header>
+    <!-- Navbar - Make sure JS can update profile link if needed -->
+    <nav class="navbar">
+        <a href="/home" title="Home"><i class="fas fa-home"></i><span> Home</span></a>
+        <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i><span> Explore</span></a>
+        <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i><span> Notifications</span></a>
+        <a href="/help.html" title="Help"><i class="fas fa-question-circle"></i><span> Help</span></a>
+        <!-- Update href dynamically or set a default -->
+        <a href="/profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span> Profile</span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span> Logout</span></a>
+    </nav>
 
-<main>
-    <button id="add-internship-button">Add Internship</button>
+    <main>
+        <h1>Internship Opportunities</h1>
 
-    <section id="add-internship">
-        <h2>Suggest a New Internship</h2>
-        <form id="internship-form">
-            <label for="company">Company Name:</label>
-            <input type="text" id="new-company" placeholder="Company Name" required>
+        <div id="add-internship-controls">
+             <button id="add-internship-button">Suggest Internship Posting</button>
+         </div>
 
-            <label for="role">Internship Role:</label>
-            <input type="text" id="new-role" placeholder="Internship Role" required>
+        <!-- Form is hidden by default via CSS -->
+        <section id="add-internship">
+            <h2>Suggest a New Internship</h2>
+            <form id="internship-form">
+                <div>
+                    <label for="new-title">Internship Role/Title *</label>
+                    <input type="text" id="new-title" required>
+                </div>
+                <div>
+                    <label for="new-company">Company Name *</label>
+                    <input type="text" id="new-company" required>
+                </div>
+                <div>
+                    <label for="new-start-date">Start Date (Optional):</label>
+                    <input type="date" id="new-start-date">
+                </div>
+                <div>
+                    <label for="new-end-date">End Date (Optional):</label>
+                    <input type="date" id="new-end-date">
+                </div>
+                <div>
+                    <label for="new-description">Description (Optional):</label>
+                    <textarea id="new-description" placeholder="Role details, requirements, duration, stipend, etc."></textarea>
+                </div>
+                <div>
+                    <label for="new-url">Application Link/URL *</label>
+                    <input type="url" id="new-url" placeholder="https://careers.example.com/..." required>
+                </div>
+                <div class="form-actions">
+                     <button type="button" class="cancel-button">Cancel</button>
+                     <button type="button" id="submit-new-internship">Submit Suggestion</button>
+                </div>
+            </form>
+        </section>
 
-            <label for="location">Location:</label>
-            <input type="text" id="new-location" placeholder="Location" required>
-
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="new-start-date" required>
-
-            <label for="end_date">End Date:</label>
-            <input type="date" id="new-end-date" required>
-
-            <label for="description">Description:</label>
-            <textarea id="new-description" placeholder="Internship Description"></textarea>
-
-            <label for="link">Application Link:</label>
-            <input type="url" id="new-link" placeholder="Application Link" required>
-
-            <button type="button" id="submit-new-internship">Submit for Review</button>
-            <button type="button" onclick="document.getElementById('add-internship').style.display='none';">Cancel</button>
-        </form>
-    </section>
-
-    <section id="internship-listings">
-        <h2>Available Internships</h2>
-        <div id="internships-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <section id="internship-listings">
+            <h2>Available Internships</h2>
+            <!-- Container for the list, JS targets this ID -->
+            <div id="internships-list">
+                <p class="loading">Loading internships...</p>
+                <!-- Internship items will be loaded here by JS -->
             </div>
-    </section>
-</main>
+        </section>
+    </main>
 
-<div class="overlay" id="overlay"></div>
-<div class="popup" id="popup-description">
-    <button class="close-btn" onclick="document.getElementById('popup-description').style.display='none'; document.getElementById('overlay').style.display='none';">X</button>
-    <h2 id="popup-title">Internship Details</h2>
-    <p><strong>Company:</strong> <span id="popup-company"></span></p>
-    <p><strong>Role:</strong> <span id="popup-role"></span></p>
-    <p><strong>Start Date:</strong> <span id="popup-start-date"></span></p>
-    <p><strong>End Date:</strong> <span id="popup-end-date"></span></p>
-    <p><strong>Description:</strong> <span id="popup-description-text"></span></p>
-    <a id="popup-link" href="#" target="_blank">Apply Here</a>
-    <button id="apply-button">Apply Now</button>
-    <div id="application-form" style="display:none;">
-        <input type="text" id="name" placeholder="Your Name">
-        <input type="email" id="email" placeholder="Your Email">
-        <textarea id="resume" placeholder="Link to your Resume"></textarea>
-        <button id="submit-application">Submit Application</button>
+    <!-- Popup Structure -->
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup-details">
+        <button class="close-btn" id="popup-close-btn" title="Close">×</button> <!-- Using × for X -->
+        <h2 id="popup-title">Internship Details</h2>
+        <p><strong>Company:</strong> <span id="popup-company">--</span></p>
+        <p><strong>Role:</strong> <span id="popup-role">--</span></p>
+        <p><strong>Start Date:</strong> <span id="popup-start-date">--</span></p>
+        <p><strong>End Date:</strong> <span id="popup-end-date">--</span></p>
+        <p><strong>Description:</strong></p>
+        <p><span id="popup-description-text">--</span></p> <!-- Description text here -->
+        <a id="popup-link" href="#" target="_blank" rel="noopener noreferrer">Apply Here / More Info</a>
     </div>
-</div>
 
-<script src="static/internship.js"></script>
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <!-- Link the external JavaScript file -->
+    <script src="static/internship.js"></script>
 
 </body>
 </html>

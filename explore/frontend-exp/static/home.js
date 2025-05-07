@@ -153,8 +153,7 @@ fetch('/api/feed/events')
                     } else {
                         console.warn('Invalid event object:', event);
                     }
-                    const eventDescription = event.data && event.data.description ? event.data.description : 'No description available.';
-                    eventCard.innerHTML = `<h3>${eventName}</h3><p>${eventDescription}</p>`;
+                    const eventDescription = (event && event.description) ? event.description : 'No description available.';eventCard.innerHTML = `<h3>${eventName}</h3><p>${eventDescription}</p>`;
                     eventList.appendChild(eventCard);
                 });
             } else {

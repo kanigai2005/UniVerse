@@ -23,7 +23,7 @@ CREATE TABLE users (
     username TEXT unique NOT NULL,
     email TEXT UNIQUE NOT NULL,
     hashed_password TEXT, -- Added password field
-    is_student BOOLEAN DEFAULT TRUE, -- Added is_student field
+    is_student BOOLEAN DEFAULT False, -- Added is_student field
     is_alumni BOOLEAN DEFAULT FALSE, -- Added is_alumni field
     is_admin BOOLEAN DEFAULT FALSE, -- Added is_admin field
     activity_score INTEGER DEFAULT 0,
@@ -48,20 +48,10 @@ CREATE TABLE users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_name ON users (username);
 
-CREATE TABLE IF NOT EXISTS user_connections (
-    user_id INTEGER,
-    connected_user_id INTEGER,
-    PRIMARY KEY (user_id, connected_user_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (connected_user_id) REFERENCES users(id)
-);
-CREATE INDEX IF NOT EXISTS idx_user_connections_user_id ON user_connections (user_id);
-CREATE INDEX IF NOT EXISTS idx_user_connections_connected_user_id ON user_connections (connected_user_id);
-
 CREATE TABLE IF NOT EXISTS career_fairs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    date DATE,
+    start_date DATE,
     location TEXT,
     description TEXT,
     url TEXT, -- Added url field
@@ -84,7 +74,7 @@ CREATE TABLE IF NOT EXISTS internships (
 CREATE TABLE IF NOT EXISTS hackathons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    date DATE,
+    start_date DATE,
     location TEXT,
     description TEXT,
     theme TEXT,
@@ -217,6 +207,151 @@ CREATE TABLE IF NOT EXISTS user_issues (
 );
 CREATE INDEX IF NOT EXISTS idx_user_issues_user_id ON user_issues (user_id);
 
+-- SQL for creating the unverified tables (SQLite syntax)
+
+-- Table for Unverified Job Submissions
+CREATE TABLE IF NOT EXISTS unverified_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submitted_by_user_id INTEGER NOT NULL,
+    submitted_at DATETIME, -- Default handled by application
+    status TEXT DEFAULT 'pending', -- Can set simple default here
+    title TEXT NOT NULL,
+    company TEXT,
+    location TEXT,
+    description TEXT,
+    salary TEXT,
+    date_posted DATE,
+    type TEXT,
+    experience TEXT,
+    imageUrl TEXT,
+    url TEXT,
+    FOREIGN KEY (submitted_by_user_id) REFERENCES users (id)
+);
+
+-- Index on status for faster lookups
+CREATE INDEX IF NOT EXISTS idx_unverified_jobs_status ON unverified_jobs (status);
+CREATE INDEX IF NOT EXISTS idx_unverified_jobs_submitter ON unverified_jobs (submitted_by_user_id);
+
+
+-- Table for Unverified Internship Submissions
+CREATE TABLE IF NOT EXISTS unverified_internships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submitted_by_user_id INTEGER NOT NULL,
+    submitted_at DATETIME, -- Default handled by application
+    status TEXT DEFAULT 'pending',
+    title TEXT NOT NULL,
+    company TEXT,
+    start_date DATE,
+    end_date DATE,
+    description TEXT,
+    url TEXT,
+    FOREIGN KEY (submitted_by_user_id) REFERENCES users (id)
+);
+
+-- Index on status
+CREATE INDEX IF NOT EXISTS idx_unverified_internships_status ON unverified_internships (status);
+CREATE INDEX IF NOT EXISTS idx_unverified_internships_submitter ON unverified_internships (submitted_by_user_id);
+
+
+-- Table for Unverified Career Fair Submissions
+CREATE TABLE IF NOT EXISTS unverified_career_fairs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submitted_by_user_id INTEGER NOT NULL,
+    submitted_at DATETIME, -- Default handled by application
+    status TEXT DEFAULT 'pending',
+    name TEXT NOT NULL,
+    start_date DATE,
+    location TEXT,
+    description TEXT,
+    url TEXT,
+    FOREIGN KEY (submitted_by_user_id) REFERENCES users (id)
+);
+
+-- Index on status
+CREATE INDEX IF NOT EXISTS idx_unverified_career_fairs_status ON unverified_career_fairs (status);
+CREATE INDEX IF NOT EXISTS idx_unverified_career_fairs_submitter ON unverified_career_fairs (submitted_by_user_id);
+
+
+-- Table for Unverified Hackathon Submissions
+CREATE TABLE IF NOT EXISTS unverified_hackathons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submitted_by_user_id INTEGER NOT NULL,
+    submitted_at DATETIME, -- Default handled by application
+    status TEXT DEFAULT 'pending',
+    name TEXT NOT NULL,
+    start_date DATE,
+    location TEXT,
+    description TEXT,
+    theme TEXT,
+    prize_pool TEXT,
+    url TEXT,
+    FOREIGN KEY (submitted_by_user_id) REFERENCES users (id)
+);
+
+-- Index on status
+CREATE INDEX IF NOT EXISTS idx_unverified_hackathons_status ON unverified_hackathons (status);
+CREATE INDEX IF NOT EXISTS idx_unverified_hackathons_submitter ON unverified_hackathons (submitted_by_user_id);
+
+-- Create expert_qa_answers table
+CREATE TABLE IF NOT EXISTS expert_qa_answers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    answer_text TEXT NOT NULL, -- Changed from String for potentially longer answers
+    is_alumni_answer BOOLEAN DEFAULT 0,
+    created_at DATETIME,
+    likes INTEGER DEFAULT 0,
+    FOREIGN KEY (question_id) REFERENCES questions (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+CREATE INDEX IF NOT EXISTS idx_expert_qa_answers_question ON expert_qa_answers (question_id);
+CREATE INDEX IF NOT EXISTS idx_expert_qa_answers_user ON expert_qa_answers (user_id);
+
+-- Create question_likes table
+CREATE TABLE IF NOT EXISTS question_likes (
+    user_id INTEGER NOT NULL,
+    question_id INTEGER NOT NULL,
+    created_at DATETIME,
+    PRIMARY KEY (user_id, question_id), -- Composite primary key enforces uniqueness
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (question_id) REFERENCES questions (id)
+);
+-- Optional index for looking up questions liked by a user
+CREATE INDEX IF NOT EXISTS idx_question_likes_user ON question_likes (user_id);
+-- Optional index for looking up users who liked a question
+CREATE INDEX IF NOT EXISTS idx_question_likes_question ON question_likes (question_id);
+
+
+-- SQL for creating the user_connections table and its indexes (SQLite syntax)
+
+-- Drop the OLD table IF IT EXISTS and you are okay with losing data
+-- BACKUP YOUR DATABASE FIRST IF YOU HAVE IMPORTANT DATA!
+-- DROP TABLE IF EXISTS user_connections;
+
+-- Create the NEW user_connections table for the request system
+CREATE TABLE IF NOT EXISTS user_connections (
+    requester_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'ignored', 'blocked'
+    created_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')),
+    updated_at DATETIME DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')),
+    FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users (id) ON DELETE CASCADE,
+    PRIMARY KEY (requester_id, receiver_id),
+    CHECK (status IN ('pending', 'accepted', 'ignored', 'blocked'))
+);
+-- Create indexes AFTER the table is created
+-- Index for efficiently finding pending requests FOR a user
+CREATE INDEX IF NOT EXISTS idx_user_connections_receiver_status
+    ON user_connections (receiver_id, status);
+
+-- Index for efficiently finding requests SENT BY a user
+CREATE INDEX IF NOT EXISTS idx_user_connections_requester_status
+    ON user_connections (requester_id, status);
+
+-- Index status generally if needed for filtering/reporting
+CREATE INDEX IF NOT EXISTS idx_user_connections_status
+    ON user_connections (status);
 -- Insert Sample Data
 INSERT INTO users (username, email, hashed_password, is_student, is_alumni, is_admin, activity_score, achievements, alumni_gems, department, profession, alma_mater, interviews, internships, startups, current_company, milestones, advice, likes, badges, solved, links)
 VALUES
@@ -225,23 +360,18 @@ VALUES
     ('Bob Johnson', 'bob.johnson@example.com', 'test1234', FALSE, TRUE, TRUE, 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1),
     ('sri', 'sri@gmail.com', 'sripass', TRUE, FALSE, FALSE, 80, 'Patent holder', 5, 'Mechanical Engineering', 'Product Manager', 'City University', 'Apple', NULL, 'GreenTech', 'InnovateX', 'Launched a product', 'Never give up!', 3, 1, 5, 1);
 
-INSERT INTO user_connections (user_id, connected_user_id)
-VALUES
-    (1, 2),
-    (1, 3),
-    (2, 3);
 
-INSERT INTO career_fairs (name, date, location, description, url)
+INSERT INTO career_fairs (name, start_date, location, description, url)
 VALUES
     ('Tech Career Fair', '2026-03-10', 'Tech Hall', 'Meet top tech companies', 'https://example.com/tech-career-fair'),
     ('Engineering Expo', '2026-04-15', 'City Center', 'Explore engineering opportunities', 'https://example.com/engineering-expo');
 
 INSERT INTO internships (title, company, start_date, end_date, description, url)
 VALUES
-    ('Software Engineering Intern', 'Google', '2024-05-20', '2024-08-15', 'Work on a real-world project', 'https://careers.google.com/internships'),
-    ('Data Science Intern', 'Facebook', '2024-06-01', '2024-09-01', 'Analyze large datasets', 'https://www.metacareers.com/internships');
+    ('Software Engineering Intern', 'Google', '2025-05-20', '2025-08-15', 'Work on a real-world project', 'https://careers.google.com/internships'),
+    ('Data Science Intern', 'Facebook', '2025-06-01', '2025-09-01', 'Analyze large datasets', 'https://www.metacareers.com/internships');
 
-INSERT INTO hackathons (name, date, location, description, theme, prize_pool, url)
+INSERT INTO hackathons (name, start_date, location, description, theme, prize_pool, url)
 VALUES
     ('Hackathon X', '2026-07-01', 'Online', 'Build innovative solutions', 'AI', '$10000', 'https://example.com/hackathon-x'),
     ('CodeFest', '2026-08-01', 'University Campus', '24-hour coding challenge', 'Web Development', '$5000', 'https://example.com/codefest');

@@ -3,175 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internship Q&A</title>
+    <title>Expert Q&A - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f4f4f4;
-            text-align: center;
-        }
+        /* Basic Styles - Use shared CSS or keep relevant styles here */
+        body { font-family: sans-serif; margin: 0; background-color: #f0f2f5; padding-top: 70px; padding-bottom: 60px; }
+        .container { width: 95%; max-width: 900px; margin: 20px auto; }
+        .card { background-color: #fff; padding: 20px 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .card h2 { color: #2f4f4f; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.6em; }
+        .navbar { background-color: #2f2f2f; padding: 10px 20px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 1000; position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; }
+        .navbar a { color: #e0e0e0; text-decoration: none; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s ease; font-size: 1rem; display: flex; align-items: center; gap: 5px; }
+        .navbar a i { font-size: 1.1em; }
+        .navbar a:hover { background-color: #444; color: #90caf9; }
 
-        back-icon {
-            font-size: 40px; /* Adjust icon size if needed */
-            color: black; /* Icon color */
-            text-decoration: none; /* Remove underline */
-            cursor: pointer; /* Show pointer cursor on hover */
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically align */
-        }
-
-        .header-container {
-            display: flex;
-            align-items: center;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            justify-content: space-between;
-        }
-
-        .back-icon {
-            font-size: 40px; /* Adjust icon size if needed */
-            color: black; /* Icon color */
-            text-decoration: none; /* Remove underline */
-            cursor: pointer; /* Show pointer cursor on hover */
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically align */
-        }
-
-        .header-container {
-            display: flex;
-            align-items: center;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            justify-content: space-between;
-        }
-
-        .header-title {
-            margin: 0;
-            flex-grow: 1;
-            text-align: center;
-        }
-
-        h1, h2 {
-            margin-bottom: 10px;
-        }
-
-        main {
-            padding: 20px;
-        }
-
-        #ask-question {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            border-radius: 10px;
-            max-width: 500px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        form textarea, form button {
-            display: block;
-            width: 90%;
-            padding: 10px;
-            margin: 10px auto;
+        /* Q&A Specific Styles */
+        #alumni-answer-section { border-left: 5px solid #fd7e14; }
+        #alumni-answer-section h2 { color: #fd7e14; }
+        .no-questions-selected { text-align: center; padding: 20px; color: #777; font-style: italic;}
+        .loading, .no-data, .error { text-align: center; color: #777; padding: 15px; font-style: italic; }
+        .error { color: red; font-weight: bold;}
+        #question-input {
+            width: 100%;
+            min-height: 70px;
+            padding: 8px;
+            border-radius: 4px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            font-family: inherit;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
-
-        form button {
-            background: #555555;
+        #question-form button[type="submit"] {
+            font-size: 0.9em;
+            padding: 6px 12px;
+            background-color: #2f4f4f;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
 
-        form button:hover {
-            background: #444444;
+        #question-form button[type="submit"]:hover {
+            background-color: #2f4f4f; /* Hover effect is the same as default */
         }
+        .question-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: left; border: 1px solid #eee;}
+        .question-text { font-size: 1.1em; font-weight: 500; margin-bottom: 15px; line-height: 1.5; }
+        .question-meta { font-size: 0.85em; color: #777; margin-bottom: 15px; }
+        .question-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        .like-section button.like-button { background: none; border: 1px solid #ccc; color: #2f4f4f; cursor: pointer; font-size: 0.9em; padding: 5px 10px; border-radius: 4px; transition: background-color 0.2s, color 0.2s, border-color 0.2s;} /* Added border-color transition */
+        .like-section button.like-button:hover:not(:disabled) { background-color: #e7f3ff; border-color: #9acffa; }
+        .like-section button.like-button.liked { background-color: #0077b5; color: white; border-color: #0077b5;}
+        .like-section button.like-button.liked:hover:not(:disabled) { background-color: #2f4f4f; border-color: #2f4f4f; }
+        .like-section button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .like-section .like-count { margin-left: 8px; font-size: 0.9em; color: #555; font-weight: bold; }
+        .like-section .like-feedback { font-size: 0.8em; margin-left: 10px; font-style: italic; min-height: 1em; display: inline-block; } /* Ensure space for feedback */
+        .answer-button { background-color:#2f4f4f; font-size: 0.9em; padding: 6px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        .answer-button:hover { background-color: #2f4f4f; }
 
-        #questions-list, #user-questions-list {
-            max-width: 90%;
-            margin: 20px auto;
-        }
+        .answers-section { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #eee; }
+        .answers-section h3 { font-size: 1.1em; color: #444; margin-bottom: 10px; }
+        .answer-item { background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 12px; margin-bottom: 10px; border-radius: 4px; font-size: 0.95em; }
+        .answer-item strong { color: #2f4f4f; }
+        .answer-item .alumni-badge { background-color: #2f4f4f; color: white; font-size: 0.75em; padding: 2px 5px; border-radius: 3px; margin-left: 8px; font-weight: bold; }
+        .answer-meta { font-size: 0.8em; color: #888; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;}
+        .answer-like-section button { font-size: 1em; color: #6c757d; background: none; border: none; cursor: pointer; padding: 3px;}
+        .answer-like-section .upvote:hover { color: #2f4f4f; }
+        .answer-like-section .answer-likes-count { margin-left: 5px; font-size: 0.9em; }
 
-        .question-box {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
-            text-align: left;
-            position: relative;
-        }
+        .answer-form { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dotted #ccc; }
+        .answer-form label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .answer-form textarea { width: 100%; min-height: 70px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; font-size: 0.95em; margin-bottom: 10px; box-sizing: border-box; }
+        .answer-form button { font-size: 0.9em; padding: 6px 12px; background-color: #2f4f4f; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .answer-form button:disabled { background-color: #ccc; cursor: not-allowed;}
+        .answer-form button:hover:not(:disabled) { background-color: #2f4f4f; }
+        .status-message { margin-top: 10px; font-size: 0.9em; min-height: 1.2em; text-align: left;}
+        .status-message.success { color: #28a745; }
+        .status-message.error { color: #dc3545; font-weight: bold;}
 
-        .vote-buttons {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-
-        .vote-buttons button {
-            background: #ddd;
-            border: none;
-            padding: 5px 10px;
-            margin-left: 5px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .vote-buttons button:hover {
-            background: #ccc;
-        }
-
-        .like-feedback {
-            font-size: 0.8em;
-            margin-left: 5px;
-        }
-
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .success-message {
-            color: green;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .post-feedback {
-            margin-top: 10px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
+        .footer { background-color: #2f4f4f; color: #e0e0e0; text-align: center; padding: 10px 0; font-size: 0.85em; /* position: fixed; */ bottom: 0; left: 0; width: 100%; margin-top: 30px; box-shadow: 0 -1px 3px rgba(0,0,0,0.2);}
     </style>
 </head>
 <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/home" title="Home"><i class="fas fa-home"></i> </a>
+        <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i> </a>
+        <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i> </a>
+        <a href="/help.html" title="Help"><i class="fas fa-question-circle"></i></a>
+        <a href="/profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i> </a> <!-- JS updates href -->
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i> </a>
+    </nav>
 
-    <div class="header-container">
-        <a href="explore.html" class="back-icon">⬅️</a>
-        <h1 class="header-title">Expert Q&A</h1>
+    <div class="container">
+        <header style="text-align:center; margin-bottom: 30px;">
+            <h1>Expert Q&A</h1>
+            <p>Ask questions, get insights from peers and experienced alumni.</p>
+        </header>
+
+        <!-- Section for ANY user to ask a question -->
+        <section id="ask-question" class="card">
+            <h2>Ask a Question</h2>
+            <form id="question-form">
+                <label for="question-input">Your Question:</label>
+                <textarea id="question-input" placeholder="Type your question here..." required rows="4"></textarea>
+                <button type="submit">Submit Question</button>
+                <div class="post-feedback status-message"></div> <!-- Feedback area -->
+            </form>
+        </section>
+
+        <!-- Section for Alumni to answer selected questions -->
+        <section id="alumni-answer-section" class="card" style="display: none;">
+            <h2>Answer Today's Selected Questions (Alumni Only)</h2>
+            <div id="selected-questions-list">
+                <p class="loading">Loading selected questions...</p>
+            </div>
+        </section>
+
+        <!-- Section to display user's own questions -->
+        <section id="user-questions-section" class="card question-list-section">
+            <h2>Your Questions</h2>
+            <div id="user-questions-list">
+                <p class="loading">Loading your questions...</p>
+            </div>
+        </section>
+
+        <!-- Section to display popular community questions -->
+        <section id="community-questions-section" class="card question-list-section">
+            <h2>Community Questions (Top Liked)</h2>
+            <div id="questions-list"> <!-- Community Questions -->
+                <p class="loading">Loading community questions...</p>
+            </div>
+        </section>
     </div>
 
-<main>
-    <section id="ask-question">
-        <h2>Ask a Question</h2>
-        <form id="question-form">
-            <textarea id="question-input" placeholder="Type your question here..." required></textarea>
-            <button type="submit">Submit</button>
-            <div class="post-feedback"></div>
-        </form>
-    </section>
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
 
-    <h2>Your Questions</h2>
-    <section id="user-questions-list"></section>
+    <!-- Link the SINGLE external JavaScript file -->
+    <script src="static/expertqa.js"></script>
 
-    <h2>Community Questions (Ordered by Likes)</h2>
-    <section id="questions-list"></section>
-</main>
-
-<script src="static/expertqa.js"></script>
 </body>
 </html>

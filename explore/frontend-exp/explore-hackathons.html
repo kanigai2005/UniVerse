@@ -3,364 +3,200 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Hackathons - UniVerse</title>
+    <title>Explore Hackathons - UniVerse</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --main-bg: #e6e1e1;
-            --primary-color: #0a66c2;
-            --card-bg: white;
-            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            --card-hover-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            --text: #333;
+            --bg-dark: #1a1a1a;
+            --nav-bg: #2f2f2f;
+            --card-bg: #2a2a2a;
+            --card-hover-bg: #3a3a3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #2f4f4f;
+            --link-hover: #90caf9;
+            --border-color: #444;
+            --button-bg: #64b5f6;
+            --button-text: #1a1a1a;
+            --button-hover-bg: #2f4f4f;
+            --success-color: #2f4f4f;
+            --error-color: #ef5350;
         }
 
         body {
             font-family: 'Montserrat', sans-serif;
             margin: 0;
-            background-color: var(--main-bg);
-            color: var(--text);
-            padding-top: 4rem;
-            padding-bottom: 2rem;
-            font-size: 0.9rem;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            padding-top: 70px; /* Space for fixed navbar */
+            padding-bottom: 60px; /* Space for fixed footer */
+            font-size: 15px;
         }
 
-        nav.top-nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: #2f4f4f;
-            padding: 0.6rem;
+        /* Navbar Styles (Keep consistent with other pages) */
+        .navbar {
+            background-color: var(--nav-bg);
+            padding: 10px 20px;
             display: flex;
             justify-content: space-around;
-            z-index: 10;
-        }
-
-        nav.top-nav a {
-            color: #e0e0e0;
-            text-decoration: none;
-            font-size: 1.1rem;
-        }
-
-        header {
-            text-align: center;
-            padding: 0.8rem 0;
-        }
-
-        header h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
-        header p {
-            font-size: 0.9rem;
-            margin-top: 0.2rem;
-        }
-
-        .container {
-            width: 92%;
-            max-width: 900px;
-            margin: auto;
-        }
-
-        section {
-            background-color: var(--card-bg);
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: var(--card-shadow);
-        }
-
-        h2 {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-        }
-
-        input, button, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 0.9rem;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        li {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
-            box-shadow: var(--card-shadow);
-            transition: box-shadow 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        li:hover {
-            box-shadow: var(--card-hover-shadow);
-        }
-
-        .search-container {
-            display: flex;
-            gap: 8px;
-            margin-top: 0.5rem;
-            align-items: center; /* Vertically align items */
-        }
-
-        .search-container input {
-            flex: 1;
-            min-width: 200px; /* Ensure input doesn't get too small */
-        }
-
-        .search-container button {
-            /* width: auto;  Adjust button width to content */
-            padding: 8px 16px; /* Give it some horizontal padding */
-        }
-
-        #current-hackathons {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        #current-hackathons ul li {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-
-        #current-hackathons a {
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        #current-hackathons a:hover {
-            text-decoration: underline;
-        }
-
-        .back-icon {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            font-size: 1.4rem;
-            color: white;
-        }
-
-        .hackathon-card {
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: var(--card-bg);
-            box-shadow: var(--card-shadow);
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-
-        .hackathon-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--card-hover-shadow);
-            border-color: #0a66c220;
-        }
-
-        .hackathon-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .hackathon-date {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 0.25rem;
-        }
-
-        .hackathon-location {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 0.25rem;
-        }
-
-        .hackathon-description {
-            font-size: 0.9rem;
-            color: var(--text);
-            margin-bottom: 1rem;
-            display: none; /* Initially hidden */
-        }
-
-        .hackathon-register-btn {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease-in-out;
-            display: none; /* Initially hidden */
-        }
-
-        .hackathon-register-btn:hover {
-            background-color: #004080;
-        }
-
-        .hackathon-card.show-description .hackathon-description,
-        .hackathon-card.show-description .hackathon-register-btn {
-            display: block; /* Show on click */
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            left: 0;
+            position: fixed;
             top: 0;
+            left: 0;
             width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
+            box-sizing: border-box;
         }
+        .navbar a { color: var(--text-primary); text-decoration: none; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s ease; font-size: 1rem; display: flex; align-items: center; gap: 5px; }
+        .navbar a i { font-size: 1.1em; }
+        .navbar a:hover { background-color: #444; color: var(--link-hover); }
 
-        .modal-content {
-            background-color: var(--card-bg);
-            color: var(--text);
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: var(--card-hover-shadow);
-            width: 90%;
-            max-width: 600px;
-            position: relative;
-        }
+        /* Header */
+        header { text-align: center; padding: 25px 0; }
+        header h1 { color: var(--accent-color); margin: 0 0 10px 0; font-size: 2.2em; font-weight: 700; }
+        header p { font-size: 1.1em; margin-top: 0; color: var(--text-secondary); }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 0.5rem;
-        }
+        .container { width: 95%; max-width: 1100px; margin: auto; }
 
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
+        /* Sections */
+        section { background-color: var(--card-bg); padding: 20px 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        section h2 { color: var(--accent-color); font-size: 1.5em; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
 
-        .close-modal {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            color: #aaa;
-            font-size: 2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.2s ease-in-out;
-            border: none;
-            background: none;
-            padding: 0;
-            line-height: 0;
-        }
+        /* Search/Filter */
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .search-container input[type="text"] { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-primary); font-size: 1em; }
+        .search-container button { width: auto; padding: 10px 20px; background-color: var(--button-bg); color: var(--button-text); font-weight: bold; }
+        .search-container button:hover { background-color: var(--button-hover-bg); }
 
-        .close-modal:hover {
-            color: #333;
-        }
+        /* Add Hackathon Form */
+        #hackathon-form { display: grid; gap: 15px; }
+        #hackathon-form label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-secondary); font-size: 0.9em;}
+        #hackathon-form input[type="text"],
+        #hackathon-form input[type="url"],
+        #hackathon-form input[type="date"],
+        #hackathon-form textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-primary); font-size: 1em; box-sizing: border-box; }
+        #hackathon-form textarea { min-height: 80px; resize: vertical; }
+        #hackathon-form button { background-color: var(--button-bg); color: var(--button-text); width: auto; padding: 10px 20px; font-weight: bold; justify-self: start; /* Align button left */ }
+        #hackathon-form button:hover { background-color: var(--button-hover-bg); }
 
-        .modal-body {
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            line-height: 1.65;
+        /* Hackathon List */
+        #current-hackathons-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; list-style: none; padding: 0; }
+        .hackathon-card {
+            padding: 18px; border-radius: 6px; background-color: var(--nav-bg); /* Use navbar bg for cards */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column;
         }
+        .hackathon-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-color: var(--accent-color); }
+        .hackathon-name { font-size: 1.2em; font-weight: 600; color: var(--accent-color); margin: 0 0 8px 0; }
+        .hackathon-date, .hackathon-location, .hackathon-theme, .hackathon-prize { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .hackathon-date i, .hackathon-location i, .hackathon-theme i, .hackathon-prize i { color: var(--accent-color); width: 16px; text-align: center;}
+        .hackathon-details-link { margin-top: auto; /* Push button to bottom */ padding-top: 10px; text-align: right; }
+        .hackathon-details-link button { font-size: 0.9em; padding: 6px 12px; background-color: #555; }
+        .hackathon-details-link button:hover { background-color: #666; }
 
-        .modal-footer {
-            text-align: right;
-        }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
+        .modal-content { background-color: var(--card-bg); color: var(--text-primary); padding: 25px 30px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); width: 90%; max-width: 650px; position: relative; animation: fadeInModal 0.3s ease-out; }
+        @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .modal-header h2 { margin: 0; font-size: 1.6em; color: var(--accent-color); }
+        .close-modal { position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.2s; border: none; background: none; padding: 0; line-height: 1; }
+        .close-modal:hover { color: #fff; }
+        .modal-body { margin-bottom: 20px; font-size: 1em; line-height: 1.7; max-height: 60vh; overflow-y: auto; }
+        .modal-body p { margin: 10px 0; }
+        .modal-body strong { color: var(--text-primary); font-weight: 600;}
+        .modal-footer { text-align: right; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+        .modal-register-btn { background-color: var(--button-bg); color: var(--button-text); padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 1em; font-weight: bold; transition: background-color 0.2s ease-in-out; }
+        .modal-register-btn:hover { background-color: var(--button-hover-bg); }
+
+        /* Loading/Error */
+        .loading, .error-message, .no-data { text-align:center; padding: 20px; color: var(--text-secondary); font-style: italic; }
+        .error-message { color: var(--error-color); font-weight: bold;}
+
+        /* Footer */
+        .footer { background-color: var(--nav-bg); color: var(--text-secondary); text-align: center; padding: 15px 0; font-size: 0.9em; box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3); position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;}
 
     </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <a href="#"><i class="fas fa-home"></i></a>
-        <a href="#"><i class="fas fa-compass"></i></a>
-        <a href="#"><i class="fas fa-briefcase"></i></a>
-        <a href="#"><i class="fas fa-user"></i></a>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/home" title="Home"><i class="fas fa-home"></i><span> Home</span></a>
+        <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i><span> Explore</span></a>
+        <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i><span> Notifications</span></a>
+        <a href="/help.html" title="Help"><i class="fas fa-question-circle"></i><span> Help</span></a>
+        <!-- JS updates href -->
+        <a href="/profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span> Profile</span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span> Logout</span></a>
     </nav>
 
-    <header>
-        <h1>🚀 Hackathons</h1>
-        <p>Explore upcoming hackathons and register your team.</p>
-    </header>
+    <main class="container">
+        <header>
+            <h1>🚀 Hackathons</h1>
+            <p>Discover coding challenges, build innovative projects, and compete for prizes.</p>
+        </header>
 
-    <div class="container">
-        <section>
-            <h2>Search Hackathons</h2>
+        <section id="search-add-hackathon">
+            <h2>Find or Add a Hackathon</h2>
             <div class="search-container">
-                <input type="text" id="hackathon-search-input" placeholder="Search hackathons..." />
-                <button id="hackathon-search-button">Search</button>
+                <input type="text" id="hackathon-search-input" placeholder="Search by name, theme, location..." />
+                <button id="hackathon-search-button"><i class="fas fa-search"></i> Search</button>
             </div>
-        </section>
-
-        <section>
-            <h2>Add a Hackathon</h2>
-            <form id="hackathon-form">
-                <input type="text" id="hackathon-name" placeholder="Hackathon Name" required />
-                <input type="text" id="hackathon-location" placeholder="Location" required />
-                <input type="date" id="hackathon-date" required />
-                <input type="url" id="hackathon-link" placeholder="More Info / Registration Link" required />
-                <textarea id="hackathon-description" placeholder="Enter Description" required></textarea>
-                <input type="text" id="hackathon-theme" placeholder="Theme"/>
-                <input type="text" id="hackathon-prize_pool" placeholder="Prize Pool"/>
-                <button type="submit">Submit</button>
+            <!-- Add Hackathon Form -->
+            <form id="hackathon-form" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                 <h3>Suggest a New Hackathon</h3>
+                 <input type="text" id="hackathon-name" placeholder="Hackathon Name" required />
+                 <input type="text" id="hackathon-location" placeholder="Location (e.g., Online, City)" />
+                 <input type="date" id="hackathon-date" title="Date of Hackathon"/>
+                 <input type="url" id="hackathon-url" placeholder="Registration/Info Link" required />
+                 <textarea id="hackathon-description" placeholder="Brief Description" rows="3"></textarea>
+                 <input type="text" id="hackathon-theme" placeholder="Main Theme (e.g., AI, Web3, HealthTech)"/>
+                 <input type="text" id="hackathon-prize_pool" placeholder="Prize Pool (e.g., $10,000, Swag)"/>
+                 <button type="submit">Submit Suggestion</button>
             </form>
         </section>
 
         <section id="current-hackathons">
-            <h2>Current Hackathons</h2>
-            <ul id="current-hackathons-list">
-                </ul>
+            <h2>Upcoming Hackathons</h2>
+            <div id="current-hackathons-list"> <!-- Changed to div for grid -->
+                 <p class="loading">Loading hackathons...</p>
+                 <!-- Hackathon cards will be loaded here -->
+            </div>
         </section>
-    </div>
+    </main>
 
+    <!-- Modal Structure -->
     <div id="hackathon-details-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2></h2> <button class="close-modal">&times;</button>
+                <h2 id="modal-title">Hackathon Details</h2>
+                <button class="close-modal" id="modal-close-btn">×</button>
             </div>
             <div class="modal-body">
-                <p></p>
+                <p><strong>Date:</strong> <span id="modal-date">--</span></p>
+                <p><strong>Location:</strong> <span id="modal-location">--</span></p>
+                <p><strong>Theme:</strong> <span id="modal-theme">--</span></p>
+                <p><strong>Prize Pool:</strong> <span id="modal-prize">--</span></p>
+                <p><strong>Description:</strong></p>
+                <p id="modal-description" style="white-space: pre-wrap;">--</p>
             </div>
             <div class="modal-footer">
-                <a href="#" class="hackathon-register-btn" target="_blank" rel="noopener noreferrer">Register Now</a>
+                <a href="#" id="modal-register-btn" class="modal-register-btn" target="_blank" rel="noopener noreferrer">Visit Website / Register</a>
             </div>
         </div>
     </div>
 
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <!-- JavaScript for this page -->
     <script src="static/explore-hackathons.js">
-        
+       
     </script>
 </body>
 </html>

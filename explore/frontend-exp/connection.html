@@ -3,111 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connections</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>My Network - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* --- Basic Styles --- */
+        :root {
+            --main-bg: #f4f6f8;
+            --primary-color: #2f4f4f; /* LinkedIn Blue */
+            --secondary-color: #283e4a; /* Darker blue for nav/accents */
+            --nav-text-color: #f0f2f5;
+            --nav-hover-bg: #3c5362;
+            --card-bg: #ffffff;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --text-primary: #191919;
+            --text-secondary: #5e5e5e;
+            --button-text: white;
+            --success-color: #2f4f4f; /* Green for accept/connect */
+            --info-color: #2f4f4f;    /* Blue for message */
+            --neutral-color: #6c757d; /* Grey for ignore/sent */
+            --danger-color: #d32f2f;  /* Red for remove */
+            --error-color: #d32f2f;
+            --input-border: #d1d1d1;
+            --link-color: #0073b1;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            padding-top: 70px; /* Space for fixed navbar */
+            padding-bottom: 30px; /* Min space at bottom */
+            font-size: 14px;
+            line-height: 1.5;
         }
 
+        /* --- Top Navigation --- */
         .top-nav {
-            background: #2f4f4f;
-            padding: 25px 35px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 26px;
+            background-color: var(--secondary-color); padding: 0 20px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000; position: fixed; top: 0; left: 0; width: 100%;
+            box-sizing: border-box; height: 60px;
+        }
+        .top-nav .nav-title { color: var(--nav-text-color); font-size: 1.25em; font-weight: 600; }
+        .top-nav .nav-actions { display: flex; align-items: center; }
+        .top-nav .nav-actions a {
+            color: var(--nav-text-color); text-decoration: none; padding: 10px; margin-left: 8px;
+            border-radius: 50%; transition: background-color 0.2s ease; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .top-nav .nav-actions a:hover { background-color: var(--nav-hover-bg); }
+
+        /* --- Main Container --- */
+        .container { width: 95%; max-width: 1140px; margin: 25px auto; }
+
+        /* --- Section Cards --- */
+        .section-card {
+            background-color: var(--card-bg); padding: 20px 25px; margin-bottom: 25px;
+            border-radius: 8px; box-shadow: var(--card-shadow);
+        }
+        .section-card h2 {
+            color: var(--primary-color); font-size: 1.25em; margin-top: 0;
+            margin-bottom: 15px; border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px; font-weight: 600; display: flex;
+            justify-content: space-between; align-items: center;
         }
 
-        .top-nav a {
-            color: #e0e0e0;
-            text-decoration: none;
-            padding: 18px 25px;
-            border-radius: 10px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
+        /* --- Search Bar --- */
+        .search-bar-container { margin-bottom: 20px; }
+        .search-bar { display: flex; gap: 10px; align-items: center; }
+        .search-bar input[type="text"] {
+            flex-grow: 1; padding: 10px 12px; border: 1px solid var(--input-border);
+            border-radius: 6px; font-size: 0.95em; outline-color: var(--primary-color);
         }
+        .search-bar button {
+            background-color: var(--primary-color); color: var(--button-text); padding: 10px 18px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em;
+            transition: background-color 0.2s; font-weight: 500;
+        }
+        .search-bar button i { margin-right: 5px; }
+        .search-bar button:hover { background-color: #2f4f4f; }
+        #search-results-list { margin-top: 15px; min-height: 50px; /* Space even when empty */ }
 
-        .top-nav a i {
-            font-size: 30px;
-            margin-right: 8px;
+        /* --- Toggle Button for Pending Requests --- */
+        .toggle-requests-container { text-align: right; margin-bottom: 15px; }
+        #toggle-pending-requests-btn {
+            background-color: var(--text-secondary); color: white; padding: 8px 15px;
+            border: 2px solid transparent; border-radius: 6px; cursor: pointer; font-size: 0.9em;
+            transition: background-color 0.2s, border-color 0.3s, color 0.3s;
         }
+        #toggle-pending-requests-btn:hover { background-color: #495057; }
+        #toggle-pending-requests-btn .fas { margin-right: 6px; }
+        #toggle-pending-requests-btn .count-badge { /* Style the count */
+            background-color: var(--danger-color); color: white; border-radius: 50%;
+            padding: 2px 6px; font-size: 0.8em; margin-left: 5px; min-width: 18px;
+            display: inline-block; text-align: center; font-weight: bold;
+        }
+        #toggle-pending-requests-btn.has-requests {
+            border-color: var(--success-color); color: var(--success-color); background-color: var(--card-bg);
+            animation: pulse-border 1.8s infinite ease-in-out;
+        }
+         #toggle-pending-requests-btn.has-requests .count-badge { background-color: var(--success-color); }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(26, 60, 80, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
 
-        .top-nav a:hover {
-            background-color: #486363;
-        }
+        /* Hidden Section */
+        #pending-requests-section.hidden { display: none; }
 
-        .connections-container {
-            background-color: #fff;
-            width: 100%;
-            max-width: 950px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 60px;
-            margin: 60px auto;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
+        /* User Lists - Grid Layout */
+        .user-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* Responsive grid */
+            gap: 15px; list-style: none; padding: 0; margin: 0;
         }
+        .user-card {
+            background-color: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column;
+            align-items: center; text-align: center; transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .user-card:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .user-card .avatar-placeholder {
+            width: 60px; height: 60px; border-radius: 50%; background-color: #e9ecef;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6em; font-weight: bold; color: var(--text-secondary);
+            margin-bottom: 10px; text-transform: uppercase;
+        }
+        .user-card .user-info { margin-bottom: 10px; width: 100%; }
+        .user-card .user-info .username { font-weight: 600; color: var(--text-primary); font-size: 1.05em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-card .user-info .profession { color: var(--text-secondary); font-size: 0.9em; min-height: 1.4em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .user-card .user-info .request-date { font-size: 0.75em; color: #888; margin-top: 5px; }
+        .user-card .user-actions {
+            margin-top: auto; padding-top: 12px; display: flex;
+            flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%;
+            border-top: 1px solid #f0f0f0;
+        }
+        .user-card .user-actions button {
+            padding: 8px 10px; border: none; border-radius: 5px; cursor: pointer;
+            font-size: 0.8em; transition: background-color 0.2s, opacity 0.2s;
+            color: white; font-weight: 500; flex-basis: calc(50% - 4px); /* Try to fit two buttons per row */
+            min-width: 80px; box-sizing: border-box; text-align: center;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .user-card .user-actions button i { margin-right: 4px; }
+        .user-card .user-actions button:hover:not(:disabled) { opacity: 0.9; }
+        .user-card .user-actions button:disabled { background-color: #ccc !important; cursor: not-allowed; opacity: 0.7; }
 
-        .connections-container h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
-            color: #333;
-        }
+        .user-card .user-actions button.view-profile-btn { background-color: var(--primary-color); }
+        .user-card .user-actions button.message-btn { background-color: var(--info-color); }
+        .user-card .user-actions button.request-btn { background-color: var(--success-color); }
+        .user-card .user-actions button.request-btn.sent { background-color: var(--neutral-color); }
+        .user-card .user-actions button.accept-btn { background-color: var(--success-color); }
+        .user-card .user-actions button.ignore-btn { background-color: var(--neutral-color); }
+        .user-card .user-actions button.remove-conn-btn { background-color: var(--danger-color); flex-basis: auto; /* Allow remove to be smaller */ min-width: 35px;}
 
-        #connections-list, #suggestions-list {
-            padding: 30px;
-            border-bottom: 3px solid #e0e0e0;
-            color: #333;
-        }
+        /* Show More Button */
+        .show-more-container { text-align: center; margin-top: 25px; }
+        #show-more-connections-btn { background-color: var(--primary-color); color: white; border:none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: 500; font-size: 0.95em; }
+        #show-more-connections-btn.hidden { display: none; }
 
-        #connections-list div, #suggestions-list div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
+        /* Loading/Error/No Data Messages */
+        .loading, .no-data, .error-message { text-align:center; padding: 25px; color: var(--text-secondary); font-style: italic; font-size: 1em; grid-column: 1 / -1; /* Span full grid width */ }
+        .error-message { color: var(--error-color); font-weight: bold; }
 
-        #connections-list button, #suggestions-list button {
-            background-color: #0077b5;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        #connections-list button:hover, #suggestions-list button:hover {
-            background-color: #005582;
-        }
     </style>
 </head>
 <body>
-    <div class="top-nav">
-        <a href="profile.html"><i class="fas fa-arrow-left"></i></a>
-        <span>Connections</span>
+    <nav class="top-nav">
+        <a href="/home" title="Home"><i class="fas fa-arrow-left"></i></a> <!-- Changed Back Link -->
+        <span class="nav-title">My Network</span>
+        <div class="nav-actions">
+            <a href="/home" title="Home"><i class="fas fa-home"></i></a>
+            <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i></a>
+            <a href="/notifications.html" title="Notifications"><i class="fas fa-bell"></i></a>
+             <a href="/profile.html" title="Profile"><i class="fas fa-user"></i></a> <!-- Link to own profile -->
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Search Users Section -->
+        <section class="section-card">
+            <h2>Find New Connections</h2>
+            <div class="search-bar-container">
+                <div class="search-bar">
+                    <input type="text" id="user-search-input" placeholder="Search for users by name or profession...">
+                    <button id="user-search-button"><i class="fas fa-search"></i> Search</button>
+                </div>
+                <!-- Search Results Grid -->
+                <div id="search-results-list" class="user-grid">
+                     <p class="no-data" style="grid-column: 1 / -1;">Enter a name or profession to find users.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toggle Button for Pending Requests -->
+        <div class="toggle-requests-container">
+            <button id="toggle-pending-requests-btn">
+                <i class="fas fa-user-clock"></i> View Pending Requests <span class="count-badge" id="pending-requests-count">(0)</span>
+            </button>
+        </div>
+
+        <!-- Pending Connection Requests Section (Initially Hidden) -->
+        <section class="section-card hidden" id="pending-requests-section">
+            <h2>Pending Connection Requests</h2>
+            <div id="pending-requests-list" class="user-grid">
+                <p class="loading">Loading pending requests...</p>
+            </div>
+        </section>
+
+        <!-- Connections Section -->
+        <section class="section-card">
+            <h2>Connections</h2>
+            <div id="connections-list" class="user-grid">
+                 <p class="loading">Loading connections...</p>
+            </div>
+            <div class="show-more-container">
+                <button id="show-more-connections-btn" class="hidden">Show More Connections</button>
+            </div>
+        </section>
+
+        <!-- Suggestions Section -->
+        <section class="section-card">
+            <h2>Suggestions</h2>
+            <div id="suggestions-list" class="user-grid">
+                 <p class="loading">Loading suggestions...</p>
+            </div>
+        </section>
     </div>
 
-    <div class="connections-container">
-        <h2>My Connections</h2>
-        <div id="connections-list">Loading...</div>
-
-        <h2>Suggestions</h2>
-        <div id="suggestions-list">Loading...</div>
-    </div>
-
+    <!-- Link the external JavaScript file -->
     <script src="static/connection.js"></script>
+
 </body>
 </html>

@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniVerse Register</title>
     <style>
-        /* Your existing styles */
         body {
             margin: 0;
             padding: 0;
             font-family: "Trebuchet MS", sans-serif;
-            background-color: whitesmoke;
+            background-color: #1e1e2f; /* Darker background for better contrast */
             background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            color: white; /* Default text color for body */
         }
         .container {
             display: flex;
@@ -25,12 +25,13 @@
         }
         .register-box {
             background: #3f1647;
-            padding: 30px;
+            padding: 30px 40px; /* Increased padding */
             border-radius: 20px;
             text-align: center;
             font-family: "Trebuchet MS", sans-serif;
             color: white;
-            width: 350px;
+            width: 380px; /* Slightly wider */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); /* Added shadow for depth */
         }
         .logo {
             width: 60px;
@@ -38,26 +39,60 @@
             margin-bottom: 10px;
         }
         h2 {
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* Increased margin */
             font-size: 35px;
         }
-        input {
-            width: 85%;
-            padding: 10px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
         }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #e0e0e0; /* Lighter label text */
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%; /* Use full width within form-group */
+            padding: 12px; /* Increased padding */
+            margin: 0; /* Remove default margins */
+            border: 1px solid #5a3b5f; /* Subtle border */
+            border-radius: 8px; /* More rounded */
+            font-size: 16px;
+            background-color: #2c1d3e; /* Darker input background */
+            color: white; /* Text color in input */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        input::placeholder {
+            color: #a09aac; /* Lighter placeholder */
+        }
+        
+        select {
+            appearance: none; /* Basic reset for custom arrow later if desired */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23c0c0c0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: .65em auto;
+            padding-right: 30px; /* Make space for arrow */
+        }
+
         .register-btn, .google-btn {
-            width: 65%;
-            padding: 10px;
+            width: 100%; /* Full width buttons */
+            padding: 12px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
             font-family: "Trebuchet MS", sans-serif;
             cursor: pointer;
             margin-top: 10px;
+            font-weight: bold;
         }
         .register-btn {
             background: linear-gradient(45deg, #ff0080, #ff66b2);
@@ -66,13 +101,28 @@
         .google-btn {
             background: linear-gradient(45deg, #6b229f, #800080);
             color: white;
+            margin-top: 15px; /* More space above google button */
         }
-        p {
-            margin-top: 15px;
+        .login-link { /* Class for the p tag */
+            margin-top: 20px;
+            font-size: 14px;
         }
-        a {
+        .login-link a { /* Specific styling for the link itself */
             color: #ff66b2;
             text-decoration: none;
+            font-weight: bold;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .error-message { /* For displaying errors */
+            color: #ff4d4d;
+            background-color: rgba(255, 77, 77, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 77, 77, 0.3);
         }
     </style>
 </head>
@@ -81,15 +131,41 @@
         <div class="register-box">
             <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="Logo" class="logo">
             <h2>Register</h2>
+
+            {% if error %}
+            <div class="error-message">{{ error }}</div>
+            {% endif %}
+
             <form id="register-form" method="post" action="/register">
-                <input type="text" name="username" id="username" placeholder="Username" required>
-                <input type="email" name="email" id="email" placeholder="Email" required>
-                <input type="password" name="password" id="password" placeholder="Password" required>
-                <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" placeholder="Choose a username" required value="{{ username_val or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" placeholder="Your email address" required value="{{ email_val or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" placeholder="Create a strong password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">I am a...</label>
+                    <select name="role" id="role" required>
+                        <option value="" disabled {% if not role_val %}selected{% endif %}>Select your role</option>
+                        <option value="student" {% if role_val == "student" %}selected{% endif %}>Student</option>
+                        <option value="alumni" {% if role_val == "alumni" %}selected{% endif %}>Alumni</option>
+                        <option value="admin" {% if role_val == "admin" %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
                 <button type="submit" class="register-btn">Sign Up</button>
                 <button type="button" class="google-btn">Sign up with Google</button>
             </form>
-            <p>Already have an account? <a href="/">Login here</a></p>
+            <p class="login-link">Already have an account? <a href="/">Login here</a></p>
         </div>
     </div>
     <script>
@@ -98,8 +174,9 @@
             const confirmPassword = document.getElementById('confirm-password').value;
 
             if (password !== confirmPassword) {
-                event.preventDefault();
-                alert("Passwords do not match!");
+                event.preventDefault(); // Stop form submission
+                // Display error message more gracefully if you have an error div
+                alert("Passwords do not match!"); // Simple alert for now
             }
         });
     </script>
