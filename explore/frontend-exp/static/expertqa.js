@@ -334,39 +334,86 @@ document.addEventListener('DOMContentLoaded', async () => {
          });
      }
 
-     function attachAnswerFormSubmitListeners(container) {
-         container.querySelectorAll('.answer-form').forEach(form => {
-             const newForm = form.cloneNode(true); // Clone to remove old listeners
-             form.parentNode.replaceChild(newForm, form);
-             newForm.addEventListener('submit', async function(event) {
-                 event.preventDefault();
-                 const questionId = this.id.split('-').pop();
-                 const textarea = this.querySelector('textarea');
-                 const feedbackDiv = this.querySelector('.post-feedback');
-                 const submitBtn = this.querySelector('button');
-                 const answerText = textarea?.value.trim();
+     // --- Find this function in your expertqa.js ---
+function attachAnswerFormSubmitListeners(container) {
+    container.querySelectorAll('.answer-form').forEach(form => {
+        const newForm = form.cloneNode(true); // Clone to remove old listeners
+        form.parentNode.replaceChild(newForm, form);
+        newForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const questionId = this.id.split('-').pop(); // Get question ID from form ID
+            const textarea = this.querySelector('textarea');
+            const feedbackDiv = this.querySelector('.post-feedback');
+            const submitBtn = this.querySelector('button[type="submit"]'); // More specific selector
+            const answerText = textarea?.value.trim();
 
-                 if (!textarea || !feedbackDiv || !submitBtn) { console.error("Answer form elements missing"); return; }
-                 if (!answerText) { /* ... handle empty answer ... */ return; }
+            if (!textarea || !feedbackDiv || !submitBtn) { console.error("Answer form elements missing"); return; }
+            if (!answerText) {
+                feedbackDiv.textContent = 'Please enter your answer.';
+                feedbackDiv.className = 'post-feedback status-message error';
+                setTimeout(() => { feedbackDiv.textContent = ''; }, 3000);
+                return;
+            }
+            if (!currentUser) { // Double check user is logged in before submitting
+                alert("Error: You seem to be logged out. Please refresh and log in again.");
+                feedbackDiv.textContent = 'Authentication error.';
+                feedbackDiv.className = 'post-feedback status-message error';
+                return;
+            }
 
-                 feedbackDiv.textContent = 'Submitting...'; feedbackDiv.className = 'post-feedback status-message'; submitBtn.disabled = true;
+            feedbackDiv.textContent = 'Submitting...'; feedbackDiv.className = 'post-feedback status-message'; submitBtn.disabled = true;
 
-                 try {
-                     const response = await fetch(`/api/expertqa/answers/${questionId}`, { /* ... fetch options ... */ });
-                     const responseData = await response.json();
-                     if (!response.ok) throw new Error(responseData.detail || `Failed to submit: ${response.status}`);
+            try {
+                // ***** THIS IS THE CORRECTED FETCH CALL *****
+                const response = await fetch(`/api/expertqa/answers/${questionId}`, {
+                    method: 'POST', // Explicitly set method to POST
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add other headers like CSRF token if your backend requires them
+                    },
+                    body: JSON.stringify({ answer_text: answerText }) // Send the data as JSON in the body
+                });
+                // ***** END OF CORRECTION *****
 
-                     feedbackDiv.textContent = 'Answer submitted!'; feedbackDiv.className = 'post-feedback status-message success';
-                     textarea.value = ''; newForm.style.display = 'none';
-                     const answersListDiv = this.closest('.answers-section')?.querySelector('.answers-list');
-                     if (answersListDiv) appendAnswer(responseData, answersListDiv); // Append new answer
-                     setTimeout(() => { feedbackDiv.textContent = '';}, 3000);
-                 } catch (error) { /* ... handle error ... */ }
-                 finally { submitBtn.disabled = false; }
-             });
-         });
-     }
+                const responseData = await response.json(); // Try to parse JSON even on error for details
+                if (!response.ok) {
+                    // Use error detail from backend if available, otherwise status text
+                    throw new Error(responseData.detail || `Failed to submit: ${response.statusText} (Status: ${response.status})`);
+                }
 
+                // --- Success ---
+                feedbackDiv.textContent = 'Answer submitted!'; feedbackDiv.className = 'post-feedback status-message success';
+                textarea.value = ''; // Clear the textarea
+                // newForm.style.display = 'none'; // Optionally hide form after success
+
+                // Find the specific answers list for this question and append the new answer
+                const answersListDiv = document.querySelector(`.question-box[data-question-id="${questionId}"] .answers-list`);
+                if (answersListDiv) {
+                    appendAnswer(responseData, answersListDiv); // Append new answer dynamically
+                } else {
+                    console.warn("Could not find answers list container to append new answer for question:", questionId);
+                    // As a fallback, maybe just reload the section or page if dynamic append fails
+                    // await loadSelectedQuestions(); // Example: reload selected questions
+                }
+
+                setTimeout(() => { feedbackDiv.textContent = '';}, 3000);
+
+            } catch (error) {
+                console.error("Error submitting answer:", error);
+                feedbackDiv.textContent = `Error: ${error.message}`;
+                feedbackDiv.className = 'post-feedback status-message error';
+                // Don't clear textarea on error so user doesn't lose input
+            } finally {
+                submitBtn.disabled = false; // Re-enable button in both success and error cases
+                // Optionally clear error message after a delay
+                 if (feedbackDiv.textContent.startsWith('Error:')) {
+                     setTimeout(() => { feedbackDiv.textContent = ''; }, 5000); // Longer delay for errors
+                 }
+            }
+        });
+    });
+}
+// --- Keep the rest of your expertqa.js file as is ---
      function attachLikeQuestionButtonListeners(container) {
          container.querySelectorAll('.like-section .like-button').forEach(button => { // More specific selector
              const newButton = button.cloneNode(true); // Clone

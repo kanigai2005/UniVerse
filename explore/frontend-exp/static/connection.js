@@ -1,7 +1,8 @@
+// static/connection.js (CORRECTED FOR REDIRECTION)
+
 // --- Utility: Simple HTML Escaping ---
 function escapeHtml(unsafe) {
-    if (typeof unsafe !== 'string') { return unsafe === null || unsafe === undefined ? '' : unsafe; }
-    // Corrected escaping for all necessary characters
+    if (typeof unsafe !== 'string') { return unsafe === null || unsafe === undefined ? '' : String(unsafe); }
     return unsafe
          .replace(/&/g, "&")
          .replace(/</g, "<")
@@ -11,7 +12,7 @@ function escapeHtml(unsafe) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Connections Page DOM Loaded.");
+    console.log("Connections Page DOM Loaded - Version: REDIRECTION_ONLY");
 
     // --- Element References ---
     const connectionsListContainer = document.getElementById('connections-list');
@@ -22,23 +23,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchResultsListContainer = document.getElementById('search-results-list');
     const togglePendingRequestsBtn = document.getElementById('toggle-pending-requests-btn');
     const pendingRequestsSection = document.getElementById('pending-requests-section');
-    const pendingRequestsCountSpan = document.getElementById('pending-requests-count');
+    let pendingRequestsCountSpan = document.getElementById('pending-requests-count');
     const showMoreConnectionsBtn = document.getElementById('show-more-connections-btn');
 
     // --- State ---
     let currentUsername = null;
-    let currentUserData = null; // Store full current user object
+    let currentUserData = null;
     let allFetchedConnections = [];
     let displayedConnectionsCount = 0;
-    const CONNECTIONS_PER_PAGE = 9; // Number of connection cards per 'page'
+    const CONNECTIONS_PER_PAGE = 9;
 
-    // --- Check Core Elements ---
-    if (!connectionsListContainer || !suggestionsListContainer || !pendingRequestsListContainer ||
-        !userSearchInput || !userSearchButton || !searchResultsListContainer ||
-        !togglePendingRequestsBtn || !pendingRequestsSection || !pendingRequestsCountSpan || !showMoreConnectionsBtn) {
-        console.error("CRITICAL: One or more essential UI elements are missing from connections.html!");
-        document.body.insertAdjacentHTML('afterbegin', '<p style="background:red; color:white; padding:10px; text-align:center; position:fixed; top: 60px; width:100%; z-index:1001;">Page Error: UI elements missing.</p>');
-        return; // Stop initialization
+    // --- Check Core Elements (No chat pop-up elements here) ---
+    const essentialElements = {
+        connectionsListContainer, suggestionsListContainer, pendingRequestsListContainer,
+        userSearchInput, userSearchButton, searchResultsListContainer,
+        togglePendingRequestsBtn, pendingRequestsSection, pendingRequestsCountSpan, showMoreConnectionsBtn
+    };
+    for (const elName in essentialElements) {
+        if (!essentialElements[elName]) {
+            console.error(`CRITICAL: UI element '${elName}' is missing! Page may not function correctly.`);
+            // You might want to display a more user-friendly error on the page itself
+            return;
+        }
     }
 
     // --- Helper to fetch current user ---
@@ -48,108 +54,115 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/api/users/me');
             if (!response.ok) {
                 if (response.status === 401 || response.status === 307) {
-                    window.location.href = '/?error=Session+expired'; // Redirect if not authenticated
+                    console.warn("User not authenticated, redirecting to login.");
+                    window.location.href = '/?error=Session+expired';
+                } else {
+                    console.error("fetchCurrentUser failed with status:", response.status, await response.text());
                 }
                 return null;
             }
-            currentUserData = await response.json();
-            if (currentUserData && currentUserData.username) {
-                currentUsername = currentUserData.username; // Set global username
-                console.log("Current user fetched:", currentUsername);
-                return currentUserData; // Return full data
+            const userData = await response.json();
+            if (userData && userData.username && typeof userData.id === 'number') {
+                currentUserData = userData;
+                currentUsername = userData.username;
+                console.log("Current user fetched:", currentUsername, "ID:", currentUserData.id);
+                return currentUserData;
             }
-            console.warn("User data fetched but username missing.");
+            console.warn("User data fetched but username or ID missing or ID not a number.", userData);
             return null;
         } catch (error) {
             console.error('Error in fetchCurrentUser:', error);
-            const mainContainer = document.querySelector('.container');
-            if (mainContainer && !mainContainer.querySelector('.api-error-message')) {
-                mainContainer.insertAdjacentHTML('afterbegin', '<p class="error-message api-error-message" style="padding: 10px; background-color: var(--error-color); color: white;">Could not verify user session. Please log in.</p>');
-            }
             return null;
         }
     }
 
     // --- API Call Helper ---
     async function apiCall(url, method = 'GET', body = null) {
-        const options = { method, headers: {} };
-        if (body) {
+        const options = { method, headers: {}, credentials: 'include' };
+        if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
             options.headers['Content-Type'] = 'application/json';
             options.body = JSON.stringify(body);
         }
-        const response = await fetch(url, options);
-        const responseData = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            const errorMessage = responseData.detail || `Request failed: ${response.status} ${response.statusText}`;
-            console.error(`API call to ${url} failed:`, errorMessage, responseData);
-            throw new Error(errorMessage);
+        try {
+            const response = await fetch(url, options);
+            let responseData = {};
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                responseData = await response.json();
+            } else if (!response.ok) {
+                const textError = await response.text();
+                throw new Error(textError || `Request failed: ${response.status} ${response.statusText}`);
+            }
+            if (!response.ok) {
+                const errorMessage = responseData.detail || `Request to ${url} failed: ${response.status} ${response.statusText}`;
+                throw new Error(errorMessage);
+            }
+            return responseData;
+        } catch (error) {
+            console.error(`Error during API call to ${url} (method: ${method}):`, error);
+            throw error;
         }
-        return responseData;
+    }
+
+    // --- UI Update Helpers ---
+    function updateListContainer(container, items, itemCreatorFunc, noDataMessage, itemType, isOwnPage = false) {
+        if (!container) { console.error("updateListContainer: container is null for itemType", itemType); return; }
+        container.innerHTML = '';
+        if (!Array.isArray(items) || items.length === 0) {
+            container.innerHTML = `<p class="no-data">${escapeHtml(noDataMessage)}</p>`;
+            if (container === connectionsListContainer && showMoreConnectionsBtn) showMoreConnectionsBtn.classList.add('hidden');
+            return;
+        }
+        items.forEach(item => container.appendChild(itemCreatorFunc(item, itemType, isOwnPage)));
     }
 
     // --- Fetch Connections ---
-    async function fetchConnections(usernameToFetchFor) {
-        if (!usernameToFetchFor) return;
+    async function fetchConnections(usernameToFetchFor = currentUsername) {
+        if (!usernameToFetchFor) { console.warn("fetchConnections: usernameToFetchFor is missing"); return; }
         connectionsListContainer.innerHTML = '<p class="loading">Loading connections...</p>';
-        showMoreConnectionsBtn.classList.add('hidden');
+        if (showMoreConnectionsBtn) showMoreConnectionsBtn.classList.add('hidden');
         try {
             const connections = await apiCall(`/api/users/${encodeURIComponent(usernameToFetchFor)}/connections`);
             allFetchedConnections = Array.isArray(connections) ? connections : [];
             displayedConnectionsCount = 0;
-            connectionsListContainer.innerHTML = ''; // Clear loading
-            displayMoreConnections(usernameToFetchFor); // Display initial batch
+            connectionsListContainer.innerHTML = '';
+            displayMoreConnections(usernameToFetchFor);
         } catch (error) {
             connectionsListContainer.innerHTML = `<p class="error-message">Could not load connections: ${escapeHtml(error.message)}</p>`;
         }
     }
 
-    // --- Display More Connections (Pagination) ---
     function displayMoreConnections(displayedUsername) {
         const isOwn = (currentUsername === displayedUsername);
         const newConnections = allFetchedConnections.slice(displayedConnectionsCount, displayedConnectionsCount + CONNECTIONS_PER_PAGE);
-
         if (newConnections.length === 0 && displayedConnectionsCount === 0) {
-            connectionsListContainer.innerHTML = `<p class="no-data">You have no connections yet.</p>`; // Changed message
-            showMoreConnectionsBtn.classList.add('hidden');
+            updateListContainer(connectionsListContainer, [], createUserListItem, "No connections yet. Find new people!", 'connection', isOwn);
             return;
         }
-
         newConnections.forEach(user => {
             connectionsListContainer.appendChild(createUserListItem(user, 'connection', isOwn));
         });
         displayedConnectionsCount += newConnections.length;
-        showMoreConnectionsBtn.classList.toggle('hidden', displayedConnectionsCount >= allFetchedConnections.length);
+        if (showMoreConnectionsBtn) {
+            showMoreConnectionsBtn.classList.toggle('hidden', displayedConnectionsCount >= allFetchedConnections.length);
+        }
     }
 
     // --- Fetch and Display Suggestions ---
     async function fetchSuggestions() {
-        if (!currentUsername) return;
+        if (!currentUsername) { console.warn("fetchSuggestions: currentUsername is missing"); return; }
         suggestionsListContainer.innerHTML = '<p class="loading">Loading suggestions...</p>';
         try {
             const suggestions = await apiCall(`/api/users/${encodeURIComponent(currentUsername)}/suggestions`);
-            console.log("RAW SUGGESTIONS DATA FROM API:", JSON.stringify(suggestions, null, 2));
-            displaySuggestions(suggestions);
+            updateListContainer(suggestionsListContainer, suggestions.slice(0, 9), createUserListItem, "No new suggestions right now.", 'suggestion');
         } catch (error) {
             suggestionsListContainer.innerHTML = `<p class="error-message">Could not load suggestions: ${escapeHtml(error.message)}</p>`;
         }
     }
 
-    function displaySuggestions(suggestions) {
-        suggestionsListContainer.innerHTML = '';
-        if (!Array.isArray(suggestions) || suggestions.length === 0) {
-            suggestionsListContainer.innerHTML = '<p class="no-data">No new suggestions right now.</p>'; return;
-        }
-        console.log("Displaying suggestions. First item:", suggestions[0]);
-        // Optionally limit suggestions shown initially
-        suggestions.slice(0, 9).forEach((user, index) => { // Show 9 suggestions initially
-            console.log(`Suggestion item ${index}:`, user);
-            suggestionsListContainer.appendChild(createUserListItem(user, 'suggestion'));
-        });
-    }
-
     // --- Fetch and Display Pending Requests ---
     async function fetchPendingRequests() {
-        if (!currentUserData) return; // Use the full user object check
+        if (!currentUserData) { console.warn("fetchPendingRequests: currentUserData is missing"); return; }
         if (!pendingRequestsSection.classList.contains('hidden')) {
             pendingRequestsListContainer.innerHTML = '<p class="loading">Loading requests...</p>';
         }
@@ -159,7 +172,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             pendingRequestsCountSpan.textContent = `(${numRequests})`;
             togglePendingRequestsBtn.classList.toggle('has-requests', numRequests > 0);
             if (!pendingRequestsSection.classList.contains('hidden') || numRequests > 0) {
-                displayPendingRequests(requests);
+                 updateListContainer(pendingRequestsListContainer, requests, createPendingRequestItem, "No pending connection requests.", 'pending-request');
+            } else if (numRequests === 0 && !pendingRequestsSection.classList.contains('hidden')) {
+                 pendingRequestsListContainer.innerHTML = '<p class="no-data">No pending connection requests.</p>';
             }
         } catch (error) {
             if (!pendingRequestsSection.classList.contains('hidden')) {
@@ -170,32 +185,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function displayPendingRequests(requests) {
-        pendingRequestsListContainer.innerHTML = '';
-        if (!Array.isArray(requests) || requests.length === 0) {
-            pendingRequestsListContainer.innerHTML = '<p class="no-data">No pending connection requests.</p>';
-            pendingRequestsCountSpan.textContent = '(0)';
-            togglePendingRequestsBtn.classList.remove('has-requests');
-            return;
-        }
-        pendingRequestsCountSpan.textContent = `(${requests.length})`;
-        togglePendingRequestsBtn.classList.toggle('has-requests', requests.length > 0);
-        requests.forEach(req => pendingRequestsListContainer.appendChild(createPendingRequestItem(req)));
-    }
-
     function createPendingRequestItem(req) {
-        // Check specifically for requester_username
-        if (!req || typeof req.requester_id === 'undefined' || typeof req.requester_username === 'undefined' || req.requester_username === null) {
-            console.warn("Invalid pending request data:", req); return document.createElement('div');
+        if (!req || typeof req.requester_id !== 'number' || typeof req.requester_username !== 'string' || !req.requester_username) {
+            console.warn("Invalid pending request data:", req);
+            const errorCard = document.createElement('div'); errorCard.classList.add('user-card');
+            errorCard.innerHTML = `<div class="user-info"><span class="username" style="color:red;">Data Error</span></div>`;
+            return errorCard;
         }
         const item = document.createElement('div');
         item.classList.add('user-card');
+        const requestedAt = req.requested_at ? new Date(req.requested_at).toLocaleDateString() : 'Unknown date';
         item.innerHTML = `
             <div class="avatar-placeholder">${escapeHtml(req.requester_username.substring(0,2).toUpperCase())}</div>
             <div class="user-info">
                 <span class="username">${escapeHtml(req.requester_username)}</span>
                 <span class="profession">${escapeHtml(req.requester_profession || 'Profession not specified')}</span>
-                <span class="request-date">Requested: ${new Date(req.requested_at).toLocaleDateString()}</span>
+                <span class="request-date">Requested: ${escapeHtml(requestedAt)}</span>
             </div>
             <div class="user-actions">
                 <button class="accept-btn" data-requester-id="${req.requester_id}"><i class="fas fa-check"></i> Accept</button>
@@ -207,33 +212,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Search Users ---
     async function searchUsers() {
-        if (!currentUserData) { searchResultsListContainer.innerHTML = '<p class="error-message">Please log in to search.</p>'; return; }
+        if (!currentUserData) {
+            searchResultsListContainer.innerHTML = '<p class="error-message">Please log in to search.</p>'; return;
+        }
         const searchTerm = userSearchInput.value.trim();
         if (searchTerm.length < 2) {
-            searchResultsListContainer.innerHTML = '<p class="no-data" style="text-align:left; padding-left:0;">Enter at least 2 characters.</p>';
+            searchResultsListContainer.innerHTML = '<p class="no-data">Enter at least 2 characters.</p>';
             return;
         }
         searchResultsListContainer.innerHTML = '<p class="loading">Searching...</p>';
         try {
             const users = await apiCall(`/api/users/searchable?term=${encodeURIComponent(searchTerm)}`);
-            displaySearchResults(users);
+            updateListContainer(searchResultsListContainer, users, createUserListItem, `No users found matching "${escapeHtml(searchTerm)}".`, 'search_result');
         } catch (error) {
             searchResultsListContainer.innerHTML = `<p class="error-message">Search failed: ${escapeHtml(error.message)}</p>`;
         }
     }
 
-    function displaySearchResults(users) {
-        searchResultsListContainer.innerHTML = '';
-        if (!Array.isArray(users) || users.length === 0) {
-            searchResultsListContainer.innerHTML = '<p class="no-data">No users found.</p>'; return;
-        }
-        users.forEach(user => searchResultsListContainer.appendChild(createUserListItem(user, 'search_result')));
-    }
-
-    // --- Helper to create user card item (for grid) ---
+    // --- Create User Card Item ---
     function createUserListItem(user, type, isForOwnConnectionsPage = false) {
-        if (!user || typeof user.id === 'undefined' || typeof user.username !== 'string' || !user.username) { // Stricter check
-             console.warn(`Invalid or incomplete user data for list item (type: ${type}):`, user);
+        if (!user || typeof user.id !== 'number' || typeof user.username !== 'string' || !user.username) {
+             console.warn(`Invalid user data for list item (type: ${type}):`, user);
              const errorCard = document.createElement('div'); errorCard.classList.add('user-card');
              errorCard.innerHTML = `<div class="user-info"><span class="username" style="color:red;">User Data Error</span><span class="profession">Required info missing</span></div>`;
              return errorCard;
@@ -267,113 +266,125 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Action Event Handlers (Delegated) ---
-    function handleUserListActions(event) {
-        if (!currentUserData) { // Check if user is loaded before allowing actions
-            console.warn("User data not loaded, ignoring action.");
+    document.body.addEventListener('click', async (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+
+        if (!currentUserData && !button.classList.contains('view-profile-btn') && !button.classList.contains('message-btn')) {
+            console.warn("User data not loaded, action blocked (except profile/message navigation).");
             return;
         }
-        const target = event.target.closest('button');
-        if (!target) return;
 
-        const username = target.dataset.username;
-        const requesterId = target.dataset.requesterId;
+        const username = button.dataset.username;
+        const requesterIdStr = button.dataset.requesterId;
+        const requesterId = requesterIdStr ? parseInt(requesterIdStr, 10) : null;
 
-        target.disabled = true;
-        const originalButtonHtml = target.innerHTML; // Store original content
-        target.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Generic spinner
+        const originalButtonHtml = button.innerHTML;
 
-        // Use a map for cleaner action dispatch
-        const actions = {
-            'view-profile-btn': () => {
-                if(username) window.location.href = `/profile.html?username=${encodeURIComponent(username)}`;
-            },
-            'message-btn': () => initiateChat(username),
-            'request-btn': () => sendConnectionRequestAction(username, target, originalButtonHtml),
-            'accept-btn': () => acceptRequestAction(requesterId, target, originalButtonHtml),
-            'ignore-btn': () => ignoreRequestAction(requesterId, target, originalButtonHtml),
-            'remove-conn-btn': () => removeConnectionAction(username, target, originalButtonHtml)
-        };
+        if (button.classList.contains('message-btn') || button.classList.contains('view-profile-btn')) {
+            button.disabled = true; // Briefly disable navigation buttons
+        } else {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
 
-        let actionFound = false;
-        for (const btnClass in actions) {
-            if (target.classList.contains(btnClass)) {
-                actions[btnClass]();
-                actionFound = true;
-                break;
+        try {
+            if (button.classList.contains('view-profile-btn') && username) {
+                window.location.href = `/profile.html?username=${encodeURIComponent(username)}`;
+                // Button will be re-enabled on page load or if navigation fails by browser
+            } else if (button.classList.contains('message-btn') && username) {
+                console.log(`[ConnectionsPage] Message button for ${username}. Redirecting to chat.html?user=${encodeURIComponent(username)}`);
+                window.location.href = `/chat.html?user=${encodeURIComponent(username)}`;
+                // Button will be re-enabled on page load or if navigation fails
+            } else if (button.classList.contains('request-btn') && username) {
+                await sendConnectionRequestAction(username, button, originalButtonHtml);
+            } else if (button.classList.contains('accept-btn') && Number.isInteger(requesterId)) {
+                await acceptRequestAction(requesterId, button, originalButtonHtml);
+            } else if (button.classList.contains('ignore-btn') && Number.isInteger(requesterId)) {
+                await ignoreRequestAction(requesterId, button, originalButtonHtml);
+            } else if (button.classList.contains('remove-conn-btn') && username) {
+                await removeConnectionAction(username, button, originalButtonHtml);
+            } else {
+                // If no specific action matched, and it wasn't a nav button
+                if (!button.classList.contains('view-profile-btn') && !button.classList.contains('message-btn')) {
+                    button.disabled = false;
+                    button.innerHTML = originalButtonHtml;
+                }
+            }
+        } catch (error) {
+            console.error("Error in delegated action handler:", error);
+            // Restore button state if it wasn't a navigation/redirection one
+            if (!button.classList.contains('view-profile-btn') && !button.classList.contains('message-btn')) {
+                 button.disabled = false;
+                 button.innerHTML = originalButtonHtml;
+            } else if (button.classList.contains('message-btn') || button.classList.contains('view-profile-btn')) {
+                // Re-enable navigation buttons if the navigation itself failed or was blocked
+                button.disabled = false;
             }
         }
-
-        // Re-enable immediately only for navigation actions
-        if (target.classList.contains('view-profile-btn') || target.classList.contains('message-btn')) {
-             setTimeout(() => { // Slight delay to allow navigation to start if successful
-                  target.disabled = false;
-                  target.innerHTML = originalButtonHtml;
-              }, 100);
-        } else if (!actionFound) {
-            // If no action matched, re-enable immediately
-             target.disabled = false;
-             target.innerHTML = originalButtonHtml;
-        }
-    }
-
-    async function initiateChat(targetUsername) { /* ... (keep as before) ... */ }
+    });
 
     async function sendConnectionRequestAction(targetUsername, button, originalHtml) {
         try {
             const result = await apiCall(`/api/connections/request/${encodeURIComponent(targetUsername)}`, 'POST');
             alert(result.message || "Request sent!");
-            button.textContent = 'Request Sent';
-            button.classList.remove('request-btn'); // Remove old class
-            button.classList.add('sent'); // Add new class for styling
-            // Keep button disabled after sending
-            fetchSuggestions(); // Refresh suggestions
-            if (userSearchInput.value.trim().length > 0) searchUsers();
+            button.innerHTML = 'Sent';
+            button.classList.remove('request-btn');
+            button.classList.add('sent');
+            // Keep button disabled as 'Sent'
+            await Promise.all([fetchSuggestions(), (userSearchInput.value.trim().length > 0 ? searchUsers() : Promise.resolve())]);
         } catch (error) {
             alert(`Could not send request: ${escapeHtml(error.message)}`);
-            button.disabled = false; button.innerHTML = originalHtml; // Restore on error
+            button.disabled = false; button.innerHTML = originalHtml;
         }
     }
 
     async function acceptRequestAction(requesterId, button, originalHtml) {
         const parentItem = button.closest('.user-card');
-        button.textContent = 'Accepting...'; // Keep spinner from handleUserListActions
         try {
             const result = await apiCall(`/api/connections/requests/accept/${requesterId}`, 'POST');
-            alert(result.message || "Request accepted! Almagems awarded.");
-            if(parentItem) parentItem.remove();
-            fetchConnections(); // Use global currentUsername
-            fetchSuggestions();
-            fetchPendingRequests();
+            alert(result.message || "Request accepted!");
+            if(parentItem) { parentItem.style.transition = 'opacity 0.5s ease'; parentItem.style.opacity = '0'; }
+            setTimeout(async () => {
+                if(parentItem) parentItem.remove();
+                await Promise.all([fetchConnections(), fetchSuggestions(), fetchPendingRequests()]);
+            }, 500);
         } catch (error) {
             alert(`Could not accept request: ${escapeHtml(error.message)}`);
-            button.disabled = false; button.innerHTML = originalHtml; // Restore on error
+            button.disabled = false; button.innerHTML = originalHtml;
         }
     }
 
     async function ignoreRequestAction(requesterId, button, originalHtml) {
         const parentItem = button.closest('.user-card');
-        button.textContent = 'Ignoring...';
         try {
             const result = await apiCall(`/api/connections/requests/ignore/${requesterId}`, 'POST');
             alert(result.message || "Request ignored.");
-            if(parentItem) parentItem.remove();
-            fetchPendingRequests();
+            if(parentItem) { parentItem.style.transition = 'opacity 0.5s ease'; parentItem.style.opacity = '0'; }
+            setTimeout(async () => {
+                 if(parentItem) parentItem.remove();
+                 await fetchPendingRequests();
+            }, 500);
         } catch (error) {
             alert(`Could not ignore request: ${escapeHtml(error.message)}`);
             button.disabled = false; button.innerHTML = originalHtml;
         }
     }
+
     async function removeConnectionAction(targetUsername, button, originalHtml) {
-        if (!confirm(`Are you sure you want to remove ${targetUsername}?`)) {
+        if (!confirm(`Are you sure you want to remove ${escapeHtml(targetUsername)} from your connections?`)) {
              button.disabled = false; button.innerHTML = originalHtml; return;
         }
         const parentItem = button.closest('.user-card');
         try {
             const result = await apiCall(`/api/connections/${encodeURIComponent(targetUsername)}`, 'DELETE');
             alert(result.message || "Connection removed.");
-            if(parentItem) parentItem.remove(); // Remove directly
-            else fetchConnections(currentUsername); // Fallback refresh
-            fetchSuggestions();
+            if(parentItem) { parentItem.style.transition = 'opacity 0.5s ease'; parentItem.style.opacity = '0'; }
+            setTimeout(async () => {
+                 if(parentItem) parentItem.remove();
+                 else await fetchConnections(); // Fallback refresh
+                 await fetchSuggestions();
+            }, 500);
         } catch (error) {
             alert(`Could not remove connection: ${escapeHtml(error.message)}`);
             button.disabled = false; button.innerHTML = originalHtml;
@@ -382,58 +393,63 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initialize Page ---
     async function initializeConnectionPage() {
-        await fetchCurrentUser(); // Fetch current user data first
-        if (!currentUsername) { 
-            console.error("Cannot initialize page: current user not available.");
-            connectionsListContainer.innerHTML = '<p class="error-message">Could not load page data. Please try logging in again.</p>';
-            suggestionsListContainer.innerHTML = '';
-            pendingRequestsListContainer.innerHTML = '';
-            searchResultsListContainer.innerHTML = '';
-            return; }
-
-        // Page is always "My Network"
+        await fetchCurrentUser();
+        if (!currentUsername) {
+            console.error("CRITICAL: Page initialization failed - current user not available.");
+            if (connectionsListContainer) connectionsListContainer.innerHTML = '<p class="error-message">Could not load your data. Please log in again.</p>';
+            [userSearchInput, userSearchButton, togglePendingRequestsBtn].forEach(el => { if(el) el.disabled = true; });
+            return;
+        }
         const pageTitle = document.querySelector('.top-nav .nav-title');
         if (pageTitle) pageTitle.textContent = "My Network";
 
-        // Show relevant sections
         document.querySelectorAll('.section-card, .toggle-requests-container').forEach(el => {
-            if (el.id === 'pending-requests-section') {
-                // Visibility for pending-requests-section is handled by its 'hidden' class
-                // No explicit style.display setting needed here if it's not hidden by class
-                if (!el.classList.contains('hidden')) {
-                    el.style.display = 'block'; // Or 'grid' if it's a grid container directly
-                }
-            } else {
-                el.style.display = 'block'; // Make other sections visible
-            }
+            if(el) el.style.display = 'block';
         });
-        // Fetch data for the logged-in user
-        fetchConnections(currentUsername);
+        if (pendingRequestsSection && pendingRequestsSection.classList.contains('hidden')) {
+            // initial hidden state is respected
+        } else if (pendingRequestsSection) {
+             pendingRequestsSection.style.display = 'block';
+        }
+
+        fetchConnections();
         fetchSuggestions();
         fetchPendingRequests();
     }
 
-    // --- Attach Global Event Listeners ---
-    connectionsListContainer?.addEventListener('click', handleUserListActions);
-    suggestionsListContainer?.addEventListener('click', handleUserListActions);
-    pendingRequestsListContainer?.addEventListener('click', handleUserListActions);
-    searchResultsListContainer?.addEventListener('click', handleUserListActions);
-
-    if (userSearchButton && userSearchInput) {
-        userSearchButton.addEventListener('click', searchUsers);
+    // --- Attach General Event Listeners ---
+    if (userSearchButton) userSearchButton.addEventListener('click', searchUsers);
+    if (userSearchInput) {
         userSearchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchUsers(); } });
         let searchDebounceTimer;
-        userSearchInput.addEventListener('input', () => { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(searchUsers, 400); });
+        userSearchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            const searchTerm = userSearchInput.value.trim();
+            if (searchTerm.length === 0) {
+                if (searchResultsListContainer) searchResultsListContainer.innerHTML = '<p class="no-data">Enter a name or profession to find users.</p>';
+            } else if (searchTerm.length >= 2) {
+                searchDebounceTimer = setTimeout(searchUsers, 400);
+            }
+        });
     }
 
-    if (togglePendingRequestsBtn && pendingRequestsSection) {
+    if (togglePendingRequestsBtn) {
         togglePendingRequestsBtn.addEventListener('click', () => {
             const isHidden = pendingRequestsSection.classList.toggle('hidden');
             const iconClass = isHidden ? 'fa-user-clock' : 'fa-eye-slash';
             const buttonText = isHidden ? 'View Pending Requests' : 'Hide Pending Requests';
-            togglePendingRequestsBtn.innerHTML = `<i class="fas ${iconClass}"></i> ${buttonText} <span class="count-badge" id="pending-requests-count">${pendingRequestsCountSpan.textContent}</span>`;
-            if (!isHidden && (pendingRequestsListContainer.innerHTML.includes('loading') || pendingRequestsListContainer.children.length === 0)) {
-                fetchPendingRequests(); // Fetch data if opening an empty/loading list
+            const currentCountText = pendingRequestsCountSpan.textContent || '(0)'; // Read before changing innerHTML
+            togglePendingRequestsBtn.innerHTML = `<i class="fas ${iconClass}"></i> ${buttonText} <span class="count-badge" id="pending-requests-count">${currentCountText}</span>`;
+            // After innerHTML is replaced, the old 'pendingRequestsCountSpan' reference is no longer valid.
+            // We need to get the new reference if we intend to update its textContent again without re-reading from the button.
+            // However, since fetchPendingRequests updates it anyway, this might not be strictly necessary here
+            // unless other functions directly manipulate pendingRequestsCountSpan.textContent later.
+            // For safety, re-assign:
+            pendingRequestsCountSpan = document.getElementById('pending-requests-count');
+
+
+            if (!isHidden && (pendingRequestsListContainer.innerHTML.includes('loading') || pendingRequestsListContainer.children.length === 0 || pendingRequestsListContainer.querySelector('.no-data'))) {
+                fetchPendingRequests();
             }
         });
     }
@@ -444,5 +460,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- START INITIALIZATION ---
     initializeConnectionPage();
-
-}); // End DOMContentLoaded
+});

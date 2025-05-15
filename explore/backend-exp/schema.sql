@@ -119,9 +119,25 @@ CREATE TABLE IF NOT EXISTS daily_spark_questions (
     company TEXT,
     role TEXT,
     question TEXT NOT NULL,
+
+    -- ADDED: Foreign key to the user who posted the question
+    user_id INTEGER NOT NULL,
+
+    -- ADDED: Date the question was posted
+    posted_date DATE NOT NULL DEFAULT (date('now')), -- SQLite function for current date
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME
+    updated_at DATETIME, -- You might want a trigger for this or handle in app logic
+
+    -- ADDED: Foreign key constraint definition
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    -- ADDED: Unique constraint for one post per alumnus per day
+    CONSTRAINT uq_alumni_spark_once_per_day UNIQUE (user_id, posted_date)
 );
+
+-- Optional: Index for faster querying by posted_date if not covered by unique constraint
+CREATE INDEX IF NOT EXISTS idx_daily_spark_posted_date ON daily_spark_questions(posted_date);
 
 CREATE TABLE IF NOT EXISTS daily_spark_answers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -395,10 +411,10 @@ VALUES
     (2, 'me', 'How is the project going?', NULL),
     (2, 'Bob', 'It is going well', 'report.pdf');
 
-INSERT INTO daily_spark_questions (company, role, question)
+INSERT INTO daily_spark_questions (company, role, question, user_id)
 VALUES
-    ('Google', 'Software Engineer', 'What is the most challenging bug you have ever faced?'),
-    ('Amazon', 'Data Scientist', 'Describe a time you had to deal with messy data.');
+    ('Google', 'Software Engineer', 'What is the most challenging bug you have ever faced?', 1),
+    ('Amazon', 'Data Scientist', 'Describe a time you had to deal with messy data.', 2);
 
 INSERT INTO daily_spark_answers (question_id, user, text, votes)
 VALUES
@@ -434,6 +450,62 @@ INSERT INTO applied_hackathons (user_id, hackathon_id)
 VALUES
     (1, 1),
     (2, 1);
+
+-- Insert Sample Data for expert_qa_answers
+-- Make sure user_id and question_id refer to existing users and questions
+
+-- User 1 (John Doe) answers Question 2 (Jane Smith's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (2, 1, 'To prepare for a data science interview, focus on statistics, machine learning algorithms, coding (Python/R), and practice case studies. Also, be ready to discuss your projects in detail.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-2 days'), 5);
+
+-- User 2 (Jane Smith) answers Question 1 (John Doe's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (1, 2, 'Python is often recommended for beginners due to its readability and large community. JavaScript is great for web development, and Java for enterprise applications.', FALSE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-1 day'), 10);
+
+-- User 3 (Bob Johnson) answers Question 1 (John Doe's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (1, 3, 'I agree, Python is excellent. Also consider C# if you are interested in game development with Unity or .NET applications.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), 7);
+
+-- Example of an answer for Question 3, by User 1
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (3, 1, 'For web development, check out freeCodeCamp, The Odin Project, and MDN Web Docs. They are fantastic resources.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), 12);
+
+-- Add an answer that might have a user_id problem if you were testing data integrity issues,
+-- For instance, if user with ID 4 ('sri') answers a question:
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (3, 4, 'Sri''s advice: Building full-stack projects is key to learning web development effectively. Use Node.js for backend if you like JavaScript.', FALSE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-5 hours'), 3);-- Insert Sample Data for expert_qa_answers
+-- Make sure user_id and question_id refer to existing users and questions
+
+-- User 1 (John Doe) answers Question 2 (Jane Smith's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (2, 1, 'To prepare for a data science interview, focus on statistics, machine learning algorithms, coding (Python/R), and practice case studies. Also, be ready to discuss your projects in detail.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-2 days'), 5);
+
+-- User 2 (Jane Smith) answers Question 1 (John Doe's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (1, 2, 'Python is often recommended for beginners due to its readability and large community. JavaScript is great for web development, and Java for enterprise applications.', FALSE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-1 day'), 10);
+
+-- User 3 (Bob Johnson) answers Question 1 (John Doe's question)
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (1, 3, 'I agree, Python is excellent. Also consider C# if you are interested in game development with Unity or .NET applications.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), 7);
+
+-- Example of an answer for Question 3, by User 1
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (3, 1, 'For web development, check out freeCodeCamp, The Odin Project, and MDN Web Docs. They are fantastic resources.', TRUE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), 12);
+
+-- Add an answer that might have a user_id problem if you were testing data integrity issues,
+-- For instance, if user with ID 4 ('sri') answers a question:
+INSERT INTO expert_qa_answers (question_id, user_id, answer_text, is_alumni_answer, created_at, likes)
+VALUES
+    (3, 4, 'Sri''s advice: Building full-stack projects is key to learning web development effectively. Use Node.js for backend if you like JavaScript.', FALSE, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW', '-5 hours'), 3);
 
 INSERT INTO user_issues (user_id, name, email, message)
 VALUES

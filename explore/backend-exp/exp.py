@@ -10,7 +10,7 @@ import logging
 from email.mime.text import MIMEText
 from urllib.parse import urlencode
 from datetime import date, datetime, timedelta
-from typing import List, Dict, Optional, Annotated, Tuple, Union # Added Tuple
+from typing import Any, List, Dict, Optional, Annotated, Tuple, Union # Added Tuple
 
 from fastapi import FastAPI, HTTPException, Depends, Header, Body, Request, Form, Response, Cookie # Added Cookie
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, RedirectResponse
@@ -28,7 +28,7 @@ from sqlalchemy.exc import OperationalError # Import for specific exception hand
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.sqlite import DATE as SQLiteDATE # Keep if specific SQLite date handling needed
 
-from pydantic import BaseModel, EmailStr, Field, ValidationError, field_validator, ConfigDict, TypeAdapter
+from pydantic import BaseModel, EmailStr, Field, ValidationError, ValidationInfo, computed_field, field_validator, ConfigDict, TypeAdapter
 
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
@@ -122,6 +122,8 @@ class User(Base):
     foreign_keys="[UserConnection.receiver_id]", # Points to the UserConnection table's column
     back_populates="receiver"                   # Name of the attribute in UserConnection model
     )
+    expert_answers = relationship("ExpertQAAnswer", back_populates="user")
+    posted_daily_sparks = relationship("DailySparkQuestion", back_populates="posted_by_alumnus", cascade="all, delete-orphan")
 
 # In exp.py - Find the UserConnection SQLAlchemy model definition
 
@@ -216,10 +218,27 @@ class DailySparkQuestion(Base):
     id = Column(Integer, primary_key=True, index=True)
     company = Column(String, nullable=True)
     role = Column(String, nullable=True)
-    question = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    question = Column(Text, nullable=False) # This is the question text itself
+
+    # --- ADDED/MODIFIED Fields ---
+    # Link to the alumnus who posted it. nullable=False means it MUST be an alumnus.
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    posted_by_alumnus = relationship("User", back_populates="posted_daily_sparks") # Relationship to the User model
+
+    # Date of posting for daily limits. index=True for faster queries.
+    posted_date = Column(Date, nullable=False, default=date.today, index=True)
+    # --- END ADDED/MODIFIED Fields ---
+
+    created_at = Column(DateTime, default=datetime.utcnow) # Original creation timestamp of the row
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     answers = relationship("DailySparkAnswer", back_populates="question")
+
+    # --- ADDED Constraint for one post per alumnus per day ---
+    __table_args__ = (
+        UniqueConstraint('user_id', 'posted_date', name='uq_alumni_spark_once_per_day'),
+    )
+
 
 class DailySparkAnswer(Base):
     __tablename__ = "daily_spark_answers"
@@ -394,26 +413,46 @@ class ExpertQAAnswer(Base):
     likes = Column(Integer, default=0)
     question = relationship("Question", back_populates="expert_answers")
     user = relationship("User")
+
 class ExpertQAAnswerCreate(BaseModel):
     answer_text: str
+# In your Pydantic models section (e.g., near other ExpertQA* models)
+
 class ExpertQAAnswerOut(BaseModel):
     id: int
     question_id: int
     user_id: int
-    username: str # Add username for display
+    # username: str # Removed direct field, will be provided by computed_field
     answer_text: str
     is_alumni_answer: bool
     created_at: datetime
     likes: int
+
     model_config = ConfigDict(from_attributes=True)
-    @field_validator('username', mode='before') # Simple way to add username if loading from ORM
-    @classmethod
-    def add_username(cls, v, info):
-        if hasattr(info.data, 'user') and hasattr(info.data.user, 'username'):
-            return info.data.user.username
-        return "Unknown User" # Fallback
 
+    @computed_field
+    @property # Important for from_attributes=True to pick this up
+    def username(self) -> str:
+        """
+        Computes the username from the related User object.
+        'self' in this context will be the Pydantic model instance being created.
+        Pydantic's from_attributes magic makes the ORM instance's attributes
+        accessible as if they were on the Pydantic model instance during creation.
+        So, self.user here refers to the ORM ExpertQAAnswer.user relationship.
+        """
+        # The extensive diagnostic logging from your original validator can be re-added here
+        # referencing `self` instead of `orm_instance` if needed for debugging.
+        # For example: logger.critical(f"DIAGNOSTIC: Computed_field for username. ORM Answer ID: {self.id}")
 
+        # Check if the 'user' attribute (relationship) exists on the ORM object
+        # and if it's loaded (not None), and if that user has a username.
+        if hasattr(self, 'user') and self.user and hasattr(self.user, 'username') and self.user.username is not None:
+            return str(self.user.username)
+        
+        # Fallback if user or username is not available
+        # Log this situation if it's unexpected
+        # logger.warning(f"ExpertQAAnswerOut: Could not determine username for answer ID {self.id if hasattr(self, 'id') else 'N/A'}. User relationship: {self.user if hasattr(self, 'user') else 'NoUserAttr'}")
+        return "Unknown User" # Provide a default string
 class UserBase(BaseModel):
     username: str
     email: EmailStr
@@ -484,9 +523,29 @@ class DailySparkAnswerOut(BaseModel):
     id: int; user: str; text: str; votes: int
     model_config = ConfigDict(from_attributes=True)
 class DailySparkQuestionOut(BaseModel):
-    id: int; company: Optional[str] = None; role: Optional[str] = None; question: str
+    id: int
+    company: Optional[str] = None
+    role: Optional[str] = None
+    question: str
+
+    # --- ADDED/MODIFIED to show who posted it and when ---
+    user_id: int  # Made non-optional as user_id in DB model is nullable=False
+    posted_by_username: Optional[str] = None # For convenience, if loaded
+    posted_date: date # Made non-optional, as DB model has default and is nullable=False
+    # --- END ---
+
     answers: List[DailySparkAnswerOut] = []
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('posted_by_username', mode='before')
+    @classmethod
+    def populate_posted_by_username(cls, v, info):
+        # This assumes that 'posted_by_alumnus' is eager-loaded on the ORM object.
+        if hasattr(info.data, 'posted_by_alumnus') and info.data.posted_by_alumnus:
+            return info.data.posted_by_alumnus.username
+        # Fallback if relationship not loaded (should ideally be loaded in endpoint)
+        # You might log a warning here if this happens often, as it means inefficient loading.
+        return None 
 class DailySparkSubmit(BaseModel): text: str
 class DailySparkQuestionCreate(BaseModel): # For alumni posting questions
     question_text: str
@@ -576,19 +635,6 @@ class CareerFairOut(CareerFairBase): # Inherits the CORRECT 'date' definition
         orm_mode = True
 # ALSO: Ensure CareerFairOut.model_rebuild(force=True) is called after all models are defined.
 
-class QuestionCreate(BaseModel): question_text: str
-class QuestionOut(BaseModel): # Now includes answers
-    id: int; user_id: Optional[int] = None; username: Optional[str] = None # Add username
-    question_text: str; created_at: datetime; likes: int
-    expert_answers: List[ExpertQAAnswerOut] = [] # Include answers list
-    model_config = ConfigDict(from_attributes=True)
-    @field_validator('username', mode='before') # Simple way to add username if loading from ORM
-    @classmethod
-    def add_q_username(cls, v, info):
-        if hasattr(info.data, 'user') and hasattr(info.data.user, 'username'):
-            return info.data.user.username
-        return "Anonymous" # Fallback
-
 class ConnectionUser(BaseModel):
     id: int
     username: str
@@ -607,7 +653,18 @@ class PendingRequestOut(BaseModel): # For displaying incoming requests
 class ChatMessageCreate(BaseModel):
     contact_id: int
     text: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True) 
     # file_path: Optional[str] = None # File uploads require different handling (FastAPI UploadFile)
+
+class ChatContactInfo(BaseModel): # Pydantic model for the new endpoint's response item
+    contact_id: int
+    other_user_username: str
+    other_user_id: int # Good to have for frontend if needed
+    # last_message_preview: Optional[str] = None # Optional
+    # last_message_timestamp: Optional[datetime] = None # Optional
+    # unread_count: int = 0 # Optional
+
+    model_config = ConfigDict(from_attributes=True)
 
 class SendMessageRequest(BaseModel): # Input for send message endpoint
     contact_id: int
@@ -773,22 +830,6 @@ class DailySparkQuestionCreate(BaseModel): # For alumni posting questions
 # --- Expert Q&A Models ---
 class ExpertQAAnswerCreate(BaseModel):
     answer_text: str
-class ExpertQAAnswerOut(BaseModel):
-    id: int
-    question_id: int
-    user_id: int
-    username: str # Add username for display
-    answer_text: str
-    is_alumni_answer: bool
-    created_at: datetime
-    likes: int
-    model_config = ConfigDict(from_attributes=True)
-    @field_validator('username', mode='before') # Simple way to add username if loading from ORM
-    @classmethod
-    def add_username(cls, v, info):
-        if hasattr(info.data, 'user') and hasattr(info.data.user, 'username'):
-            return info.data.user.username
-        return "Unknown User" # Fallback
 
 class QuestionCreate(BaseModel): question_text: str
 class QuestionOut(BaseModel): # Now includes answers
@@ -803,12 +844,7 @@ class QuestionOut(BaseModel): # Now includes answers
             return info.data.user.username
         return "Anonymous" # Fallback
 
-class SelectedExpertQuestion(Base):
-    __tablename__ = "selected_expert_questions"
-    id = Column(Integer, primary_key=True, index=True)
-    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False, unique=True) # Ensure a question isn't selected twice simultaneously
-    selected_date = Column(Date, nullable=False, default=date.today, index=True)
-    question = relationship("Question")
+
 
 # --- Add these NEW SQLAlchemy models ---
 
@@ -1022,6 +1058,7 @@ try:
     ForgotPasswordRequest.model_rebuild(force=True); ResetPasswordRequest.model_rebuild(force=True)
     ExpertQAAnswerCreate.model_rebuild(force=True); ExpertQAAnswerOut.model_rebuild(force=True) # Added new models
     DailySparkQuestionCreate.model_rebuild(force=True) # Added new model
+
     # Inside the explicit model_rebuild block
 # ... (add the new model) ...
     #SelectedExpertQuestion.model_rebuild(force=True) # Add if you created a Pydantic model for it (usually not needed for this tracking table)
@@ -1311,12 +1348,13 @@ async def serve_login_html(request: Request, error: Optional[str] = None, messag
 @app.post("/login", response_class=RedirectResponse, tags=["Auth"])
 async def login(
     request: Request,
-    response: Response, # Inject Response object to set cookie
+    # No need to inject 'response: Response' as a parameter here,
+    # FastAPI handles creating the RedirectResponse object.
     username: Annotated[str, Form()],
     password: Annotated[str, Form()],
     db: Session = Depends(get_db)
 ):
-    """Handles login via HTML form submission, sets session cookie, redirects."""
+    """Handles login via HTML form submission, sets session cookie, and redirects based on user role."""
     logger.info(f"Login attempt for username/email: '{username}'")
     user = db.query(User).filter(
         (User.username == username) | (User.email == username)
@@ -1328,28 +1366,38 @@ async def login(
         logger.warning(f"Login failed for '{username}'. Reason: {login_error}")
         query_params = urlencode({"error": login_error})
         # Redirect back to login page with error message
-        return RedirectResponse(url=f"/?{query_params}", status_code=303) # 303 See Other for POST->Redirect->GET
+        # We create the RedirectResponse object and return it directly.
+        # FastAPI will handle setting cookies if we set them on this response object.
+        return RedirectResponse(url=f"/?{query_params}", status_code=303)
 
     # Login successful
-    logger.info(f"User '{user.username}' logged in successfully (ID: {user.id}).")
+    logger.info(f"User '{user.username}' (ID: {user.id}) logged in successfully.")
     session_token = secrets.token_urlsafe(32)
 
     # Store session token mapped to user ID (IN-MEMORY EXAMPLE)
     session_storage[session_token] = user.id
     logger.debug(f"Stored session token {session_token[:8]}... for user ID {user.id}")
 
+    # Determine redirect URL based on user role
+    redirect_url = "/home"  # Default redirect
+    if user.is_admin:
+        redirect_url = "/admin-home.html" # Redirect admins here
+        logger.info(f"User '{user.username}' is an admin, redirecting to {redirect_url}")
+    else:
+        logger.info(f"User '{user.username}' is not an admin, redirecting to {redirect_url}")
+
     # Create RedirectResponse first, then set the cookie on it
-    response = RedirectResponse(url="/home", status_code=303) # Redirect to home page
-    response.set_cookie(
+    # This response object will be returned by the function.
+    redirect_response_obj = RedirectResponse(url=redirect_url, status_code=303)
+    redirect_response_obj.set_cookie(
         key="session_token",
         value=session_token,
-        httponly=True, # Prevents client-side JavaScript access (important security)
+        httponly=True,      # Prevents client-side JavaScript access (important security)
         secure=request.url.scheme == "https", # Set Secure flag if using HTTPS
-        samesite="lax", # Good default for security (prevents CSRF in most cases)
-        max_age=1800 # Cookie expires in 30 minutes (in seconds)
+        samesite="lax",     # Good default for security (prevents CSRF in most cases)
+        max_age=1800        # Cookie expires in 30 minutes (in seconds)
     )
-    return response
-
+    return redirect_response_obj
 # --- Logout ---
 @app.get("/logout", response_class=RedirectResponse, tags=["Auth"])
 async def logout(response: Response, session_token: Annotated[str | None, Cookie()] = None):
@@ -1395,6 +1443,26 @@ async def home(
         "username": current_user.username,
         # Add other data needed by home.html template here, e.g.,
         # "is_admin": current_user.is_admin,
+    })
+
+# Place this near your other HTML serving routes (like the one for /home)
+@app.get("/admin-home.html", response_class=HTMLResponse, tags=["Pages", "Admin"])
+async def admin_home(
+    request: Request,
+    current_user: User = Depends(require_user_from_cookie) # Require login
+):
+    """Serves the admin home page (admin-home.html) for logged-in admins."""
+    # Add an explicit check to ensure only admins can access this page directly
+    if not current_user.is_admin:
+        logger.warning(f"Non-admin user '{current_user.username}' attempted to access /admin-home.html. Redirecting to /home.")
+        # Redirect non-admins to the regular home page or show an error
+        return RedirectResponse(url="/home", status_code=303)
+
+    logger.info(f"Serving admin home page for admin user '{current_user.username}' (ID: {current_user.id})")
+    return templates.TemplateResponse("admin-home.html", {
+        "request": request,
+        "username": current_user.username,
+        # Add any other data needed by admin-home.html
     })
 
 @app.get("/register", response_class=HTMLResponse, tags=["Pages", "Auth"])
@@ -2214,198 +2282,149 @@ async def search_connectable_users(term: str, db: Session = Depends(get_db), cur
     return connection_user_adapter.validate_python(search_results_orm)
 
 # Optional Chat Session Endpoint
+# exp.py
+# ... (all other imports, models, Pydantic schemas, etc.) ...
+
+BASE_API_PATH = "/api" # Ensure this is defined
+
+# --- Chat API Endpoints ---
+
+# ***** ROUTE ORDER IS CRITICAL *****
+# 1. Most specific static routes first
+@app.get(f"{BASE_API_PATH}/chat/my-contacts", response_model=List[ChatContactInfo], tags=["Chat", "API"])
+async def get_my_chat_contacts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user_from_cookie)
+):
+    # ... (your existing implementation for get_my_chat_contacts - THIS IS FINE)
+    logger.info(f"[API_MY_CONTACTS] User '{current_user.username}' (ID: {current_user.id}) fetching their chat contacts.")
+    all_user_pair_contacts = db.query(ChatContact)\
+                               .filter(ChatContact.name.like(f"chat_users_%"))\
+                               .order_by(desc(ChatContact.updated_at)).all()
+    my_contacts_info: List[ChatContactInfo] = []
+    processed_contact_ids = set()
+    for contact in all_user_pair_contacts:
+        if contact.id in processed_contact_ids: continue
+        if contact.name and contact.name.startswith("chat_users_"):
+            try:
+                parts = contact.name.split('_')
+                if len(parts) == 4:
+                    user_id1 = int(parts[2]); user_id2 = int(parts[3])
+                    other_user_id = user_id2 if current_user.id == user_id1 else (user_id1 if current_user.id == user_id2 else None)
+                    if other_user_id is None: continue
+                    other_user = db.query(User).filter(User.id == other_user_id).first()
+                    if other_user:
+                        my_contacts_info.append(ChatContactInfo(
+                            contact_id=contact.id,
+                            other_user_username=other_user.username,
+                            other_user_id=other_user.id
+                        ))
+                        processed_contact_ids.add(contact.id)
+            except (IndexError, ValueError) as e:
+                logger.warning(f"Could not parse contact name '{contact.name}' for my-contacts list: {e}")
+                continue
+    logger.info(f"[API_MY_CONTACTS] Returning {len(my_contacts_info)} contacts for user '{current_user.username}'.")
+    return my_contacts_info
+
+# 2. Routes with specific path structures but still somewhat static parts
 @app.get(
-    f"{BASE_API_PATH}/chat/session/with/{{target_username}}",
+    f"{BASE_API_PATH}/chat/session/with/{{target_username:str}}", # Explicitly type target_username as string
     response_model=ChatSessionResponse,
     tags=["Chat", "API"],
     summary="Get or create a 1-on-1 chat session ID"
 )
 async def get_or_create_chat_session(
-    target_username: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user_from_cookie) # Ensures the requesting user is logged in
-):
-    """
-    Finds an existing 1-on-1 ChatContact between the current logged-in user
-    and the specified target user based on a naming convention.
-    If no existing contact is found, creates a new one.
-    Returns the ID of the found or created ChatContact.
-
-    Uses a naming convention "chat_users_{smaller_user_id}_{larger_user_id}" on the
-    ChatContact.name field to uniquely identify the chat pair. Your ChatContact
-    model MUST have a 'name' column for this to work.
-    """
-    logger.info(f"User '{current_user.username}' (ID: {current_user.id}) requesting chat session with '{target_username}'.")
-
-    # 1. Prevent chatting with oneself
-    if target_username == current_user.username:
-        logger.warning(f"User '{current_user.username}' attempted to start chat with themselves.")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot start a chat session with yourself."
-        )
-
-    # 2. Find the target user in the database
-    target_user = db.query(User).filter(User.username == target_username).first()
-    if not target_user:
-        logger.warning(f"Target user '{target_username}' not found for chat initiation by '{current_user.username}'.")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User '{target_username}' not found."
-        )
-
-    # 3. Determine the unique chat contact name based on sorted user IDs
-    #    This assumes ChatContact has a unique 'name' field for this purpose.
-    user_ids = sorted([current_user.id, target_user.id])
-    # Ensure your ChatContact model has a 'name' column suitable for this convention
-    chat_contact_name = f"chat_{user_ids[0]}_{user_ids[1]}"
-    logger.debug(f"Calculated chat contact name: {chat_contact_name}")
-
-    try:
-        # 4. Look for an existing ChatContact with that name
-        chat_contact = db.query(ChatContact).filter(ChatContact.name == chat_contact_name).first()
-
-        if chat_contact:
-            # 5a. If found, return its ID
-            logger.info(f"Found existing chat contact ID {chat_contact.id} for users {current_user.id} and {target_user.id}.")
-            return ChatSessionResponse(chat_id=chat_contact.id)
-        else:
-            # 5b. If not found, create a new one
-            logger.info(f"No existing chat contact found named '{chat_contact_name}'. Creating new one...")
-            # Create the new ChatContact with the unique name
-            new_chat_contact = ChatContact(name=chat_contact_name)
-            # --- Participation Tracking (Crucial for robust chat) ---
-            # You SHOULD have a way to link users to chat contacts, either directly
-            # on ChatContact (e.g., user1_id, user2_id - harder for group chats)
-            # or via a separate ChatParticipant table.
-            # If using ChatParticipant:
-            # participant1 = ChatParticipant(user_id=current_user.id, chat_contact_id=new_chat_contact.id)
-            # participant2 = ChatParticipant(user_id=target_user.id, chat_contact_id=new_chat_contact.id)
-            # db.add_all([new_chat_contact, participant1, participant2])
-            # --- End Participation Tracking ---
-
-            db.add(new_chat_contact) # Add just the contact if using name convention only
-            db.commit() # Commit to save and get ID
-            db.refresh(new_chat_contact) # Load the generated ID
-            logger.info(f"Created new chat contact ID {new_chat_contact.id} with name '{chat_contact_name}'.")
-            return ChatSessionResponse(chat_id=new_chat_contact.id)
-
-    except Exception as e:
-        db.rollback() # Rollback transaction on any database error
-        logger.error(f"Database error getting/creating chat session between user {current_user.id} and user {target_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not get or create chat session due to a server error."
-        )
-
-@app.get(f"{BASE_API_PATH}/chat/session/with/{{target_username}}", response_model=ChatSessionResponse, tags=["Chat"])
-async def get_or_create_chat_session(
-    target_username: str,
+    target_username: str, # FastAPI will use the :str from path
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user_from_cookie)
 ):
-    logger.info(f"User '{current_user.username}' requesting chat session with '{target_username}'.")
+    # ... (your existing implementation - THIS IS FINE) ...
+    logger.info(f"[API_CHAT_SESSION] User '{current_user.username}' (ID: {current_user.id}) requesting chat session with '{target_username}'.")
+    if target_username == current_user.username:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot start a chat session with yourself.")
     target_user = db.query(User).filter(User.username == target_username).first()
     if not target_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target user not found.")
-    if target_user.id == current_user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot chat with yourself.")
-
-    # Try to find an existing 1-on-1 chat "contact" or "room"
-    # This logic depends heavily on your ChatContact/ChatMessage schema.
-    # Assuming ChatContact 'name' might store something like "user1_id:user2_id" or you have a linking table.
-    # For simplicity, let's assume a ChatContact can be found/created.
-    # A more robust system would have a dedicated chat_participants table.
-
-    # Simple example: Create a unique contact name for a pair of users
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User '{target_username}' not found.")
     user_ids = sorted([current_user.id, target_user.id])
     chat_contact_name = f"chat_users_{user_ids[0]}_{user_ids[1]}"
-
-    chat_contact = db.query(ChatContact).filter(ChatContact.name == chat_contact_name).first()
-
-    if not chat_contact:
-        chat_contact = ChatContact(name=chat_contact_name)
-        # You might want to link users to this ChatContact more formally
-        # e.g., through a chat_participants table.
-        db.add(chat_contact)
-        try:
-            db.commit()
-            db.refresh(chat_contact)
-            logger.info(f"Created new chat contact ID {chat_contact.id} for {current_user.username} and {target_username}")
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error creating chat contact: {e}", exc_info=True)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not initiate chat session.")
-    else:
-        logger.info(f"Found existing chat contact ID {chat_contact.id} for {current_user.username} and {target_username}")
-
-    return ChatSessionResponse(chat_id=chat_contact.id)
-
-@app.get(f"{BASE_API_PATH}/chat/{{contact_id}}", response_model=List[ChatMessageOut], tags=["Chat", "API"])
-async def get_chat_messages(
-    contact_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user_from_cookie) # Requires login via cookie
-):
-    """Gets messages for a specific chat contact (requires cookie auth). Needs access control."""
-    logger.info(f"API request by '{current_user.username}' for messages in chat contact ID {contact_id}")
-
-    # TODO: Optional but recommended - Verify current_user has access to this contact_id
-    # This might involve checking a linking table or ownership.
-
-    # Fetch the contact to ensure it exists
-    contact = db.query(ChatContact).filter(ChatContact.id == contact_id).first()
-    if not contact:
-        logger.warning(f"Chat contact ID {contact_id} not found when requested by {current_user.username}.")
-        raise HTTPException(status_code=404, detail="Chat contact not found")
-
-    # Fetch messages for the contact
-    messages = db.query(ChatMessage)\
-        .filter(ChatMessage.contact_id == contact_id)\
-        .order_by(ChatMessage.timestamp.asc()).limit(200).all() # Limit message history fetched
-
-    logger.info(f"Found {len(messages)} messages for chat contact ID {contact_id} for user {current_user.username}.")
-    return messages # Pydantic validates against List[ChatMessageOut]
-
-@app.post(f"{BASE_API_PATH}/send-message", response_model=ChatMessageOut, status_code=201, tags=["Chat", "API"])
-async def send_message(
-    message_data: SendMessageRequest, # Body validated by Pydantic
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user_from_cookie) # Requires login via cookie
-):
-    """Sends a message to a chat contact (requires cookie auth). Needs access control."""
-    logger.info(f"API request by '{current_user.username}' to send message to contact ID {message_data.contact_id}")
-
-    # Verify contact exists
-    contact = db.query(ChatContact).filter(ChatContact.id == message_data.contact_id).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    # TODO: Optional but recommended - Verify current_user can send message to this contact_id
-
-    # Basic validation for empty message text
-    if not message_data.text or not message_data.text.strip():
-        raise HTTPException(status_code=400, detail="Message text cannot be empty")
-
-    # Create the message object
-    db_message = ChatMessage(
-        contact_id=message_data.contact_id,
-        sender=current_user.username, # Identify sender by username (or user ID)
-        text=message_data.text.strip(),
-        timestamp=datetime.utcnow() # Use UTC
-    )
-
+    logger.debug(f"[API_CHAT_SESSION] Calculated chat contact name: {chat_contact_name}")
     try:
-        db.add(db_message)
-        db.commit()
-        db.refresh(db_message)
-        logger.info(f"Message ID {db_message.id} saved successfully from {current_user.username} to contact {message_data.contact_id}.")
-        # TODO: Potentially broadcast message via WebSockets here to other participants
-        return db_message # Pydantic validates against ChatMessageOut
+        chat_contact = db.query(ChatContact).filter(ChatContact.name == chat_contact_name).first()
+        if chat_contact:
+            return ChatSessionResponse(chat_id=chat_contact.id)
+        else:
+            new_chat_contact = ChatContact(name=chat_contact_name)
+            db.add(new_chat_contact)
+            db.commit(); db.refresh(new_chat_contact)
+            return ChatSessionResponse(chat_id=new_chat_contact.id)
     except Exception as e:
         db.rollback()
-        logger.error(f"Failed to send message DB error from {current_user.username}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Could not send message")
+        logger.error(f"[API_CHAT_SESSION] DB error: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error creating chat session.")
+
+
+# 3. More general routes with path parameters, especially integer ones, LAST among GETs with same prefix
+@app.get(f"{BASE_API_PATH}/chat/{{contact_id:int}}", response_model=List[ChatMessageOut], tags=["Chat", "API"]) # Explicitly type contact_id as int
+async def get_chat_messages(
+    contact_id: int, # FastAPI will use the :int from path and validate
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user_from_cookie)
+):
+    # ... (your existing implementation with security check - THIS IS FINE)
+    logger.info(f"[API_GET_MESSAGES] User '{current_user.username}' requesting messages for contact_id: {contact_id}")
+    contact = db.query(ChatContact).filter(ChatContact.id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat contact not found")
+    # --- SECURITY CHECK ---
+    if contact.name and contact.name.startswith("chat_users_"):
+        try:
+            parts = contact.name.split('_');
+            if len(parts) == 4:
+                user_id1 = int(parts[2]); user_id2 = int(parts[3])
+                if current_user.id not in [user_id1, user_id2]:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You do not have access to this chat.")
+            else: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Chat participation unclear (name format).")
+        except: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Chat participation error (parsing).")
+    else: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Cannot determine participation in this chat type.")
+    # --- END SECURITY CHECK ---
+    messages = db.query(ChatMessage).filter(ChatMessage.contact_id == contact_id).order_by(ChatMessage.timestamp.asc()).limit(200).all()
+    return messages
+
+
+@app.post(f"{BASE_API_PATH}/send-message", response_model=ChatMessageOut, status_code=status.HTTP_201_CREATED, tags=["Chat", "API"])
+async def send_message_api(
+    message_data: SendMessageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user_from_cookie)
+):
+    # ... (your existing implementation with security check - THIS IS FINE)
+    logger.info(f"[API_SEND_MESSAGE] User '{current_user.username}' sending to contact_id: {message_data.contact_id}")
+    if not message_data.text or not message_data.text.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message text cannot be empty")
+    contact = db.query(ChatContact).filter(ChatContact.id == message_data.contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat contact not found")
+    # --- SECURITY CHECK ---
+    if contact.name and contact.name.startswith("chat_users_"):
+        try:
+            parts = contact.name.split('_');
+            if len(parts) == 4:
+                user_id1 = int(parts[2]); user_id2 = int(parts[3])
+                if current_user.id not in [user_id1, user_id2]:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You cannot send messages to this chat.")
+            else: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Chat participation unclear (name format for send).")
+        except: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Chat participation error (parsing for send).")
+    else: raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Cannot determine participation for sending.")
+    # --- END SECURITY CHECK ---
+    db_message = ChatMessage(contact_id=message_data.contact_id, sender=current_user.username, text=message_data.text.strip(), timestamp=datetime.utcnow())
+    try:
+        db.add(db_message); db.commit(); db.refresh(db_message)
+        return db_message
+    except Exception as e:
+        db.rollback(); logger.error(f"[API_SEND_MESSAGE] DB error: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not send message.")
+
+# ... (rest of your FastAPI app routes and main execution block)
 
 # --- Leaderboard/Alumni API ---
 
@@ -2600,23 +2619,18 @@ async def get_my_liked_alumni_ids(
         raise HTTPException(status_code=500, detail="Could not retrieve liked alumni.")
 # --- Expert Q&A API ---
 
-@app.get(f"{BASE_API_PATH}/questions/popular", response_model=List[QuestionOut], tags=["Expert Q&A", "API"]) # Add response_model back
-async def get_popular_questions(limit: int = 10, db: Session = Depends(get_db)):
-    """Gets the most popular questions based on likes, including answers. Public endpoint."""
-    logger.info(f"API request for top {limit} popular questions with answers.")
-    try:
-        questions = db.query(Question)\
-            .options(
-                selectinload(Question.user), # Load asker user
-                selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user) # Correct nested load
-            )\
-            .order_by(desc(Question.likes), desc(Question.created_at))\
-            .limit(limit).all()
-        return questions # Let FastAPI handle validation with corrected response_model
-    except Exception as e:
-        logger.error(f"Error fetching popular questions: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error fetching questions")
+@app.get("/api/questions/popular", response_model=List[QuestionOut], tags=["Questions", "API"])
+async def get_popular_questions(db: Session = Depends(get_db)):
+    popular_questions = db.query(Question)\
+        .options(
+            selectinload(Question.user),  # For asker's username
+            selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user) # FOR EXPERT ANSWERER'S USERNAME
+        )\
+        .order_by(desc(Question.likes)) .limit(10).all() # Assuming Question model is imported
 
+    if not popular_questions:
+        return []
+    return popular_questions
 
 
 @app.post(f"{BASE_API_PATH}/questions", response_model=QuestionOut, status_code=201, tags=["Expert Q&A", "API"])
@@ -2669,18 +2683,22 @@ async def get_single_question(question_id: int, db: Session = Depends(get_db)):
     try:
         question = db.query(Question)\
             .options(
-                selectinload(Question.user), # Correct eager load
-                selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user) # Correct nested eager load
+                selectinload(Question.user), # Eager load asker user
+                selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user) # Eager load answer users
             )\
             .filter(Question.id == question_id).first()
 
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
+
+        # FastAPI serializes using the reverted QuestionOut and ExpertQAAnswerOut models
         return question
     except Exception as e:
         logger.error(f"Error fetching question {question_id}: {e}", exc_info=True)
+        if isinstance(e, ValidationError):
+             logger.error(f"Pydantic ResponseValidationError fetching single question: {e.errors()}", exc_info=False)
+             raise HTTPException(status_code=500, detail="Server error: Could not process single question data.")
         raise HTTPException(status_code=500, detail="Internal server error fetching question details")
-
 
 
 # --- Replace the existing like_question function ---
@@ -2753,6 +2771,11 @@ async def toggle_like_question( # Renamed for clarity
         logger.error(f"Toggle like DB error for question {question_id} by user {current_user.id}: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not update like status.")
 
+# Assume necessary imports: FastAPI, Depends, HTTPException, Session, date, logger
+# Assume SQLAlchemy models: Question, ExpertQAAnswer, User
+# Assume Pydantic models: ExpertQAAnswerOut, ExpertQAAnswerCreate
+# Assume BASE_API_PATH is defined
+
 @app.post(f"{BASE_API_PATH}/expertqa/answers/{{question_id}}", response_model=ExpertQAAnswerOut, status_code=201, tags=["Expert Q&A", "API"])
 async def submit_expertqa_answer(
     question_id: int,
@@ -2760,69 +2783,86 @@ async def submit_expertqa_answer(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user_from_cookie)
 ):
-    """Submits an answer to a specific Expert Q&A question (Alumni only, must be selected)."""
+    """
+    Submits an answer to a specific Expert Q&A question (Alumni only).
+    (Modified: Removed check against SelectedExpertQuestion table)
+    """
     logger.info(f"API POST /expertqa/answers/{question_id} by '{current_user.username}'")
 
+    # Check 1: User must be alumni
     if not current_user.is_alumni:
         raise HTTPException(status_code=403, detail="Only alumni can answer expert questions.")
 
+    # Check 2: The question must exist
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found.")
 
-    # --- Check if this question is selected for today ---
-    today = date.today()
-    is_selected = db.query(SelectedExpertQuestion).filter(
-        SelectedExpertQuestion.question_id == question_id,
-        SelectedExpertQuestion.selected_date == today
-    ).first()
+    # --- REMOVED Check if this question is selected ---
+    # today = date.today()
+    # is_selected = db.query(SelectedExpertQuestion).filter(
+    #     SelectedExpertQuestion.question_id == question_id,
+    #     SelectedExpertQuestion.selected_date == today
+    # ).first()
+    #
+    # if not is_selected:
+    #     logger.warning(f"Alumnus {current_user.username} tried to answer non-selected question {question_id}")
+    #     raise HTTPException(status_code=403, detail="This question is not currently selected for alumni answers.")
+    # --- End REMOVED check ---
 
-    if not is_selected:
-        logger.warning(f"Alumnus {current_user.username} tried to answer non-selected question {question_id}")
-        raise HTTPException(status_code=403, detail="This question is not currently selected for alumni answers.")
-    # --- End check ---
-
+    # Create the answer object
     db_answer = ExpertQAAnswer(
-        question_id=question_id, user_id=current_user.id,
-        answer_text=answer_data.answer_text, is_alumni_answer=True
+        question_id=question_id,
+        user_id=current_user.id,
+        answer_text=answer_data.answer_text,
+        is_alumni_answer=True  # Mark it as an alumni answer
     )
     try:
-        db.add(db_answer); db.commit(); db.refresh(db_answer)
+        # Add and commit the new answer
+        db.add(db_answer)
+        db.commit()
+        db.refresh(db_answer) # Refresh to get the assigned ID, etc.
         logger.info(f"Alumnus '{current_user.username}' submitted answer ID {db_answer.id} for question ID {question_id}")
-        db_answer.user = current_user # Eager load for response model
+
+        # Return the created answer (FastAPI/Pydantic handles serialization)
         return db_answer
-    except Exception as e: db.rollback(); logger.error(f"Submit EQA answer DB error: {e}", exc_info=True); raise HTTPException(status_code=500, detail="DB error")
-
-
-@app.get(f"{BASE_API_PATH}/expertqa/selected-questions", response_model=List[QuestionOut], tags=["Expert Q&A", "API"]) # Add response_model
-async def get_selected_questions_for_alumni(db: Session = Depends(get_db)):
-    """Gets the Top 5 questions selected for alumni answers today."""
-    logger.info("API request for selected Expert Q&A questions.")
-    today = date.today()
-    try:
-        selected_q_ids_query = db.query(SelectedExpertQuestion.question_id)\
-                           .filter(SelectedExpertQuestion.selected_date == today)
-                           # .subquery() # Using subquery might prevent relationship loading, use .scalar() or direct filter
-
-        # Get list of IDs selected today
-        selected_q_ids = [q_id for q_id, in selected_q_ids_query.all()]
-
-        if not selected_q_ids:
-             return [] # Return empty list if none selected
-
-        questions = db.query(Question)\
-            .options(
-                selectinload(Question.user), # Correct eager load
-                selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user) # Correct nested eager load
-            )\
-            .filter(Question.id.in_(selected_q_ids))\
-            .order_by(desc(Question.likes)).all()
-
-        return questions
     except Exception as e:
-        logger.error(f"Error fetching selected questions: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Server error fetching selected questions.")
-    
+        db.rollback() # Rollback in case of error
+        logger.error(f"Submit EQA answer DB error for question {question_id} by user {current_user.username}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error submitting answer.")
+@app.get(f"{BASE_API_PATH}/expertqa/selected-questions", response_model=List[QuestionOut], tags=["Expert Q&A", "API"])
+async def get_selected_questions_for_alumni(db: Session = Depends(get_db)):
+    """
+    Gets the Top 5 most liked questions from the main questions table.
+    These are considered the "selected" questions for alumni to answer.
+    (Modified: No longer uses SelectedExpertQuestion table)
+    """
+    logger.info("API request for top 5 liked Expert Q&A questions (for alumni selection).")
+    try:
+        # Fetch the top 5 questions with the highest number of likes directly
+        top_liked_questions = db.query(Question)\
+            .options(
+                selectinload(Question.user), # <<< THIS IS CORRECT for QuestionOut's username
+                selectinload(Question.expert_answers).selectinload(ExpertQAAnswer.user)  # Eager load answers and their users
+            )\
+            .order_by(desc(Question.likes), desc(Question.created_at))\
+            .limit(5).all()
+
+        if not top_liked_questions:
+            logger.info("No questions found in the database.")
+            return []
+
+        logger.info(f"Returning {len(top_liked_questions)} top liked questions for alumni selection.")
+        # FastAPI serializes using QuestionOut and ExpertQAAnswerOut models
+        return top_liked_questions
+
+    except Exception as e:
+        logger.error(f"Error fetching top liked questions for alumni: {e}", exc_info=True)
+        if isinstance(e, ValidationError): # Catch Pydantic validation errors
+             logger.error(f"Pydantic ResponseValidationError fetching top liked questions: {e.errors()}", exc_info=False)
+             raise HTTPException(status_code=500, detail="Server error: Could not process top liked question data.")
+        raise HTTPException(status_code=500, detail="Server error fetching top liked questions for alumni.")
+        
 @app.post(f"{BASE_API_PATH}/expertqa/answers/{{answer_id}}/like", status_code=200, tags=["Expert Q&A", "API"])
 async def like_expertqa_answer(
     answer_id: int,
@@ -3064,62 +3104,72 @@ async def submit_hackathon_for_verification(
 
 @app.post(f"{BASE_API_PATH}/daily-spark/questions", response_model=DailySparkQuestionOut, status_code=201, tags=["Daily Spark", "API", "Alumni Only"])
 async def create_daily_spark_question(
-    question_data: DailySparkQuestionCreate,
+    question_data: DailySparkQuestionCreate, # Contains question_text, company, role
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_user_from_cookie) # Requires login
+    current_user: User = Depends(require_user_from_cookie)
 ):
     """Allows an alumnus to post a Daily Spark question (subject to limits)."""
     logger.info(f"API POST /daily-spark/questions by '{current_user.username}'")
 
-    # 1. Check if user is alumni
     if not current_user.is_alumni:
         raise HTTPException(status_code=403, detail="Only alumni can post Daily Spark questions.")
 
     today = date.today()
+    DAILY_SPARK_OVERALL_LIMIT = 5 # Overall limit for all alumni for the day
 
-    # 2. Check if this alumnus already posted today
-    already_posted = db.query(DailySparkQuestion).filter(
-        DailySparkQuestion.user_id == current_user.id,
-        DailySparkQuestion.posted_date == today
-    ).first()
-    if already_posted:
-        raise HTTPException(status_code=400, detail="You have already posted a Daily Spark question today.")
-
-    # 3. Check if the daily limit of 5 questions has been reached
-    questions_today_count = db.query(DailySparkQuestion).filter(
+    # Check overall daily limit first (how many questions already posted today by ANY alumnus)
+    questions_posted_today_overall_count = db.query(DailySparkQuestion).filter(
         DailySparkQuestion.posted_date == today
     ).count()
-    if questions_today_count >= 5:
-        raise HTTPException(status_code=400, detail="The maximum number of Daily Spark questions for today has already been posted.")
 
-    # 4. Create the question and the tracking record
-    db_question = DailySparkQuestion(
+    if questions_posted_today_overall_count >= DAILY_SPARK_OVERALL_LIMIT:
+        logger.warning(f"Overall daily limit of {DAILY_SPARK_OVERALL_LIMIT} Daily Spark questions reached for today.")
+        raise HTTPException(status_code=400, detail=f"The maximum number of {DAILY_SPARK_OVERALL_LIMIT} Daily Spark questions for today has already been posted by all alumni.")
+
+    # Create the DailySparkQuestion instance with user_id and posted_date
+    # The 'question' field in DailySparkQuestion model stores the text.
+    db_spark_question_instance = DailySparkQuestion(
         question=question_data.question_text,
         company=question_data.company,
         role=question_data.role,
-        # Note: Answers list will be empty initially
+        user_id=current_user.id, # Assign current user as the poster
+        posted_date=today       # Set the posted date
+        # created_at and updated_at will be set by default by the model
     )
+
     try:
-        db.add(db_question)
-        db.flush() # Get the ID for the question
-
-        # Create tracking record
-        tracking_record = DailySparkQuestion(
-            user_id=current_user.id,
-            question_id=db_question.id,
-            posted_date=today
-        )
-        db.add(tracking_record)
-
+        db.add(db_spark_question_instance)
         db.commit()
-        db.refresh(db_question) # Refresh to load relationships if needed by model
-        logger.info(f"Alumnus '{current_user.username}' posted Daily Spark question ID {db_question.id}")
-        return db_question # Pydantic validates
+        db.refresh(db_spark_question_instance)
+
+        # To ensure 'posted_by_username' is populated in the response,
+        # assign the current_user to the relationship attribute if it wasn't auto-loaded.
+        # SQLAlchemy often handles this if the session is still active and relationships are defined.
+        if not hasattr(db_spark_question_instance, 'posted_by_alumnus') or \
+           not db_spark_question_instance.posted_by_alumnus:
+            db_spark_question_instance.posted_by_alumnus = current_user
+
+        # For DailySparkQuestionOut response model, it expects an 'answers' list.
+        if not hasattr(db_spark_question_instance, 'answers') or db_spark_question_instance.answers is None:
+             db_spark_question_instance.answers = []
+
+        logger.info(f"Alumnus '{current_user.username}' (ID: {current_user.id}) posted Daily Spark question ID {db_spark_question_instance.id}")
+        return db_spark_question_instance
+
+    except sqlite3.IntegrityError as ie: # Catches UniqueConstraint violation
+        db.rollback()
+        # Check if it's our specific unique constraint for (user_id, posted_date)
+        if "uq_alumni_spark_once_per_day" in str(ie.orig).lower():
+            logger.warning(f"Alumnus '{current_user.username}' (ID: {current_user.id}) attempted to post Daily Spark again today (UniqueConstraint violated).")
+            raise HTTPException(status_code=400, detail="You have already posted a Daily Spark question today.")
+        else:
+            # Some other integrity error
+            logger.error(f"Database integrity error creating Daily Spark question for user '{current_user.username}': {ie}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Could not save Daily Spark question due to a database conflict.")
     except Exception as e:
         db.rollback()
-        logger.error(f"Failed to create Daily Spark question DB error by '{current_user.username}': {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Could not save Daily Spark question")
-
+        logger.error(f"Failed to create Daily Spark question for user '{current_user.username}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not save Daily Spark question due to a server error.")
 
 
 # exp.py (Corrected Daily Spark endpoint)
@@ -3133,39 +3183,31 @@ async def get_todays_question(db: Session = Depends(get_db)):
     logger.info("API request for today's daily spark question.")
     today = date.today()
     try:
-        # Query the latest Daily Spark question posted today
         latest_question = db.query(DailySparkQuestion)\
                             .options(
-                                selectinload(DailySparkQuestion.answers)
-                                # REMOVED: .selectinload(DailySparkAnswer.user) <-- This caused the error
-                                # The 'user' text field will be loaded normally with the answer object.
+                                selectinload(DailySparkQuestion.answers),
+                                selectinload(DailySparkQuestion.posted_by_alumnus) # Eager load for username
                             )\
-                            .filter(func.date(DailySparkQuestion.created_at) == today)\
+                            .filter(DailySparkQuestion.posted_date == today)\
                             .order_by(desc(DailySparkQuestion.created_at))\
                             .first()
 
         if not latest_question:
             logger.warning("No Daily Spark question posted today, attempting to return latest overall.")
-            # Fallback to latest overall question if none posted today
             latest_question = db.query(DailySparkQuestion)\
                                 .options(
-                                    selectinload(DailySparkQuestion.answers)
-                                    # REMOVED: .selectinload(DailySparkAnswer.user)
+                                    selectinload(DailySparkQuestion.answers),
+                                    selectinload(DailySparkQuestion.posted_by_alumnus)
                                 )\
-                                .order_by(desc(DailySparkQuestion.created_at))\
+                                .order_by(desc(DailySparkQuestion.posted_date), desc(DailySparkQuestion.created_at))\
                                 .first()
             if not latest_question:
                 logger.warning("No Daily Spark questions found in the database at all.")
                 raise HTTPException(status_code=404, detail="No Daily Spark question found.")
-
-        # Ensure the response model `DailySparkQuestionOut` expects `user` as a string
-        # within each answer object, not as a nested User object.
         return latest_question
     except Exception as e:
         logger.error(f"Error fetching today's daily spark question: {e}", exc_info=True)
-        # Consider if specific exceptions should be handled differently
-        raise HTTPException(status_code=500, detail="Internal server error fetching daily spark")
-    
+        raise HTTPException(status_code=500, detail="Internal server error fetching daily spark")    
 # (Keep existing POST /daily-spark/submit, POST /daily-spark/answers/{id}/upvote, POST /daily-spark/answers/{id}/downvote as they allow *any* user to answer/vote)
 
 

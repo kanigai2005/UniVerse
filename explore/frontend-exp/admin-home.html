@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard - UniVerse</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-bg: #f0f2f5; --primary-color: #1f3f3f; --secondary-color: #215353; --nav-text-color: #e0e0e0;
+      --nav-hover-bg: #486363; --card-bg: white; --card-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      --card-hover-shadow: 0 4px 10px rgba(0,0,0,0.12); --text: #333; --text-secondary: #555;
+      --button-text: white;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      background-color: var(--main-bg);
+      color: var(--text);
+      padding-top: 60px;
+    }
+
+    nav.top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--secondary-color);
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    nav.top-nav a {
+      color: var(--nav-text-color);
+      text-decoration: none;
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    nav.top-nav a:hover {
+      background-color: var(--nav-hover-bg);
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem;
+      background-color: var(--card-bg);
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+
+    header h1 {
+      margin: 0;
+      color: var(--primary-color);
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .admin-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .admin-button {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background-color: var(--primary-color);
+      color: var(--button-text);
+      padding: 15px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: var(--card-shadow);
+    }
+
+    .admin-button:hover {
+      background-color: #2f4f4f;
+      box-shadow: var(--card-hover-shadow);
+    }
+
+    .admin-button i {
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a href="/home" title="Home"><i class="fas fa-home"></i></a>
+    <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i></a>
+    <a href="/career-fairs.html" title="Career Fairs & Jobs"><i class="fas fa-briefcase"></i></a>
+    <a href="/profile.html" title="Profile"><i class="fas fa-user"></i></a>
+    <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+  </nav>
+
+  <header>
+    <h1>🛠 Admin Dashboard</h1>
+    <p>Manage users, events, and feedback across the UniVerse platform.</p>
+  </header>
+
+  <div class="container">
+    <div class="admin-actions">
+      <button class="admin-button" onclick="location.href='/admin/users'">
+        <i class="fas fa-users-cog"></i> Edit / Manage Users
+      </button>
+      <button class="admin-button" onclick="location.href='/admin/events'">
+        <i class="fas fa-calendar-plus"></i> Manage / Add Events
+      </button>
+      <button class="admin-button" onclick="location.href='/admin/feedback'">
+        <i class="fas fa-comments"></i> Feedback Responses
+      </button>
+    </div>
+  </div>
+
+</body>
+</html>
