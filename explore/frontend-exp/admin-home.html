@@ -4,14 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard - UniVerse</title>
+
+  <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --main-bg: #f0f2f5; --primary-color: #1f3f3f; --secondary-color: #215353; --nav-text-color: #e0e0e0;
-      --nav-hover-bg: #486363; --card-bg: white; --card-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      --card-hover-shadow: 0 4px 10px rgba(0,0,0,0.12); --text: #333; --text-secondary: #555;
-      --button-text: white;
+      --main-bg: #f0f2f5;
+      --primary-color: #1f3f3f; /* Dark Slate Gray - Professional */
+      --secondary-color: #215353; /* Slightly lighter, still professional */
+      --nav-text-color: #e0e0e0;
+      --nav-hover-bg: #486363; /* Softer hover */
+      --card-bg: white;
+      --card-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      --card-hover-shadow: 0 5px 15px rgba(0,0,0,0.1); /* More noticeable hover */
+      --text: #333;
+      --text-secondary: #555;
     }
 
     body {
@@ -19,7 +30,7 @@
       margin: 0;
       background-color: var(--main-bg);
       color: var(--text);
-      padding-top: 60px;
+      padding-top: 60px; /* Consistent with nav height */
     }
 
     nav.top-nav {
@@ -28,24 +39,29 @@
       left: 0;
       width: 100%;
       background: var(--secondary-color);
-      padding: 0.75rem 1rem;
+      padding: 0 1rem; /* Adjusted padding */
       display: flex;
-      justify-content: space-around;
+      justify-content: space-around; /* Evenly space out nav items */
       align-items: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       z-index: 1000;
+      height: 60px; /* Explicit height */
+      box-sizing: border-box;
     }
 
     nav.top-nav a {
       color: var(--nav-text-color);
       text-decoration: none;
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      border-radius: 50%;
+      font-size: 1.1rem; /* Slightly adjusted */
+      padding: 0.6rem 0.8rem; /* Adjust padding for better click area */
+      border-radius: 6px; /* Softer radius */
       transition: background-color 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    nav.top-nav a i {
+        margin-right: 5px; /* Space between icon and text if you add text */
     }
 
     nav.top-nav a:hover {
@@ -54,91 +70,158 @@
 
     header {
       text-align: center;
-      padding: 2rem 1rem;
-      background-color: var(--card-bg);
-      margin-bottom: 20px;
+      padding: 2rem 1rem 1.5rem; /* Increased padding */
+      background-color: var(--card-bg); /* Consistent card background */
+      margin-bottom: 25px;
       box-shadow: var(--card-shadow);
+      border-bottom: 3px solid var(--primary-color); /* Accent border */
     }
 
     header h1 {
-      margin: 0;
       color: var(--primary-color);
-      font-size: 2rem;
+      margin: 0 0 0.5rem;
+      font-size: 2.2rem; /* Larger title */
       font-weight: 600;
     }
 
     header p {
-      margin-top: 0.5rem;
+      font-size: 1rem;
       color: var(--text-secondary);
+      margin: 0;
+      max-width: 600px; /* Constrain width of subtitle */
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .container {
-      max-width: 900px;
+      width: 95%;
+      max-width: 1024px; /* Slightly wider max-width */
       margin: auto;
-      padding: 20px;
+      padding: 20px 15px; /* Add horizontal padding to container */
+      box-sizing: border-box;
     }
 
     .admin-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      margin-top: 30px;
+      display: grid; /* Use grid for more flexible layout */
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
+      gap: 25px; /* Increased gap */
+      margin-top: 20px;
     }
 
-    .admin-button {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      background-color: var(--primary-color);
-      color: var(--button-text);
-      padding: 15px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+    .admin-card {
+      background-color: var(--card-bg);
       box-shadow: var(--card-shadow);
+      border-radius: 8px;
+      padding: 25px; /* Increased padding */
+      transition: box-shadow 0.3s ease, transform 0.3s ease; /* Added transform */
+      cursor: pointer;
+      text-align: center;
+      display: flex; /* For vertical centering of content */
+      flex-direction: column;
+      justify-content: center; /* Vertically center content */
     }
 
-    .admin-button:hover {
-      background-color: #2f4f4f;
+    .admin-card:hover {
       box-shadow: var(--card-hover-shadow);
+      transform: translateY(-5px); /* Slight lift effect */
     }
 
-    .admin-button i {
-      font-size: 1.2rem;
+    .admin-card h2 {
+      color: var(--primary-color);
+      margin: 15px 0 10px; /* Adjusted margin */
+      font-size: 1.4rem; /* Slightly larger heading */
+      font-weight: 600;
     }
+
+    .admin-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .admin-card i {
+      font-size: 2.5rem; /* Larger icons */
+      color: var(--primary-color); /* Use primary color for icons for consistency */
+      margin-bottom: 15px;
+    }
+
+    /* No @media query needed if using grid's auto-fit for responsiveness */
+
   </style>
 </head>
 <body>
 
+  <!-- Top Navigation -->
   <nav class="top-nav">
-    <a href="/home" title="Home"><i class="fas fa-home"></i></a>
-    <a href="/explore.html" title="Explore"><i class="fas fa-compass"></i></a>
-    <a href="/career-fairs.html" title="Career Fairs & Jobs"><i class="fas fa-briefcase"></i></a>
-    <a href="/profile.html" title="Profile"><i class="fas fa-user"></i></a>
+    <a href="/admin-home.html" title="Home"><i class="fas fa-home"></i></a>
+    <a href="/admin-usermanagement.html" title="Manage Users"><i class="fas fa-users-cog"></i></a>
+    <a href="/admin-eventmanagement.html" title="Manage Events/Submissions"><i class="fas fa-calendar-check"></i></a>
+    <a href="/admin-feedback.html" title="Feedback"><i class="fas fa-comments"></i></a>
     <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
   </nav>
 
+  <!-- Page Header -->
   <header>
     <h1>🛠 Admin Dashboard</h1>
-    <p>Manage users, events, and feedback across the UniVerse platform.</p>
+    <p>Welcome to the Admin Dashboard. Manage users, events, submissions, and feedback across the UniVerse platform.</p>
   </header>
 
+  <!-- Main Section -->
   <div class="container">
     <div class="admin-actions">
-      <button class="admin-button" onclick="location.href='/admin/users'">
-        <i class="fas fa-users-cog"></i> Edit / Manage Users
-      </button>
-      <button class="admin-button" onclick="location.href='/admin/events'">
-        <i class="fas fa-calendar-plus"></i> Manage / Add Events
-      </button>
-      <button class="admin-button" onclick="location.href='/admin/feedback'">
-        <i class="fas fa-comments"></i> Feedback Responses
-      </button>
+      <div class="admin-card" data-page="usermanagement"> <!-- Changed data-page for consistency -->
+        <i class="fas fa-users-cog"></i>
+        <h2>Manage Users</h2>
+        <p>Edit user roles, view user activity, or manage access.</p>
+      </div>
+
+      <div class="admin-card" data-page="eventmanagement"> <!-- Changed data-page for consistency -->
+        <i class="fas fa-calendar-check"></i>
+        <h2>Manage Submissions</h2>
+        <p>Approve or reject user-submitted jobs, events, and hackathons.</p>
+      </div>
+
+      <div class="admin-card" data-page="feedback">
+        <i class="fas fa-comments"></i>
+        <h2>View Feedback</h2>
+        <p>Review and respond to user queries, suggestions, or reports.</p>
+      </div>
     </div>
   </div>
+
+  <!-- JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.admin-card');
+
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          const pageKey = card.getAttribute('data-page');
+          if (pageKey) {
+            // Construct the URL based on the data-page attribute
+            // This assumes your HTML files are named like: admin-usermanagement.html, admin-eventmanagement.html, etc.
+            // and are in the same directory (root).
+            window.location.href = `/admin-${pageKey}.html`;
+          } else {
+            console.error("Admin card is missing 'data-page' attribute.", card);
+          }
+        });
+      });
+
+      // The tooltip JavaScript below is generally redundant as browsers
+      // show the 'title' attribute on hover by default.
+      // You can remove it unless you plan to implement custom tooltips.
+      /*
+      const navLinks = document.querySelectorAll('nav.top-nav a');
+      navLinks.forEach(link => {
+        link.addEventListener('mouseover', () => {
+          const title = link.getAttribute('title');
+          link.setAttribute('data-tooltip', title);
+        });
+      });
+      */
+    });
+  </script>
 
 </body>
 </html>

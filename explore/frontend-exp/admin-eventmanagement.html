@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Event & Submission Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { /* ... your existing CSS variables ... */
+            --main-bg: #f0f2f5; --primary-color: #1f3f3f; --secondary-color: #215353;
+            --nav-text-color: #e0e0e0; --nav-hover-bg: #486363; --card-bg: white;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.08); --text-primary: #333;
+            --text-secondary: #555; --button-text: white; --success-color: #28a745;
+            --danger-color: #dc3545; --info-color: #007bff; --input-border: #ced4da;
+            --action-blue: #007bff; --action-blue-hover: #0056b3;
+        }
+        body { font-family: 'Montserrat', sans-serif; margin: 0; background-color: var(--main-bg); padding-top: 70px; line-height: 1.6; }
+        nav.top-nav { position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--secondary-color);
+      padding: 0 1rem; /* Adjusted padding */
+      display: flex;
+      justify-content: space-around; /* Evenly space out nav items */
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+      height: 60px; /* Explicit height */
+      box-sizing: border-box;
+     }
+        .page-header {
+            text-align: center; padding: 1.5rem 1rem; background-color: var(--card-bg);
+            margin-bottom: 25px; box-shadow: var(--card-shadow);
+        }
+        .page-header h1 { color: var(--primary-color); margin: 0; font-size: 1.8rem; font-weight: 600; }
+
+        .container { width: 95%; max-width: 1200px; margin: 20px auto; padding: 0 15px; box-sizing: border-box;}
+
+        /* Search Bar for Submissions */
+        .submission-search-bar {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .submission-search-bar input[type="text"] {
+            flex-grow: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .submission-search-bar button {
+            padding: 10px 18px; background-color: var(--primary-color); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 1em;
+        }
+        .submission-search-bar button i { margin-right: 5px; }
+
+
+        .submission-section { background-color: var(--card-bg); padding: 20px 25px; margin-bottom: 30px; border-radius: 8px; box-shadow: var(--card-shadow); }
+        .submission-section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .submission-section-header h2 { color: var(--primary-color); margin-top: 0; margin-bottom: 0; font-size: 1.4em; font-weight: 600; display: flex; align-items: center; }
+        .submission-section-header h2 i { margin-right: 10px; color: var(--secondary-color); }
+        .add-new-btn { /* Style for the "Add New" buttons */
+            background-color: var(--success-color); color: white; padding: 8px 15px;
+            border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em;
+        }
+        .add-new-btn i { margin-right: 5px; }
+
+        .submission-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px; margin-top: 15px;
+        }
+        .submission-card {
+            border: 1px solid #e0e0e0; padding: 15px; border-radius: 6px;
+            background-color: #fdfdfd; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .submission-card h3 { margin-top: 0; font-size: 1.15em; color: var(--secondary-color); margin-bottom: 10px;}
+        .submission-card p { font-size: 0.9em; margin: 4px 0; color: var(--text-secondary); }
+        .submission-card p strong { color: var(--text-primary); font-weight: 600; }
+        .submission-card .actions { margin-top: 15px; text-align: right; }
+        .submission-card .actions button {
+            padding: 8px 15px; margin-left: 8px; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 0.9em; font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        .submission-card .actions button:hover { opacity: 0.85; }
+
+        .view-details-btn { background-color: var(--info-color); color: white; }
+        .approve-btn { background-color: var(--success-color); color: white; }
+        .reject-btn { background-color: var(--danger-color); color: white; }
+        .loading, .no-data, .error-message { text-align: center; color: #777; padding: 20px; font-style: italic; }
+        .error-message { color: var(--danger-color); font-weight: bold; }
+
+
+        /* Modal Styles (Shared for Details and Add New Form) */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.65); z-index: 1050; display: flex;
+            align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+            opacity: 0; transition: opacity 0.3s ease-in-out;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content {
+            background: white; padding: 25px 30px; border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.25); width: 100%;
+            max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative;
+            transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); opacity: 1; }
+
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-color); font-size: 1.5em; text-align: center; }
+        .modal-content p { margin: 8px 0; font-size: 0.95em; line-height: 1.6; }
+        .modal-content p strong { font-weight: 600; }
+        #modal-item-details-body p { border-bottom: 1px dotted #eee; padding-bottom: 5px; margin-bottom: 5px;}
+        #modal-item-details-body p:last-child { border-bottom: none; }
+        
+        /* Form field styling for Add New Modal */
+        .modal-form-field { margin-bottom: 15px; }
+        .modal-form-field label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9em; color: var(--text-secondary); }
+        .modal-form-field input[type="text"],
+        .modal-form-field input[type="date"],
+        .modal-form-field input[type="url"],
+        .modal-form-field textarea {
+            width: 100%; padding: 10px; border: 1px solid var(--input-border);
+            border-radius: 5px; box-sizing: border-box; font-size: 0.95em;
+        }
+        .modal-form-field textarea { min-height: 80px; resize: vertical; }
+
+        .modal-actions { text-align: right; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
+        .modal-actions button { margin-left: 10px; padding: 10px 18px; font-weight: 500; }
+        .modal-actions .visit-site-btn { background-color: var(--action-blue); color: white; }
+        .modal-actions .visit-site-btn:hover { background-color: var(--action-blue-hover); }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/admin-home.html" title="Dashboard"><i class="fas fa-home"></i></a>
+        <a href="/admin-usermanagement.html" title="Manage Users"><i class="fas fa-users-cog"></i></a>
+        <a href="/admin-eventmanagement.html" title="Manage Events/Submissions"><i class="fas fa-calendar-check"></i></a>
+        <a href="/admin-feedback.html" title="Feedback"><i class="fas fa-comments"></i></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+    </nav>
+
+    <header class="page-header">
+        <h1><i class="fas fa-tasks"></i> Submission & Event Management</h1>
+    </header>
+
+    <div class="container">
+        <div class="submission-search-bar">
+            <input type="text" id="submission-search-input" placeholder="Search all unverified submissions by title/name...">
+            <button id="submission-search-button"><i class="fas fa-search"></i> Search</button>
+        </div>
+
+        <section class="submission-section">
+            <div class="submission-section-header">
+                <h2><i class="fas fa-briefcase"></i> Unverified Jobs</h2>
+                <button class="add-new-btn" data-item-type="job"><i class="fas fa-plus"></i> Add New Job</button>
+            </div>
+            <div id="unverified-jobs-grid" class="submission-grid">
+                <p class="loading">Loading unverified jobs...</p>
+            </div>
+        </section>
+
+        <section class="submission-section">
+            <div class="submission-section-header">
+                <h2><i class="fas fa-user-graduate"></i> Unverified Internships</h2>
+                <button class="add-new-btn" data-item-type="internship"><i class="fas fa-plus"></i> Add New Internship</button>
+            </div>
+            <div id="unverified-internships-grid" class="submission-grid">
+                <p class="loading">Loading unverified internships...</p>
+            </div>
+        </section>
+
+        <section class="submission-section">
+            <div class="submission-section-header">
+                <h2><i class="fas fa-calendar-day"></i> Unverified Career Fairs</h2>
+                 <button class="add-new-btn" data-item-type="career-fair"><i class="fas fa-plus"></i> Add New Career Fair</button>
+            </div>
+            <div id="unverified-career-fairs-grid" class="submission-grid">
+                <p class="loading">Loading unverified career fairs...</p>
+            </div>
+        </section>
+
+        <section class="submission-section">
+            <div class="submission-section-header">
+                <h2><i class="fas fa-laptop-code"></i> Unverified Hackathons</h2>
+                <button class="add-new-btn" data-item-type="hackathon"><i class="fas fa-plus"></i> Add New Hackathon</button>
+            </div>
+            <div id="unverified-hackathons-grid" class="submission-grid">
+                <p class="loading">Loading unverified hackathons...</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal for VIEWING item details -->
+    <div id="item-details-modal-overlay" class="modal-overlay">
+        <div id="item-details-modal-content" class="modal-content">
+            <h3 id="modal-item-title">Item Details</h3>
+            <div id="modal-item-details-body"></div>
+            <hr>
+            <p><strong>Submitted by User ID:</strong> <span id="modal-submitted-by"></span></p>
+            <p><strong>Submission Date:</strong> <span id="modal-submission-date"></span></p>
+            <p id="modal-item-url-container" style="display:none;">
+                <strong>External Link:</strong> <a id="modal-item-url" href="#" target="_blank" rel="noopener noreferrer">Visit Website Text Link</a>
+            </p>
+            <div class="modal-actions">
+                <button type="button" id="modal-close-view-btn" class="view-details-btn" style="background-color: #6c757d;">Close</button>
+                <a id="modal-visit-site-btn-action" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">
+                    <button type="button" class="visit-site-btn"><i class="fas fa-external-link-alt"></i> Visit Website</button>
+                </a>
+                <button id="modal-reject-btn" class="reject-btn">Reject</button>
+                <button id="modal-approve-btn" class="approve-btn">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for ADDING NEW item -->
+    <div id="add-new-item-modal-overlay" class="modal-overlay">
+        <div id="add-new-item-modal-content" class="modal-content">
+            <h3 id="add-modal-title">Add New Item</h3>
+            <form id="add-new-item-form">
+                <!-- Form fields will be dynamically inserted here by JavaScript -->
+            </form>
+            <div class="modal-actions">
+                <button type="button" id="add-modal-cancel-btn" class="view-details-btn" style="background-color: #6c757d;">Cancel</button>
+                <button type="submit" form="add-new-item-form" id="add-modal-submit-btn" class="approve-btn">Add Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REMOVED: <div id="form-field-templates" style="display:none;"> ... </div> -->
+
+    <script src="static/admin-eventmanagement.js"></script>
+</body>
+</html>

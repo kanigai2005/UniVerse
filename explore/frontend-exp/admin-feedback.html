@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Feedback Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { /* Using a similar theme to other admin pages */
+            --main-bg: #f0f2f5; --primary-color: #1f3f3f; --secondary-color: #215353;
+            --nav-text-color: #e0e0e0; --nav-hover-bg: #486363; --card-bg: white;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.08); --text-primary: #333;
+            --text-secondary: #555; --button-text: white; --success-color: #28a745;
+            --danger-color: #dc3545; --warning-color: #ffc107; --info-color: #007bff;
+            --input-border: #ced4da;
+        }
+        body { font-family: 'Montserrat', sans-serif; margin: 0; background-color: var(--main-bg); padding-top: 70px; }
+        nav.top-nav {
+            position: fixed; top: 0; left: 0; width: 100%; background: var(--secondary-color);
+            padding: 0 1rem; display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; height: 60px; box-sizing: border-box;
+        }
+        nav.top-nav a {
+            color: var(--nav-text-color); text-decoration: none; font-size: 1.1rem;
+            padding: 0.6rem 0.8rem; border-radius: 6px; transition: background-color 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        nav.top-nav a i { margin-right: 5px; }
+        nav.top-nav a:hover { background-color: var(--nav-hover-bg); }
+        .page-header { text-align: center; padding: 1.5rem 1rem; background-color: var(--card-bg); margin-bottom: 25px; box-shadow: var(--card-shadow); }
+        .page-header h1 { color: var(--primary-color); margin: 0; font-size: 1.8rem; font-weight: 600; }
+
+        .container { width: 90%; max-width: 900px; margin: 20px auto; }
+        
+        .filter-bar {
+            background-color: var(--card-bg); padding: 15px; border-radius: 8px;
+            box-shadow: var(--card-shadow); margin-bottom: 20px; display: flex; gap: 15px; align-items: center;
+        }
+        .filter-bar label { font-weight: 500; margin-right: 5px; }
+        .filter-bar select {
+            padding: 8px 10px; border: 1px solid var(--input-border);
+            border-radius: 5px; font-size: 0.9em;
+        }
+
+        
+        .feedback-card {
+            background-color: var(--card-bg); border: 1px solid #e0e0e0;
+            padding: 20px; margin-bottom: 20px; border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        .feedback-card-header { margin-bottom: 10px; }
+        .feedback-card-header p { margin: 3px 0; font-size: 0.9em; }
+        .feedback-card-header strong { font-weight: 600; }
+        .feedback-card .user-info { color: var(--text-secondary); }
+        .feedback-card .submission-time { font-size: 0.8em; color: #777; }
+        .feedback-text {
+            margin: 10px 0; padding: 10px; background-color: #f9f9f9;
+            border-left: 3px solid var(--info-color); font-size: 1em; line-height: 1.6;
+            white-space: pre-wrap; /* Preserve line breaks from user input */
+        }
+        .feedback-status { margin-top: 10px; font-weight: bold; }
+        .status-pending { color: var(--warning-color); }
+        .status-resolved, .status-completed, .status-closed { color: var(--success-color); }
+        .status-investigating { color: var(--info-color); }
+
+        .feedback-actions { margin-top: 15px; text-align: right; }
+        .feedback-actions button {
+            background-color: var(--success-color); color: white;
+            padding: 8px 15px; border: none; cursor: pointer;
+            border-radius: 5px; font-size: 0.9em;
+        }
+        .feedback-actions button:hover { opacity: 0.85; }
+        .feedback-actions button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .feedback-actions button i { margin-right: 5px; }
+
+        .loading, .no-data { text-align: center; padding: 20px; color: var(--text-secondary); font-style: italic;}
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/admin-home.html" title="Dashboard"><i class="fas fa-home"></i></a>
+        <a href="/admin-eventmanagement.html" title="Manage Events/Submissions"><i class="fas fa-calendar-check"></i></a>
+        <a href="/admin-usermanagement.html" title="Manage Users"><i class="fas fa-users-cog"></i></a>
+        <a href="/admin-feedback.html" title="Feedback"><i class="fas fa-comments"></i></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+    </nav>
+
+    <header class="page-header">
+        <h1><i class="fas fa-comments"></i> Feedback & Issues Management</h1>
+    </header>
+
+    <div class="container">
+        <div class="filter-bar">
+            <label for="status-filter">Filter by Status:</label>
+            <select id="status-filter">
+                <option value="">All</option>
+                <option value="pending">Pending</option>
+                <option value="investigating">Investigating</option>
+                <option value="resolved">Resolved</option>
+                <option value="completed">Completed</option>
+                <option value="closed">Closed</option>
+            </select>
+        </div>
+
+        <div id="feedback-list-container">
+            <p class="loading">Loading feedback...</p>
+            <!-- Feedback cards will be dynamically inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // static/admin-feedback.js
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Admin Feedback JS Loaded");
+
+            const feedbackListContainer = document.getElementById('feedback-list-container');
+            const statusFilterSelect = document.getElementById('status-filter');
+
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') { return unsafe === null || unsafe === undefined ? '' : String(unsafe); }
+                return unsafe.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "").replace(/'/g, "'");
+            }
+
+            async function apiCall(url, method = 'GET', body = null) {
+                const options = { method, headers: {}, credentials: 'include' };
+                if (body && (method === 'POST' || method === 'PUT')) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = JSON.stringify(body);
+                }
+                try {
+                    const response = await fetch(url, options);
+                    const responseData = await response.json().catch(() => ({ detail: "Non-JSON response" }));
+                    if (!response.ok) throw new Error(responseData.detail || `Request failed: ${response.status}`);
+                    return responseData;
+                } catch (error) {
+                    console.error(`API Error (${method} ${url}):`, error);
+                    alert(`API Error: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            function renderFeedbackCard(issue) {
+                const card = document.createElement('div');
+                card.classList.add('feedback-card');
+                card.dataset.issueId = issue.id;
+
+                const submittedAt = new Date(issue.submitted_at).toLocaleString();
+                let statusClass = `status-${issue.status.toLowerCase().replace(' ', '-')}`;
+
+                card.innerHTML = `
+                    <div class="feedback-card-header">
+                        <p><strong>Issue ID:</strong> ${issue.id}</p>
+                        <p class="user-info">
+                            <strong>From:</strong> ${escapeHtml(issue.name)} 
+                            ${issue.user_id ? `(User ID: ${issue.user_id})` : '(Anonymous)'}
+                        </p>
+                        <p class="submission-time"><strong>Submitted:</strong> ${submittedAt}</p>
+                    </div>
+                    <div class="feedback-text">${escapeHtml(issue.message)}</div>
+                    <p class="feedback-status"><strong>Status:</strong> <span class="${statusClass}">${escapeHtml(issue.status)}</span></p>
+                    <div class="feedback-actions">
+                        ${issue.status !== 'resolved' && issue.status !== 'completed' && issue.status !== 'closed' ? 
+                            `<button class="mark-resolved-btn" data-new-status="resolved"><i class="fas fa-check-circle"></i> Mark Resolved</button>
+                             <button class="mark-pending-btn" data-new-status="pending" style="background-color:var(--warning-color); color:var(--text-primary);"><i class="fas fa-clock"></i> Mark Pending</button>
+                             <button class="mark-closed-btn" data-new-status="closed" style="background-color:var(--text-secondary);"><i class="fas fa-times-circle"></i> Mark Closed</button>
+                            ` : 
+                            '<p><em>This issue is considered finalized.</em></p>'
+                        }
+                    </div>
+                `;
+
+                card.querySelectorAll('.mark-resolved-btn, .mark-pending-btn, .mark-closed-btn').forEach(button => {
+                    button.addEventListener('click', async function() {
+                        const newStatus = this.dataset.newStatus;
+                        await handleUpdateStatus(issue.id, newStatus, this);
+                    });
+                });
+                return card;
+            }
+
+            async function loadFeedback(status = '') {
+                if (!feedbackListContainer) return;
+                feedbackListContainer.innerHTML = '<p class="loading">Loading feedback...</p>';
+                try {
+                    const url = status ? `/api/admin/issues?status_filter=${encodeURIComponent(status)}` : '/api/admin/issues';
+                    const issues = await apiCall(url);
+                    feedbackListContainer.innerHTML = '';
+                    if (Array.isArray(issues) && issues.length === 0) {
+                        feedbackListContainer.innerHTML = `<p class="no-data">No feedback items found${status ? ' for status: ' + escapeHtml(status) : ''}.</p>`;
+                    } else if (Array.isArray(issues)) {
+                        issues.forEach(issue => feedbackListContainer.appendChild(renderFeedbackCard(issue)));
+                    } else {
+                        feedbackListContainer.innerHTML = '<p class="error-message">Error: Invalid data received.</p>';
+                    }
+                } catch (error) {
+                    feedbackListContainer.innerHTML = `<p class="error-message">Could not load feedback: ${escapeHtml(error.message)}</p>`;
+                }
+            }
+
+            async function handleUpdateStatus(issueId, newStatus, buttonElement) {
+                const originalButtonText = buttonElement.innerHTML;
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                
+                // Disable other action buttons on the same card
+                const card = buttonElement.closest('.feedback-card');
+                card.querySelectorAll('.feedback-actions button').forEach(btn => btn.disabled = true);
+
+                try {
+                    await apiCall(`/api/admin/issues/${issueId}/status`, 'PUT', { new_status: newStatus });
+                    alert(`Issue ${issueId} status updated to ${newStatus}.`);
+                    loadFeedback(statusFilterSelect.value); // Refresh the list with current filter
+                } catch (error) {
+                    // apiCall helper already alerts
+                    buttonElement.disabled = false; // Re-enable current button on error
+                    buttonElement.innerHTML = originalButtonText;
+                    // Re-enable other buttons on the card if the action failed
+                    card.querySelectorAll('.feedback-actions button').forEach(btn => btn.disabled = false);
+                }
+            }
+
+            // Event Listener for status filter change
+            if (statusFilterSelect) {
+                statusFilterSelect.addEventListener('change', function() {
+                    loadFeedback(this.value);
+                });
+            }
+
+            // Initial Load
+            loadFeedback();
+        });
+    </script>
+</body>
+</html>
