@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --base-color: #2f4f4f; /* Dark Slate Gray - Main Accent */
+            --base-color-darker: #1e3e3e; /* For button hover */
+            --base-color-lighter-accent: #507f7f; /* For some highlights or secondary actions */
+
+            --body-bg: #ffffff; /* Page background is white */
+            --register-box-bg: #ffffff; /* Box background is white */
+
+            --text-primary-dark: #212529; /* For main text on light backgrounds */
+            --text-secondary-dark: #6c757d; /* For labels, muted text on light backgrounds */
+            --text-on-dark-button: #ffffff; /* Text for dark buttons */
+
+            --input-bg-light: #f8f9fa; /* Very light gray for inputs */
+            --input-text-dark: #495057;
+            --input-border-light: #ced4da;
+            --input-focus-border: var(--base-color);
+            --input-focus-shadow: rgba(47, 79, 79, 0.25); /* Shadow using base color's RGB */
+            
+            --link-color-themed: var(--base-color);
+            --link-hover-darker: var(--base-color-darker);
+
+            --error-color: #dc3545; /* Standard Bootstrap error red */
+            --error-bg-light: rgba(220, 53, 69, 0.1);
+
+            --google-btn-bg: #4285F4;
+            --google-btn-hover-bg: #357ae8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-primary-dark); /* Default text color for page */
+            padding: 20px 0;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .register-box {
+            background: var(--register-box-bg); /* WHITE BACKGROUND FOR THE BOX */
+            padding: 35px 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: var(--text-primary-dark); /* DARK TEXT INSIDE THE BOX */
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12); /* Softer shadow for white box */
+            /* border: 1px solid #e0e0e0; /* Optional light border */
+        }
+
+        .logo {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            margin-bottom: 15px; /* More space below logo */
+            object-fit: cover;
+            /* Border for logo on white background */
+            border: 3px solid var(--base-color-lighter-accent);
+        }
+
+        h2 { /* "Create Account" heading */
+            margin-bottom: 25px; /* More space below heading */
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--base-color); /* THEMED HEADING COLOR */
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background-color: var(--error-bg-light);
+            border: 1px solid var(--error-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px; /* More space if error */
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            color: var(--text-secondary-dark); /* MUTED DARK TEXT FOR LABELS */
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--input-border-light); /* LIGHT BORDER FOR INPUTS */
+            border-radius: 8px;
+            font-size: 1em;
+            background-color: var(--input-bg-light); /* LIGHT BG FOR INPUTS */
+            color: var(--input-text-dark); /* DARK TEXT IN INPUTS */
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input::placeholder, select option[value=""] {
+            color: #999999; /* Standard placeholder color */
+            font-family: 'Poppins', sans-serif;
+        }
+        select option {
+            /* Options will use browser default or inherit from select */
+            color: var(--text-primary-dark); /* Ensure options are dark */
+            background-color: #ffffff; /* Options background often white */
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--input-focus-border); /* THEMED FOCUS BORDER */
+            box-shadow: 0 0 0 3px var(--input-focus-shadow); /* THEMED FOCUS SHADOW */
+        }
+        
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: .7em auto;
+            padding-right: 40px;
+        }
+
+        .register-btn, .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease; /* Changed transition to background-color */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .register-btn {
+            background-color: var(--base-color); /* SOLID THEMED BACKGROUND */
+            color: var(--text-on-dark-button); /* WHITE TEXT */
+        }
+        .register-btn:hover {
+            background-color: var(--base-color-darker); /* DARKER SHADE ON HOVER */
+            transform: translateY(-1px);
+        }
+        .register-btn:active {
+            transform: translateY(0px);
+        }
+
+        .google-btn {
+            background: var(--google-btn-bg);
+            color: white;
+            margin-top: 15px;
+        }
+        .google-btn:hover {
+            background: var(--google-btn-hover-bg);
+            transform: translateY(-1px);
+        }
+        .google-btn:active {
+            transform: translateY(0px);
+        }
+        .google-btn i {
+            font-size: 1.2em;
+        }
+
+        .login-link-container {
+            margin-top: 25px;
+            font-size: 0.95em;
+        }
+        .login-link-container a {
+            color: var(--link-color-themed); /* THEMED LINK COLOR */
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .login-link-container a:hover {
+            text-decoration: underline;
+            color: var(--link-hover-darker); /* DARKER THEMED LINK ON HOVER */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-box">
+            <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="UniVerse Logo" class="logo">
+            <h2>Create Account</h2>
+
+            {% if error %}
+            <div class="error-message">{{ error }}</div>
+            {% endif %}
+
+            <form id="register-form" method="post" action="/register">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" placeholder="Choose a username" required value="{{ username_val or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" placeholder="Your email address" required value="{{ email_val or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" placeholder="Create a strong password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm your password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">I am a...</label>
+                    <select name="role" id="role" required>
+                        <option value="" disabled {% if not role_val %}selected{% endif %}>Select your role</option>
+                        <option value="student" {% if role_val == "student" %}selected{% endif %}>Student</option>
+                        <option value="alumni" {% if role_val == "alumni" %}selected{% endif %}>Alumni</option>
+                        <option value="admin" {% if role_val == "admin" %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="register-btn">Sign Up</button>
+            </form>
+            <p class="login-link-container">Already have an account? <a href="/">Login here</a></p>
+        </div>
+    </div>
+    <script>
+        // JavaScript remains the same as it handles logic, not primary styling
+        document.getElementById('register-form').addEventListener('submit', function(event) {
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            passwordInput.setCustomValidity('');
+            confirmPasswordInput.setCustomValidity('');
+
+            if (password !== confirmPassword) {
+                event.preventDefault();
+                confirmPasswordInput.setCustomValidity("Passwords do not match.");
+                // You could add a class to the input for error styling from CSS if preferred
+                confirmPasswordInput.style.borderColor = 'var(--error-color)'; 
+            } else {
+                 confirmPasswordInput.style.borderColor = 'var(--input-border-light)'; // Reset border
+            }
+        });
+
+        document.getElementById('confirm-password').addEventListener('input', function() {
+            this.setCustomValidity('');
+            this.style.borderColor = 'var(--input-border-light)';
+        });
+         document.getElementById('password').addEventListener('input', function() {
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            if (confirmPasswordInput.validity.customError) {
+                confirmPasswordInput.setCustomValidity('');
+                confirmPasswordInput.style.borderColor = 'var(--input-border-light)';
+            }
+        });
+    </script>
+</body>
+</html>

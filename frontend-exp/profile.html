@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse Profile</title> <!-- JS will update this -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Basic Styles --- */
+        :root {
+            --top-nav-bg: #283e4a; /* Darker blue-gray */
+            --top-nav-text: #e0e6eb;
+            --top-nav-hover-bg: #3c5362;
+            --main-bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-primary: #1d2129;
+            --text-secondary: #606770;
+            --link-primary: #0073b1; /* Primary action color */
+            --accent-color: #0073b1;
+            --footer-bg: var(--top-nav-bg);
+            --footer-text: var(--top-nav-text);
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.07);
+            --success-color: #2e6175; /* Example: a tealish green */
+            --error-color: #d32f2f;
+            --input-border: #ccd0d5;
+            --button-text: white;
+            --secondary-action-bg: #007bff; /* Blue for edit button */
+            --secondary-action-hover-bg: #0056b3; /* Darker blue for edit button hover */
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 15px;
+            padding-top: 60px; /* Space for fixed navbar */
+            padding-bottom: 50px; /* Space for fixed footer */
+        }
+
+        body.popup-open {
+            overflow: hidden;
+        }
+
+        /* --- Navbar Styles --- */
+        .navbar {
+            background-color: var(--top-nav-bg);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            height: 60px;
+        }
+        .navbar a {
+            color: var(--top-nav-text); text-decoration: none; padding: 8px 12px;
+            border-radius: 6px; transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 0.95rem; display: flex; align-items: center; gap: 6px; font-weight: 500;
+        }
+        .navbar a i { font-size: 1.1em; }
+        .navbar a:hover { background-color: var(--top-nav-hover-bg); color: #ffffff; }
+        .navbar a span { display: inline-block; }
+
+
+        /* --- Profile Container & Header --- */
+        .profile-container {
+            background-color: var(--card-bg); width: 90%; max-width: 850px; margin: 30px auto;
+            border-radius: 10px; box-shadow: var(--card-shadow); padding: 25px 30px;
+        }
+        .profile-header {
+            text-align: center; padding-bottom: 20px; border-bottom: 1px solid #e9ecef;
+            margin-bottom: 25px; position: relative;
+        }
+        .profile-pic-icon {
+            width: 120px; height: 120px; border-radius: 50%; background-color: #e9ecef;
+            color: var(--link-primary); display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px auto; font-size: 50px; border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .profile-name { font-size: 1.8em; font-weight: 600; margin-bottom: 5px; color: var(--text-primary); }
+        .profile-title { font-size: 1.05em; color: var(--text-secondary); margin-bottom: 15px; }
+
+        /* --- Profile Info Grid (Stats) --- */
+        .profile-info {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px 10px; padding: 20px 0; border-bottom: 1px solid #e9ecef;
+            margin-bottom: 25px; text-align: center;
+        }
+        .info-item i { font-size: 1.8em; color: var(--accent-color); margin-bottom: 6px; }
+        .info-item strong { display: block; font-weight: 500; font-size: 0.8em; color: var(--text-secondary); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-item p { margin: 0; font-size: 1.3em; color: var(--text-primary); font-weight: 600; }
+
+        /* --- Profile Details Sections --- */
+        .profile-details { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e9ecef; }
+        .profile-details:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .profile-details h3 {
+            margin-top: 0; margin-bottom: 18px; font-size: 1.3em; font-weight: 600;
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+        .profile-details h3 i { margin-right: 10px; }
+        .profile-details > p, .profile-details > span {
+            color: var(--text-secondary); line-height: 1.7; margin-bottom: 10px; font-size: 0.95em;
+            display: block;
+        }
+        .profile-details > p > strong, .profile-details > span > strong {
+            color: var(--text-primary); font-weight: 600; margin-right: 6px;
+        }
+        .profile-details .multi-line-text {
+            display: block;
+            white-space: pre-wrap;
+            margin-top: 5px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+
+        /* --- Profile Actions --- */
+        .profile-actions {
+            text-align: center; padding: 20px 0 0 0; margin-top: 20px;
+            display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;
+        }
+        .profile-actions button, .profile-actions a button { /* General styling for buttons within actions */
+            background-color: var(--accent-color);
+            color: var(--button-text); padding: 10px 22px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; font-weight: 500;
+            transition: background-color 0.2s ease, transform 0.1s ease; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .profile-actions button:hover:not(:disabled), .profile-actions a button:hover:not(:disabled) {
+            background-color: #005f94; /* Darker shade of general accent for hover */
+            transform: translateY(-1px);
+        }
+        .profile-actions a { text-decoration: none; display: inline-flex; } /* Ensure <a> wraps button correctly */
+
+        /* Specific button styles if needed */
+        #edit-profile-button {
+            background-color: var(--secondary-action-bg); /* Custom color for Edit button */
+        }
+        #edit-profile-button:hover:not(:disabled) {
+            background-color: var(--secondary-action-hover-bg); /* Custom hover for Edit button */
+        }
+
+        /* Network button styling */
+        .profile-actions #network-button {
+             background-color: var(--success-color); /* Greenish for network */
+        }
+        .profile-actions #network-button:hover:not(:disabled) {
+            background-color: #1e4a5a; /* Darker shade of success-color */
+        }
+
+
+        /* --- Edit Profile Popup Styles --- */
+        #edit-profile-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.65);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1050; padding: 20px; box-sizing: border-box;
+            opacity: 0; animation: fadeInOverlay 0.3s forwards;
+        }
+        #edit-profile-popup-content {
+            background-color: var(--card-bg); padding: 25px 30px; border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); width: 100%; max-width: 650px;
+            max-height: 90vh; overflow-y: auto; position: relative;
+            transform: scale(0.95) translateY(-20px); opacity: 0;
+            animation: slideInPopup 0.3s 0.1s forwards;
+        }
+        @keyframes fadeInOverlay { to { opacity: 1; } }
+        @keyframes slideInPopup { to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        #edit-profile-popup-content h2 {
+            margin-top: 0; margin-bottom: 25px; font-size: 1.6em; color: var(--text-primary);
+            border-bottom: 1px solid #e0e0e0; padding-bottom: 15px; text-align: center;
+        }
+        #edit-profile-popup-content div { margin-bottom: 18px; }
+        #edit-profile-popup-content label {
+            display: block; margin-bottom: 6px; font-weight: 600;
+            font-size: 0.9em; color: var(--text-secondary);
+        }
+        #edit-profile-popup-content input[type="text"],
+        #edit-profile-popup-content textarea {
+            width: 100%; padding: 12px 15px; border: 1px solid var(--input-border);
+            border-radius: 6px; box-sizing: border-box; font-family: inherit;
+            font-size: 0.95em; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        #edit-profile-popup-content input[type="text"]:focus,
+        #edit-profile-popup-content textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 115, 177, 0.2); outline: none;
+        }
+        #edit-profile-popup-content textarea { min-height: 100px; resize: vertical; }
+        .popup-actions {
+            display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;
+            padding-top: 20px; border-top: 1px solid #e9ecef;
+        }
+        .popup-actions button {
+            padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;
+            font-size: 0.95em; transition: background-color 0.2s ease, transform 0.1s ease;
+            border: none;
+        }
+        .popup-actions .save-button { background-color: var(--accent-color); color: white; }
+        .popup-actions .save-button:hover { background-color: #005f94; transform: translateY(-1px); }
+        .popup-actions .cancel-button { background-color: #e9ecef; color: var(--text-primary); border: 1px solid #ced4da; }
+        .popup-actions .cancel-button:hover { background-color: #dee2e6; border-color: #adb5bd; }
+
+        /* --- Footer Styles --- */
+        .footer {
+            background-color: var(--footer-bg); color: var(--footer-text); text-align: center;
+            padding: 15px 0; font-size: 0.85em; margin-top: auto;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1); position: fixed;
+            bottom: 0; left: 0; width: 100%; z-index: 999;
+        }
+        .error-message, .loading-message { /* For JS-driven messages */
+            text-align: center; padding: 20px; color: var(--text-secondary); font-style: italic;
+        }
+        .error-message { color: var(--error-color); font-weight: 500; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="home.html" title="Home"><i class="fas fa-home"></i><span></span></a>
+        <a href="explore.html" title="Explore"><i class="fas fa-compass"></i><span></span></a>
+        <a href="help.html" title="Help"><i class="fas fa-question-circle"></i><span></span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span></span></a>
+        <a href="profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span></span></a>
+    </nav>
+
+    <div class="profile-container" id="profile-container-main">
+        <div class="profile-header">
+            <div class="profile-pic-icon"><i class="fas fa-user"></i></div>
+            <h2 class="profile-name" id="profile-username">Loading...</h2>
+            <p class="profile-title" id="profile-title">Loading details...</p>
+        </div>
+
+        <div class="profile-info">
+            <div class="info-item"> <i class="fas fa-chart-line"></i> <strong>Activity</strong> <p id="profile-activity">--</p> </div>
+            <div class="info-item"> <i class="fas fa-gem"></i> <strong>Almagems</strong> <p id="profile-almagems">--</p> </div>
+            <div class="info-item"> <i class="fas fa-medal"></i> <strong>Badges</strong> <p id="profile-badges">--</p> </div>
+            <div class="info-item"> <i class="fas fa-check-circle"></i> <strong>Solved</strong> <p id="profile-solved">--</p> </div>
+            <div class="info-item"> <i class="fas fa-users"></i> <strong>Connections</strong> <p id="profile-links">--</p> </div>
+        </div>
+
+        <div class="profile-details">
+            <h3><i class="fas fa-briefcase"></i> Professional Info</h3>
+            <span><strong>Profession:</strong> <span id="profile-profession">--</span></span>
+            <span><strong>Current Company:</strong> <span id="profile-company">--</span></span>
+            <span><strong>Department:</strong> <span id="profile-department">--</span></span>
+            <span><strong>Alma Mater:</strong> <span id="profile-alma-mater">--</span></span>
+         </div>
+
+         <div class="profile-details">
+            <h3><i class="fas fa-book-reader"></i> Experiences & Advice</h3>
+            <p><strong>Interview Experiences:</strong><br><span id="profile-interviews" class="multi-line-text">--</span></p>
+            <p><strong>Internship Experiences:</strong><br><span id="profile-internships" class="multi-line-text">--</span></p>
+            <p><strong>Startup Ventures:</strong><br><span id="profile-startups" class="multi-line-text">--</span></p>
+            <p><strong>Milestones:</strong><br><span id="profile-milestones" class="multi-line-text">--</span></p>
+            <p><strong>Advice:</strong><br><span id="profile-advice" class="multi-line-text">--</span></p>
+        </div>
+
+         <div class="profile-details">
+            <h3><i class="fas fa-star"></i> Achievements</h3>
+            <span id="profile-achievements" class="multi-line-text">--</span>
+        </div>
+
+        <div class="profile-actions">
+            <button id="edit-profile-button" style="display: none;"><i class="fas fa-edit"></i> Edit Profile</button>
+            <!-- Network link/button will be shown/hidden by JS -->
+            <a href="connection.html" id="network-link" style="display: none;">
+                <button id="network-button"><i class="fas fa-users"></i> My Network</button>
+            </a>
+        </div>
+    </div>
+
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <script id="profile-data-script" type="application/json">
+        {{ profile_data_json | safe if profile_data_json else 'null' }}
+    </script>
+    <script id="profile-flags-script" type="application/json">
+        {
+            "is_own_profile": {{ is_own_profile | tojson | safe if is_own_profile is defined else 'false' }}
+        }
+    </script>
+
+    <script>
+    // --- Utility: Simple HTML Escaping ---
+    function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        const str = String(unsafe);
+        return str
+            .replace(/&/g, "&")
+            .replace(/</g, "<")
+            .replace(/>/g, ">")
+            .replace(/"/g, "")
+            .replace(/'/g, "'");
+    }
+
+    // --- Navbar Update Logic ---
+    async function updateNavbar() {
+        const navProfileLink = document.getElementById('nav-profile-link');
+        if (!navProfileLink) { console.warn("Navbar profile link element not found."); return null; }
+        try {
+            const response = await fetch('/api/users/me');
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 307) {
+                    navProfileLink.href = "/login.html";
+                } else {
+                    console.error("Navbar update: Failed to fetch current user, status:", response.status);
+                    navProfileLink.href = "/login.html";
+                }
+                localStorage.removeItem('loggedInUsername');
+                return null;
+            }
+            const loggedInUserData = await response.json();
+            if (loggedInUserData && loggedInUserData.username) {
+                navProfileLink.href = `/profile.html?username=${encodeURIComponent(loggedInUserData.username)}`;
+                localStorage.setItem('loggedInUsername', loggedInUserData.username);
+                return loggedInUserData;
+            } else {
+                console.warn("Navbar update: User data fetched but username missing.");
+                navProfileLink.href = "/login.html";
+                localStorage.removeItem('loggedInUsername');
+                return null;
+            }
+        } catch (error) {
+            console.error("Navbar update error:", error);
+            navProfileLink.href = "/login.html";
+            localStorage.removeItem('loggedInUsername');
+            return null;
+        }
+    }
+
+
+    // --- Profile Page Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("Profile page DOM loaded.");
+
+        const profileContainerMain = document.getElementById('profile-container-main');
+        const profileUsernameElement = document.getElementById('profile-username');
+        const profileTitleElement = document.getElementById('profile-title');
+        const profileActivityElement = document.getElementById('profile-activity');
+        const profileAlmagemsElement = document.getElementById('profile-almagems');
+        const profileBadgesElement = document.getElementById('profile-badges');
+        const profileSolvedElement = document.getElementById('profile-solved');
+        const profileLinksElement = document.getElementById('profile-links');
+        const profileProfessionElement = document.getElementById('profile-profession');
+        const profileCompanyElement = document.getElementById('profile-company');
+        const profileDepartmentElement = document.getElementById('profile-department');
+        const profileAlmaMaterElement = document.getElementById('profile-alma-mater');
+        const profileInterviewsElement = document.getElementById('profile-interviews');
+        const profileInternshipsElement = document.getElementById('profile-internships');
+        const profileStartupsElement = document.getElementById('profile-startups');
+        const profileMilestonesElement = document.getElementById('profile-milestones');
+        const profileAdviceElement = document.getElementById('profile-advice');
+        const profileAchievementsElement = document.getElementById('profile-achievements');
+        const editProfileButton = document.getElementById('edit-profile-button');
+        const networkLink = document.getElementById('network-link'); // The <a> tag
+        const networkButton = document.getElementById('network-button'); // The <button> inside <a>
+
+        let displayedProfileData = null;
+        let loggedInUser = null;
+
+        if (!profileContainerMain || !profileUsernameElement || !editProfileButton || !networkLink || !networkButton) {
+            console.error("CRITICAL ERROR: One or more essential profile elements not found!");
+            if(profileContainerMain) profileContainerMain.innerHTML = '<p class="error-message">Page setup error. Essential elements are missing.</p>';
+            return;
+        }
+
+        function populateProfileUI(userToDisplay, isActuallyOwnProfile) {
+            if (!userToDisplay) {
+                if (profileContainerMain) profileContainerMain.innerHTML = `<p class="error-message">Profile data is unavailable.</p>`;
+                editProfileButton.style.display = 'none';
+                networkLink.style.display = 'none'; // Hide network link if no user data
+                return;
+            }
+
+            console.log("Populating profile UI for user:", userToDisplay.username, "Is own profile:", isActuallyOwnProfile);
+            document.title = `${escapeHtml(userToDisplay.username) || 'User'}'s Profile - UniVerse`;
+            profileUsernameElement.textContent = escapeHtml(userToDisplay.username) || 'N/A';
+
+            const profession = escapeHtml(userToDisplay.profession);
+            const company = escapeHtml(userToDisplay.current_company);
+            let titleText = profession || (userToDisplay.is_alumni ? 'Alumni' : (userToDisplay.is_student ? 'Student' : 'Member'));
+            if (company) { titleText += ` at ${company}`; }
+            profileTitleElement.textContent = titleText;
+
+            profileActivityElement.textContent = userToDisplay.activity_score ?? '0';
+            profileAlmagemsElement.textContent = userToDisplay.alumni_gems ?? '0';
+            profileBadgesElement.textContent = userToDisplay.badges_count ?? '0';
+            profileSolvedElement.textContent = userToDisplay.solved_challenges_count ?? '0';
+            profileLinksElement.textContent = userToDisplay.connections_count ?? '0';
+
+            profileProfessionElement.textContent = escapeHtml(userToDisplay.profession) || '--';
+            profileCompanyElement.textContent = escapeHtml(userToDisplay.current_company) || '--';
+            profileDepartmentElement.textContent = escapeHtml(userToDisplay.department) || '--';
+            profileAlmaMaterElement.textContent = escapeHtml(userToDisplay.alma_mater) || '--';
+
+            const multiLineFields = {
+                'profile-interviews': userToDisplay.interview_experiences,
+                'profile-internships': userToDisplay.internship_experiences,
+                'profile-startups': userToDisplay.startup_ventures,
+                'profile-milestones': userToDisplay.milestones,
+                'profile-advice': userToDisplay.advice,
+                'profile-achievements': userToDisplay.achievements
+            };
+
+            for (const id in multiLineFields) {
+                const element = document.getElementById(id);
+                if (element) {
+                    const content = multiLineFields[id];
+                    element.textContent = (content && String(content).trim()) ? escapeHtml(content) : (id === 'profile-achievements' ? 'No achievements listed.' : 'Not shared yet.');
+                }
+            }
+
+            // --- CORRECTED NETWORK BUTTON LOGIC ---
+            if (isActuallyOwnProfile) {
+                editProfileButton.style.display = 'inline-flex';
+                networkButton.innerHTML = '<i class="fas fa-users"></i> My Network';
+                networkLink.href = "connection.html"; // Link to general connection page for own profile
+                networkLink.style.display = 'inline-flex'; // Show the link
+            } else {
+                editProfileButton.style.display = 'none';
+                // When viewing someone else's profile, hide the "My Network" button entirely.
+                // If you want a "View [User]'s Network" or "Connect" button, that would be separate logic.
+                networkLink.style.display = 'none'; // Hide the network link/button
+            }
+            // --- END OF CORRECTION ---
+        }
+
+
+        function showEditProfilePopup() {
+            if (document.getElementById('edit-profile-popup-overlay')) return;
+            if (!displayedProfileData) { alert("Cannot edit profile, data for the current profile is not loaded."); return; }
+
+            const popupOverlay = document.createElement('div');
+            popupOverlay.id = 'edit-profile-popup-overlay';
+            const popupContentBox = document.createElement('div');
+            popupContentBox.id = 'edit-profile-popup-content';
+
+            popupContentBox.innerHTML = `
+                <h2>Edit Profile</h2>
+                <div><label for="edit-profession">Profession:</label><input type="text" id="edit-profession" value="${escapeHtml(displayedProfileData.profession || '')}"></div>
+                <div><label for="edit-company">Current Company:</label><input type="text" id="edit-company" value="${escapeHtml(displayedProfileData.current_company || '')}"></div>
+                <div><label for="edit-department">Department:</label><input type="text" id="edit-department" value="${escapeHtml(displayedProfileData.department || '')}"></div>
+                <div><label for="edit-alma-mater">Alma Mater:</label><input type="text" id="edit-alma-mater" value="${escapeHtml(displayedProfileData.alma_mater || '')}"></div>
+                <div><label for="edit-achievements">Achievements:</label><textarea id="edit-achievements">${escapeHtml(displayedProfileData.achievements || '')}</textarea></div>
+                <div><label for="edit-interviews">Interview Experiences:</label><textarea id="edit-interviews">${escapeHtml(displayedProfileData.interview_experiences || '')}</textarea></div>
+                <div><label for="edit-internships">Internship Experiences:</label><textarea id="edit-internships">${escapeHtml(displayedProfileData.internship_experiences || '')}</textarea></div>
+                <div><label for="edit-startups">Startup Ventures:</label><textarea id="edit-startups">${escapeHtml(displayedProfileData.startup_ventures || '')}</textarea></div>
+                <div><label for="edit-milestones">Milestones:</label><textarea id="edit-milestones">${escapeHtml(displayedProfileData.milestones || '')}</textarea></div>
+                <div><label for="edit-advice">Advice:</label><textarea id="edit-advice">${escapeHtml(displayedProfileData.advice || '')}</textarea></div>
+                <div class="popup-actions">
+                    <button type="button" class="cancel-button">Cancel</button>
+                    <button type="button" class="save-button">Save Changes</button>
+                </div>`;
+            popupOverlay.appendChild(popupContentBox);
+            document.body.appendChild(popupOverlay);
+            document.body.classList.add('popup-open');
+
+            const closePopup = () => {
+                if (document.body.contains(popupOverlay)) document.body.removeChild(popupOverlay);
+                document.body.classList.remove('popup-open');
+            };
+            popupContentBox.querySelector('.save-button').addEventListener('click', () => {
+                const updatedData = {
+                    profession: document.getElementById('edit-profession').value.trim() || null,
+                    current_company: document.getElementById('edit-company').value.trim() || null,
+                    department: document.getElementById('edit-department').value.trim() || null,
+                    alma_mater: document.getElementById('edit-alma-mater').value.trim() || null,
+                    achievements: document.getElementById('edit-achievements').value.trim() || null,
+                    interview_experiences: document.getElementById('edit-interviews').value.trim() || null,
+                    internship_experiences: document.getElementById('edit-internships').value.trim() || null,
+                    startup_ventures: document.getElementById('edit-startups').value.trim() || null,
+                    milestones: document.getElementById('edit-milestones').value.trim() || null,
+                    advice: document.getElementById('edit-advice').value.trim() || null,
+                };
+                saveProfileChanges(updatedData, popupContentBox.querySelector('.save-button'), closePopup);
+            });
+            popupContentBox.querySelector('.cancel-button').addEventListener('click', closePopup);
+            popupOverlay.addEventListener('click', (event) => { if (event.target === popupOverlay) closePopup(); });
+        }
+
+        async function saveProfileChanges(updatedData, saveButtonElement, closePopupCallback) {
+            console.log("Saving profile changes via API:", updatedData);
+            if(saveButtonElement) {
+                saveButtonElement.disabled = true;
+                saveButtonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            }
+            try {
+                const response = await fetch(`/api/users/me`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedData)
+                });
+                 const responseData = await response.json();
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 307) { window.location.href = '/login.html'; return; }
+                    throw new Error(responseData.detail || `Update failed: ${response.statusText}`);
+                }
+                alert('Profile updated successfully!');
+                displayedProfileData = responseData;
+                populateProfileUI(displayedProfileData, true);
+                if(closePopupCallback) closePopupCallback();
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert(`Failed to update profile: ${escapeHtml(error.message)}`);
+            } finally {
+                if(saveButtonElement) {
+                    saveButtonElement.disabled = false;
+                    saveButtonElement.textContent = 'Save Changes';
+                }
+            }
+        }
+
+        if (editProfileButton) {
+            editProfileButton.addEventListener('click', showEditProfilePopup);
+        }
+
+        async function initializeProfilePage() {
+            loggedInUser = await updateNavbar();
+
+            let embeddedProfileJson = null;
+            let embeddedIsOwnProfile = false;
+
+            try {
+                const profileDataScript = document.getElementById('profile-data-script');
+                const flagsScript = document.getElementById('profile-flags-script');
+
+                if (profileDataScript && profileDataScript.textContent.trim() && profileDataScript.textContent.trim().toLowerCase() !== 'null') {
+                    embeddedProfileJson = JSON.parse(profileDataScript.textContent);
+                    console.log("Parsed embedded profile data:", embeddedProfileJson);
+                } else {
+                    console.log("No valid embedded profile data script found or it's null.");
+                }
+
+                if (flagsScript && flagsScript.textContent.trim()) {
+                    const flagsContent = JSON.parse(flagsScript.textContent);
+                    embeddedIsOwnProfile = flagsContent?.is_own_profile ?? false;
+                    console.log("Read is_own_profile flag from backend script:", embeddedIsOwnProfile);
+                } else {
+                    console.log("No embedded profile flags script found.");
+                }
+            } catch (e) {
+                console.error("Error parsing embedded JSON data:", e);
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const usernameFromUrl = params.get('username');
+            let finalIsOwnProfile = false;
+
+            if (usernameFromUrl) {
+                console.log(`Profile requested for: ${usernameFromUrl}`);
+                if (embeddedProfileJson && embeddedProfileJson.username === usernameFromUrl) {
+                    console.log("Using embedded data for URL user:", usernameFromUrl);
+                    displayedProfileData = embeddedProfileJson;
+                    finalIsOwnProfile = embeddedIsOwnProfile || (loggedInUser && loggedInUser.username === usernameFromUrl);
+                } else {
+                    console.log(`Fetching profile data for: ${usernameFromUrl} via public API...`);
+                    try {
+                        const response = await fetch(`/api/public/users/${encodeURIComponent(usernameFromUrl)}`);
+                        if (!response.ok) throw new Error(`Failed to fetch profile for ${usernameFromUrl}: ${response.status}`);
+                        displayedProfileData = await response.json();
+                        if (loggedInUser && displayedProfileData.username) {
+                            finalIsOwnProfile = (loggedInUser.username === displayedProfileData.username);
+                        } else {
+                            finalIsOwnProfile = false;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching profile from URL:", error);
+                        if (profileContainerMain) profileContainerMain.innerHTML = `<p class="error-message">Could not load profile: ${escapeHtml(error.message)}</p>`;
+                        editProfileButton.style.display = 'none';
+                        networkLink.style.display = 'none';
+                        return;
+                    }
+                }
+            } else if (loggedInUser) {
+                console.log("No username in URL, displaying logged-in user's profile.");
+                displayedProfileData = loggedInUser;
+                finalIsOwnProfile = true;
+            } else {
+                console.log("Not logged in and no username in URL. Redirecting to login.");
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (displayedProfileData) {
+                populateProfileUI(displayedProfileData, finalIsOwnProfile);
+            } else if (!usernameFromUrl && !loggedInUser) {
+                if (profileContainerMain) profileContainerMain.innerHTML = `<p class="error-message" style="text-align:center;">Please log in to view your profile.</p>`;
+                editProfileButton.style.display = 'none';
+                networkLink.style.display = 'none';
+                document.title = "Profile - UniVerse";
+                if(profileUsernameElement) profileUsernameElement.textContent = "No User";
+                if(profileTitleElement) profileTitleElement.textContent = "Please log in.";
+            }
+        }
+        initializeProfilePage();
+    });
+    </script>
+</body>
+</html>

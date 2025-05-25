@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Explore Hackathons - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --nav-bg: #2f2f2f;
+            --card-bg: #2a2a2a;
+            --card-hover-bg: #3a3a3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #2f4f4f; /* Dark Slate Gray */
+            --link-hover: #90caf9;
+            --border-color: #444;
+            --button-bg: #64b5f6; /* Light Blue */
+            --button-text: #1a1a1a;
+            --button-hover-bg: #2f4f4f; /* Dark Slate Gray for hover */
+            --success-color: #2f4f4f; /* Dark Slate Gray for success */
+            --error-color: #ef5350;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            padding-top: 70px; /* Space for fixed navbar */
+            padding-bottom: 60px; /* Space for fixed footer */
+            font-size: 15px;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--accent-color); /* Using accent for navbar */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .navbar a { color: var(--text-primary); text-decoration: none; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s ease; font-size: 1rem; display: flex; align-items: center; gap: 5px; }
+        .navbar a i { font-size: 1.1em; }
+        .navbar a:hover { background-color: #444; color: var(--link-hover); }
+
+        /* Header */
+        header { text-align: center; padding: 25px 0; }
+        header h1 { color: var(--accent-color); margin: 0 0 10px 0; font-size: 2.2em; font-weight: 700; }
+        header p { font-size: 1.1em; margin-top: 0; color: var(--text-secondary); }
+
+        .container { width: 95%; max-width: 1100px; margin: auto; }
+
+        /* Sections */
+        section { background-color: var(--card-bg); padding: 20px 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        section h2 { color: var(--accent-color); font-size: 1.5em; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+        /* Search/Filter */
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .search-container input[type="text"] { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-primary); font-size: 1em; }
+        .search-container button { width: auto; padding: 10px 20px; background-color: var(--button-bg); color: var(--button-text); font-weight: bold; border-radius: 5px; border: none; cursor: pointer; transition: background-color 0.3s ease; }
+        .search-container button:hover { background-color: var(--button-hover-bg); }
+
+        /* Add Hackathon Trigger Button */
+        .add-hackathon-trigger-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .suggest-hackathon-btn {
+            padding: 10px 20px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-weight: bold;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .suggest-hackathon-btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+
+        /* Hackathon Form (inside modal) */
+        #hackathon-form { display: grid; gap: 15px; }
+        #hackathon-form label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-secondary); font-size: 0.9em;}
+        #hackathon-form input[type="text"],
+        #hackathon-form input[type="url"],
+        #hackathon-form input[type="date"],
+        #hackathon-form textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-primary); font-size: 1em; box-sizing: border-box; }
+        #hackathon-form textarea { min-height: 80px; resize: vertical; }
+        #hackathon-form button[type="submit"] {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            width: auto;
+            padding: 10px 20px;
+            font-weight: bold;
+            justify-self: start; /* Align button left */
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #hackathon-form button[type="submit"]:hover { background-color: var(--button-hover-bg); }
+        #hackathon-form button[type="submit"]:disabled { background-color: #555; cursor: not-allowed;}
+
+
+        /* Hackathon List */
+        #current-hackathons-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; list-style: none; padding: 0; }
+        .hackathon-card {
+            padding: 18px; border-radius: 6px; background-color: var(--nav-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column;
+        }
+        .hackathon-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-color: var(--accent-color); }
+        .hackathon-name { font-size: 1.2em; font-weight: 600; color: var(--accent-color); margin: 0 0 8px 0; }
+        .hackathon-date, .hackathon-location, .hackathon-theme, .hackathon-prize { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .hackathon-date i, .hackathon-location i, .hackathon-theme i, .hackathon-prize i { color: var(--accent-color); width: 16px; text-align: center;}
+        .hackathon-details-link { margin-top: auto; padding-top: 10px; text-align: right; }
+        .hackathon-details-link button { font-size: 0.9em; padding: 6px 12px; background-color: #555; color: var(--text-primary); border:none; border-radius: 4px; cursor:pointer; transition: background-color 0.2s ease;}
+        .hackathon-details-link button:hover { background-color: var(--accent-color); }
+
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
+        .modal-content { background-color: var(--card-bg); color: var(--text-primary); padding: 25px 30px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); width: 90%; max-width: 650px; position: relative; animation: fadeInModal 0.3s ease-out; }
+        @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .modal-header h2 { margin: 0; font-size: 1.6em; color: var(--accent-color); }
+        .close-modal { position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.2s; border: none; background: none; padding: 0; line-height: 1; }
+        .close-modal:hover { color: #fff; }
+        .modal-body { margin-bottom: 20px; font-size: 1em; line-height: 1.7; max-height: 70vh; /* Increased max-height for form */ overflow-y: auto; }
+        .modal-body p { margin: 10px 0; }
+        .modal-body strong { color: var(--text-primary); font-weight: 600;}
+        .modal-footer { text-align: right; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+        .modal-register-btn { background-color: var(--button-bg); color: var(--button-text); padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 1em; font-weight: bold; transition: background-color 0.2s ease-in-out; }
+        .modal-register-btn:hover { background-color: var(--button-hover-bg); }
+
+        /* Loading/Error */
+        .loading, .error-message, .no-data { text-align:center; padding: 20px; color: var(--text-secondary); font-style: italic; }
+        .error-message { color: var(--error-color); font-weight: bold;}
+
+        /* Footer */
+        .footer { background-color: var(--nav-bg); color: var(--text-secondary); text-align: center; padding: 15px 0; font-size: 0.9em; box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3); position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;}
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="home.html" title="Home"><i class="fas fa-home"></i><span> </span></a>
+        <a href="explore.html" title="Explore"><i class="fas fa-compass"></i><span> </span></a>
+        <a href="notifications.html" title="Notifications"><i class="fas fa-bell"></i><span></span></a>
+        <a href="help.html" title="Help"><i class="fas fa-question-circle"></i><span></span></a>
+        <a href="profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span></span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span></span></a>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>🚀 Hackathons</h1>
+            <p>Discover coding challenges, build innovative projects, and compete for prizes.</p>
+        </header>
+
+        <section id="search-add-hackathon">
+            <h2>Find or Add a Hackathon</h2>
+            <div class="search-container">
+                <input type="text" id="hackathon-search-input" placeholder="Search by name, theme, location..." />
+                <button id="hackathon-search-button"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div class="add-hackathon-trigger-container">
+                <button id="open-add-hackathon-form-btn" class="suggest-hackathon-btn">
+                    <i class="fas fa-plus-circle"></i> Suggest a New Hackathon
+                </button>
+            </div>
+        </section>
+
+        <section id="current-hackathons">
+            <h2>Upcoming Hackathons</h2>
+            <div id="current-hackathons-list">
+                 <p class="loading">Loading hackathons...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hackathon Details Modal Structure -->
+    <div id="hackathon-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Hackathon Details</h2>
+                <button class="close-modal" id="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Date:</strong> <span id="modal-date">--</span></p>
+                <p><strong>Location:</strong> <span id="modal-location">--</span></p>
+                <p><strong>Theme:</strong> <span id="modal-theme">--</span></p>
+                <p><strong>Prize Pool:</strong> <span id="modal-prize">--</span></p>
+                <p><strong>Description:</strong></p>
+                <p id="modal-description" style="white-space: pre-wrap;">--</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modal-register-btn" class="modal-register-btn" target="_blank" rel="noopener noreferrer">Visit Website / Register</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Hackathon Modal -->
+    <div id="add-hackathon-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Suggest a New Hackathon</h2>
+                <button class="close-modal" id="add-hackathon-modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="hackathon-form">
+                    <div>
+                        <label for="hackathon-name-input">Hackathon Name *</label>
+                        <input type="text" id="hackathon-name-input" placeholder="Hackathon Name" required />
+                    </div>
+                    <div>
+                        <label for="hackathon-location-input">Location</label>
+                        <input type="text" id="hackathon-location-input" placeholder="Location (e.g., Online, City)" />
+                    </div>
+                    <div>
+                        <label for="hackathon-date-input">Date</label>
+                        <input type="date" id="hackathon-date-input" title="Date of Hackathon"/>
+                    </div>
+                    <div>
+                        <label for="hackathon-url-input">Registration/Info Link *</label>
+                        <input type="url" id="hackathon-url-input" placeholder="https://example.com/hackathon" required />
+                    </div>
+                    <div>
+                        <label for="hackathon-description-input">Brief Description</label>
+                        <textarea id="hackathon-description-input" placeholder="Brief Description" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label for="hackathon-theme-input">Main Theme</label>
+                        <input type="text" id="hackathon-theme-input" placeholder="e.g., AI, Web3, HealthTech"/>
+                    </div>
+                    <div>
+                        <label for="hackathon-prize-pool-input">Prize Pool</label>
+                        <input type="text" id="hackathon-prize-pool-input" placeholder="e.g., $10,000, Swag"/>
+                    </div>
+                    <button type="submit">Submit Suggestion</button>
+               </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <script>
+// --- Utility: Simple HTML Escaping ---
+function escapeHtml(unsafe) {
+    if (unsafe === null || unsafe === undefined) {
+        return '';
+    }
+    const str = String(unsafe); // Convert to string first
+    return str
+         .replace(/&/g, "&")
+         .replace(/</g, "<")
+         .replace(/>/g, ">")
+         .replace(/"/g, "")
+         .replace(/'/g, "'");
+}
+
+
+// --- Navbar Update Logic (Optional) ---
+async function updateNavbar() {
+    const navProfileLink = document.getElementById('nav-profile-link');
+    if (!navProfileLink) { console.warn("Navbar profile link element not found."); return null; }
+    try {
+        const response = await fetch('/api/users/me');
+        if (!response.ok) { navProfileLink.href = "/login.html"; localStorage.removeItem('username'); return null; }
+        const userData = await response.json();
+        if (userData && userData.username) {
+            navProfileLink.href = `/profile.html?username=${encodeURIComponent(userData.username)}`;
+            localStorage.setItem('username', userData.username); return userData;
+        } else { navProfileLink.href = "/login.html"; localStorage.removeItem('username'); return null; }
+    } catch (error) { console.error("Navbar update error:", error); navProfileLink.href = "/login.html"; localStorage.removeItem('username'); return null; }
+}
+
+// --- Hackathon Page Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Explore Hackathons DOM Loaded.");
+
+    // --- Element References ---
+    const hackathonSearchInput = document.getElementById('hackathon-search-input');
+    const hackathonSearchButton = document.getElementById('hackathon-search-button');
+    const currentHackathonsList = document.getElementById('current-hackathons-list');
+
+    // Details Modal Elements
+    const hackathonDetailsModal = document.getElementById('hackathon-details-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn'); // For details modal
+    const modalTitle = document.getElementById('modal-title');
+    const modalDate = document.getElementById('modal-date');
+    const modalLocation = document.getElementById('modal-location');
+    const modalTheme = document.getElementById('modal-theme');
+    const modalPrize = document.getElementById('modal-prize');
+    const modalDescription = document.getElementById('modal-description');
+    const modalRegisterBtn = document.getElementById('modal-register-btn');
+
+    // Add Hackathon Modal Elements
+    const openAddHackathonFormBtn = document.getElementById('open-add-hackathon-form-btn');
+    const addHackathonModal = document.getElementById('add-hackathon-modal');
+    const addHackathonModalCloseBtn = document.getElementById('add-hackathon-modal-close-btn');
+    const hackathonForm = document.getElementById('hackathon-form'); // The form itself
+
+    // Check if essential elements exist
+    if (!hackathonSearchInput || !hackathonSearchButton || !currentHackathonsList ||
+        !hackathonDetailsModal || !modalCloseBtn || !modalTitle ||
+        !openAddHackathonFormBtn || !addHackathonModal || !addHackathonModalCloseBtn || !hackathonForm) {
+         console.error("One or more essential elements for the Hackathon page are missing in the HTML!");
+         if(currentHackathonsList) currentHackathonsList.innerHTML = '<p class="error-message">Page initialization failed. Required elements missing.</p>';
+         return;
+    }
+
+    let allHackathons = [];
+
+    // --- Fetch and Render Hackathons ---
+    async function fetchAndRenderHackathons(searchTerm = '') {
+        console.log("Fetching and rendering hackathons...");
+        currentHackathonsList.innerHTML = '<p class="loading">Loading hackathons...</p>';
+        try {
+            const response = await fetch('/api/hackathons?upcoming_only=true');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch hackathons: ${response.status} - ${errorText}`);
+            }
+            allHackathons = await response.json();
+            if (!Array.isArray(allHackathons)) throw new Error("Invalid data format received for hackathons.");
+            renderHackathons(searchTerm);
+        } catch (error) {
+            console.error('Error fetching hackathons:', error);
+            currentHackathonsList.innerHTML = `<p class="error-message">Failed to load hackathons: ${error.message}</p>`;
+        }
+    }
+
+    function renderHackathons(filterTerm = '') {
+         currentHackathonsList.innerHTML = '';
+         const lowerCaseFilter = filterTerm.toLowerCase().trim();
+
+         const filteredHackathons = lowerCaseFilter
+             ? allHackathons.filter(h => {
+                   if (!h) return false;
+                   const searchableText = `
+                       ${h.name || ''} ${h.location || ''} ${h.theme || ''} ${h.description || ''}
+                   `.toLowerCase();
+                   return searchableText.includes(lowerCaseFilter);
+                })
+             : allHackathons;
+
+         if (filteredHackathons.length === 0) {
+             currentHackathonsList.innerHTML = '<p class="no-data">No hackathons found matching your criteria.</p>';
+             return;
+         }
+
+         filteredHackathons.sort((a, b) => {
+                const dateA = a?.date ? new Date(a.date) : null;
+                const dateB = b?.date ? new Date(b.date) : null;
+                if (dateA === null && dateB === null) return 0;
+                if (dateA === null) return 1;
+                if (dateB === null) return -1;
+                return dateA - dateB;
+            });
+
+         filteredHackathons.forEach(hackathon => {
+             if (!hackathon || !hackathon.id) return;
+
+             const card = document.createElement('div');
+             card.classList.add('hackathon-card');
+             const dateString = hackathon.date ? new Date(hackathon.date + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Date TBD';
+
+             card.innerHTML = `
+                 <div class="hackathon-name">${escapeHtml(hackathon.name)}</div>
+                 ${hackathon.date ? `<div class="hackathon-date"><i class="fas fa-calendar-alt"></i> ${dateString}</div>` : ''}
+                 ${hackathon.location ? `<div class="hackathon-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(hackathon.location)}</div>` : ''}
+                 ${hackathon.theme ? `<div class="hackathon-theme"><i class="fas fa-lightbulb"></i> Theme: ${escapeHtml(hackathon.theme)}</div>` : ''}
+                 ${hackathon.prize_pool ? `<div class="hackathon-prize"><i class="fas fa-trophy"></i> Prize: ${escapeHtml(hackathon.prize_pool)}</div>` : ''}
+                 <div class="hackathon-details-link">
+                      <button class="view-details-btn">View Details</button>
+                 </div>
+             `;
+             card.addEventListener('click', () => showHackathonDetails(hackathon));
+             const detailsButton = card.querySelector('.view-details-btn');
+             if(detailsButton) {
+                 detailsButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showHackathonDetails(hackathon);
+                 });
+             }
+             currentHackathonsList.appendChild(card);
+         });
+     }
+
+    // --- Show Hackathon Details Modal ---
+    function showHackathonDetails(hackathon) {
+        if (!hackathonDetailsModal || !hackathon || !modalTitle) return;
+
+        modalTitle.textContent = escapeHtml(hackathon.name);
+        modalDate.textContent = hackathon.date ? new Date(hackathon.date + 'T00:00:00').toLocaleDateString() : 'Not Specified';
+        modalLocation.textContent = escapeHtml(hackathon.location || 'Not Specified');
+        modalTheme.textContent = escapeHtml(hackathon.theme || 'Not Specified');
+        modalPrize.textContent = escapeHtml(hackathon.prize_pool || 'Not Specified');
+        modalDescription.textContent = escapeHtml(hackathon.description || 'No description provided.');
+
+        if (hackathon.url) {
+             modalRegisterBtn.href = escapeHtml(hackathon.url);
+             modalRegisterBtn.style.display = 'inline-block';
+        } else {
+             modalRegisterBtn.href = '#';
+             modalRegisterBtn.style.display = 'none';
+        }
+        hackathonDetailsModal.style.display = 'flex';
+    }
+
+    // --- Close Details Modal Logic ---
+     function closeDetailsModal() {
+         if (hackathonDetailsModal) hackathonDetailsModal.style.display = 'none';
+     }
+     modalCloseBtn.addEventListener('click', closeDetailsModal);
+     hackathonDetailsModal.addEventListener('click', (event) => {
+         if (event.target === hackathonDetailsModal) closeDetailsModal();
+     });
+
+
+    // --- Add Hackathon Modal Logic ---
+    function openAddHackathonModal() {
+        if (addHackathonModal) addHackathonModal.style.display = 'flex';
+    }
+    function closeAddHackathonModal() {
+        if (addHackathonModal) addHackathonModal.style.display = 'none';
+        if (hackathonForm) hackathonForm.reset(); // Reset form when closing
+    }
+
+    openAddHackathonFormBtn.addEventListener('click', openAddHackathonModal);
+    addHackathonModalCloseBtn.addEventListener('click', closeAddHackathonModal);
+    addHackathonModal.addEventListener('click', (event) => {
+        if (event.target === addHackathonModal) closeAddHackathonModal();
+    });
+
+    // --- Close Modals with Escape Key ---
+     window.addEventListener('keydown', (event) => {
+         if (event.key === 'Escape') {
+             if (hackathonDetailsModal.style.display === 'flex') {
+                 closeDetailsModal();
+             }
+             if (addHackathonModal.style.display === 'flex') {
+                 closeAddHackathonModal();
+             }
+         }
+     });
+
+    // --- Handle Hackathon Submission ---
+    hackathonForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitButton = this.querySelector('button[type="submit"]');
+        if(!submitButton) return;
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        const hackathonData = {
+            name: document.getElementById('hackathon-name-input')?.value.trim() || '',
+            location: document.getElementById('hackathon-location-input')?.value.trim() || null,
+            date: document.getElementById('hackathon-date-input')?.value || null,
+            url: document.getElementById('hackathon-url-input')?.value.trim() || '',
+            description: document.getElementById('hackathon-description-input')?.value.trim() || null,
+            theme: document.getElementById('hackathon-theme-input')?.value.trim() || null,
+            prize_pool: document.getElementById('hackathon-prize-pool-input')?.value.trim() || null,
+        };
+
+        if (!hackathonData.name || !hackathonData.url) {
+             alert("Hackathon Name and Registration/Info Link are required.");
+             submitButton.disabled = false;
+             submitButton.textContent = 'Submit Suggestion';
+             return;
+        }
+        try { new URL(hackathonData.url); } catch (_) {
+             alert("Please enter a valid URL for the Registration/Info Link (e.g., https://...)");
+             submitButton.disabled = false; submitButton.textContent = 'Submit Suggestion'; return;
+         }
+
+        try {
+            const response = await fetch('/api/hackathons', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(hackathonData)
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.detail || `Failed to submit: ${response.statusText}`);
+            }
+            alert('Hackathon submitted for verification. Thank you!');
+            closeAddHackathonModal(); // Close modal and reset form
+        } catch (error) {
+            console.error('Error adding hackathon:', error);
+            alert(`Failed to submit hackathon: ${error.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Suggestion';
+        }
+    });
+
+    // --- Handle Search ---
+    function performSearch() {
+        const searchTerm = hackathonSearchInput.value;
+        renderHackathons(searchTerm);
+    }
+    hackathonSearchButton.addEventListener('click', performSearch);
+    hackathonSearchInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            performSearch();
+        }
+    });
+    let debounceTimer;
+    hackathonSearchInput.addEventListener('input', () => {
+         clearTimeout(debounceTimer);
+         debounceTimer = setTimeout(performSearch, 300);
+     });
+
+    // --- Initial Load ---
+    // updateNavbar(); // Uncomment if dynamic navbar updates based on login are needed on this page
+    fetchAndRenderHackathons();
+
+}); // End DOMContentLoaded
+    </script>
+</body>
+</html>

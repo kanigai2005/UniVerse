@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --main-bg: #f4f6f8; --primary-color: #2f4f4f; --secondary-color: #283e4a;
+            --nav-text-color: #e0e0e0; --nav-hover-bg: #486363; --card-bg: white;
+            --card-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            --card-hover-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            --text-primary: #212529; --text-secondary: #6c757d; --button-text: white;
+            --success-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107;
+            --info-color: #007bff; --input-border: #ced4da; --avatar-bg: #e9ecef;
+            --avatar-text: #495057; --inactive-color: #757575;
+            --activate-btn-bg: #5cb85c;
+            --deactivate-btn-bg: var(--warning-color); /* Standard Deactivate */
+            --delete-btn-bg: var(--danger-color);    /* "Remove User" / "Strong Deactivate" */
+        }
+        body { font-family: 'Montserrat', sans-serif; margin: 0; background-color: var(--main-bg); padding-top: 70px; padding-bottom: 20px; color: var(--text-primary); line-height: 1.5; font-size: 14px; }
+        nav.top-nav { position: fixed; top: 0; left: 0; width: 100%; background: var(--secondary-color); padding: 0 1rem; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; height: 60px; box-sizing: border-box; }
+        nav.top-nav a { color: var(--nav-text-color); text-decoration: none; font-size: 1.1rem; padding: 0.6rem 0.8rem; border-radius: 6px; transition: background-color 0.2s ease; display: flex; align-items: center; justify-content: center; }
+        nav.top-nav a i { margin-right: 8px; font-size: 1.2em; }
+        nav.top-nav a:hover { background-color: var(--nav-hover-bg); }
+        .page-header { text-align: center; padding: 1.5rem 1rem; background-color: var(--card-bg); margin-bottom: 25px; box-shadow: var(--card-shadow); }
+        .page-header h1 { color: var(--primary-color); margin: 0; font-size: 1.8rem; font-weight: 600; }
+        .page-header h1 i { margin-right: 10px; }
+        .container { width: 95%; max-width: 1200px; margin: 20px auto; padding: 0 15px; box-sizing: border-box; }
+
+        .search-and-filter-bar { background-color: var(--card-bg); padding: 15px 20px; border-radius: 8px; box-shadow: var(--card-shadow); margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;}
+        .search-and-filter-bar input[type="text"] { flex-grow: 1; min-width: 200px; padding: 10px 14px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 0.95em; }
+        .search-and-filter-bar button { padding: 10px 18px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; display: inline-flex; align-items: center; }
+        .search-and-filter-bar button i { margin-right: 6px; }
+        .search-and-filter-bar label { font-weight: 500; color: var(--text-secondary); cursor: pointer;}
+        .search-and-filter-bar input[type="checkbox"] { margin-right: 5px; vertical-align: middle; }
+
+        .section-card { background-color: var(--card-bg); padding: 20px 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: var(--card-shadow); }
+        .section-card h2 { color: var(--primary-color); font-size: 1.35em; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #e9ecef; padding-bottom: 12px; font-weight: 600; display: flex; align-items: center;}
+        .section-card h2 i { margin-right: 10px; }
+        .section-card h2 small { font-size: 0.7em; color: var(--text-secondary); margin-left: 10px; font-weight: 400;}
+        .inactive-candidates-header { color: var(--warning-color) !important; border-bottom-color: var(--warning-color) !important;}
+
+
+        #user-list-container, #inactive-candidates-list-container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 25px;
+        }
+        .user-card {
+            background-color: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; flex-direction: column;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .user-card:hover { transform: translateY(-4px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .user-card-header { display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f2f5; }
+        .avatar-placeholder { width: 50px; height: 50px; min-width: 50px; border-radius: 50%; background-color: var(--avatar-bg); color: var(--avatar-text); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: 600; margin-right: 15px; text-transform: uppercase; }
+        .user-main-info .username { font-weight: 600; font-size: 1.15em; color: var(--primary-color); margin: 0 0 4px 0; word-break: break-all; }
+        .user-main-info .email { font-size: 0.9em; color: var(--text-secondary); word-break: break-all; }
+        .user-details { margin-bottom: 15px; font-size: 0.9em; flex-grow: 1; }
+        .user-details p { margin: 6px 0; color: var(--text-secondary); }
+        .user-details p strong { color: var(--text-primary); font-weight: 500; }
+        .user-details .last-active-date {
+            font-size: 0.8em; color: var(--warning-color); margin-top: 8px;
+            font-style: italic; font-weight: 500; display: block;
+        }
+        .user-flags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .user-flag { font-size: 0.75em; padding: 4px 10px; border-radius: 12px; font-weight: 600; text-transform: capitalize; letter-spacing: 0.5px; }
+        .flag-admin { background-color: #e74c3c20; color: #c0392b; border: 1px solid #e74c3c80;}
+        .flag-alumni { background-color: #3498db20; color: #2980b9; border: 1px solid #3498db80;}
+        .flag-student { background-color: #f1c40f20; color: #f39c12; border: 1px solid #f1c40f80;}
+        .flag-pending { background-color: #95a5a620; color: #7f8c8d; border: 1px solid #95a5a680;}
+        .flag-active { background-color: #28a74520; color: var(--success-color); border: 1px solid #28a74580;}
+        .flag-inactive { background-color: #75757520; color: var(--inactive-color); border: 1px solid #75757580;}
+
+        .action-buttons { margin-top: auto; padding-top: 15px; border-top: 1px solid #f0f2f5; display: flex; flex-wrap: wrap; gap: 10px; }
+        .action-buttons button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; color: white; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; flex-grow: 1; min-width: 100px; transition: opacity 0.2s; }
+        .action-buttons button i { margin-right: 6px; }
+        .action-buttons button:hover:not(:disabled) { opacity: 0.88; }
+        .action-buttons button:disabled { background-color: #ccc !important; cursor: not-allowed; opacity: 0.7; }
+        .approve-student-btn, .approve-alumni-btn { background-color: var(--success-color); }
+        .make-admin-btn { background-color: var(--info-color); }
+        .revoke-admin-btn { background-color: #e67e22; }
+        .deactivate-btn { background-color: var(--deactivate-btn-bg); }
+        .activate-btn { background-color: var(--activate-btn-bg); }
+        .delete-btn { background-color: var(--delete-btn-bg); } /* Using --danger-color */
+
+        .loading, .no-data { text-align: center; padding: 30px; color: var(--text-secondary); font-style: italic; grid-column: 1 / -1; font-size: 1.1em; }
+        .error-message { color: var(--error-color); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/admin-home.html" title="Dashboard"><i class="fas fa-tachometer-alt"></i><span> Dashboard</span></a>
+        <a href="/admin-usermanagement.html" title="Manage Users"><i class="fas fa-users-cog"></i><span> Users</span></a>
+        <a href="/admin-eventmanagement.html" title="Manage Events/Submissions"><i class="fas fa-calendar-check"></i><span> Events</span></a>
+        <a href="/admin-feedback.html" title="Feedback"><i class="fas fa-comments"></i><span> Feedback</span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span> Logout</span></a>
+    </nav>
+
+    <header class="page-header">
+        <h1><i class="fas fa-users-cog"></i> User Management</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-and-filter-bar">
+            <input type="text" id="user-search-input" placeholder="Search by username, email, or profession...">
+            <button id="user-search-button"><i class="fas fa-search"></i> Search</button>
+            <label for="include-inactive-checkbox">
+                <input type="checkbox" id="include-inactive-checkbox"> Show All Deactivated/Inactive
+            </label>
+        </div>
+
+        <section class="section-card" id="inactive-candidates-section">
+            <h2><i class="fas fa-user-clock"></i> Inactive User Candidates <small>(Active, but last seen >90 days)</small></h2>
+            <div id="inactive-candidates-list-container" class="user-grid">
+                <p class="loading">Loading inactive candidates...</p>
+            </div>
+        </section>
+
+        <section class="section-card" id="general-user-list-section">
+            <h2><i class="fas fa-users"></i> User List <small id="user-list-subtitle">(Active & Recent by default)</small></h2>
+            <div id="user-list-container" class="user-grid">
+                <p class="loading">Loading users...</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("Admin User Management JS Loaded - Delete button mapped to Deactivate");
+
+            const userListContainer = document.getElementById('user-list-container');
+            const userListSubtitle = document.getElementById('user-list-subtitle');
+            const inactiveCandidatesListContainer = document.getElementById('inactive-candidates-list-container');
+            const searchInput = document.getElementById('user-search-input');
+            const searchButton = document.getElementById('user-search-button');
+            const includeInactiveCheckbox = document.getElementById('include-inactive-checkbox');
+
+            let loggedInAdminId = null;
+
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') { return unsafe === null || unsafe === undefined ? '' : String(unsafe); }
+                return unsafe.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "").replace(/'/g, "'");
+            }
+
+            async function apiCall(url, method = 'GET', body = null) {
+                const options = { method, headers: {}, credentials: 'include' };
+                if (body && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = JSON.stringify(body);
+                }
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 204) { // Handle 204 No Content for DELETE or some PUTs
+                        return { detail: "Action successful (No Content)." };
+                    }
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        const responseData = await response.json();
+                        if (!response.ok) throw new Error(responseData.detail || `Request failed: ${response.status}`);
+                        return responseData;
+                    } else {
+                        const textResponse = await response.text();
+                        if (!response.ok) throw new Error(textResponse || `Request failed: ${response.status}`);
+                        return { detail: textResponse || "Success but no JSON content" };
+                    }
+                } catch (error) {
+                    console.error(`API Error (${method} ${url}):`, error);
+                    alert(`API Error: ${escapeHtml(error.message)}`);
+                    throw error;
+                }
+            }
+
+            async function fetchCurrentAdminDetails() {
+                try {
+                    const userData = await apiCall('/api/users/me');
+                    if (userData && userData.id && userData.is_admin === true) {
+                        loggedInAdminId = userData.id;
+                        console.log("Current admin ID:", loggedInAdminId);
+                        return true;
+                    } else {
+                        alert("Authentication error or you are not an admin. Redirecting to login.");
+                        window.location.href = "/"; // Adjust to your login page
+                        return false;
+                    }
+                } catch (error) {
+                    console.error("Error fetching admin details during init:", error);
+                    window.location.href = "/"; // Adjust to your login page
+                    return false;
+                }
+            }
+
+            function renderUserCard(user, isForInactiveList = false) {
+                const card = document.createElement('div');
+                card.classList.add('user-card');
+                card.dataset.userId = user.id;
+                const initials = user.username ? user.username.substring(0, 2).toUpperCase() : '??';
+
+                let flagsHtml = '<div class="user-flags">';
+                if (user.is_admin) flagsHtml += '<span class="user-flag flag-admin">Admin</span>';
+                if (user.is_alumni) flagsHtml += '<span class="user-flag flag-alumni">Alumni</span>';
+                if (user.is_student) flagsHtml += '<span class="user-flag flag-student">Student</span>';
+                if (user.hasOwnProperty('is_active')) {
+                    flagsHtml += user.is_active ? '<span class="user-flag flag-active">Active</span>' : '<span class="user-flag flag-inactive">Deactivated</span>';
+                } else {
+                    flagsHtml += '<span class="user-flag flag-pending">Status Unknown</span>';
+                }
+                if (user.is_active && !user.is_admin && !user.is_alumni && !user.is_student) {
+                     flagsHtml += '<span class="user-flag flag-pending">Needs Role</span>';
+                }
+                flagsHtml += '</div>';
+
+                let lastActiveHtml = '';
+                if (isForInactiveList && user.last_active) {
+                    const lastActiveDate = new Date(user.last_active).toLocaleDateString();
+                    lastActiveHtml = `<span class="last-active-date">Last Active: ${lastActiveDate}</span>`;
+                } else if (isForInactiveList) {
+                    lastActiveHtml = `<span class="last-active-date">Last Active: Unknown/Never</span>`;
+                }
+
+                let actionButtonsHtml = '';
+                // Approve as student/alumni buttons
+                if (user.is_active && !user.is_admin && !user.is_student && !user.is_alumni) {
+                    actionButtonsHtml += `<button class="approve-student-btn" title="Approve as Student"><i class="fas fa-user-graduate"></i> Student</button>`;
+                    actionButtonsHtml += `<button class="approve-alumni-btn" title="Approve as Alumni"><i class="fas fa-user-tie"></i> Alumni</button>`;
+                }
+
+                if (loggedInAdminId !== user.id) { // Logged-in admin cannot modify their own core status/roles here
+                    // Admin role buttons
+                    if (!user.is_admin && user.is_active) {
+                        actionButtonsHtml += `<button class="make-admin-btn" title="Make Admin"><i class="fas fa-user-shield"></i> Make Admin</button>`;
+                    } else if (user.is_admin) {
+                        actionButtonsHtml += `<button class="revoke-admin-btn" title="Revoke Admin Role"><i class="fas fa-user-shield"></i> Revoke Admin</button>`;
+                    }
+
+                    // Activate/Deactivate buttons
+                    if (user.is_active) {
+                        // Standard Deactivate button (soft delete)
+                        actionButtonsHtml += `<button class="deactivate-btn" title="Deactivate User"><i class="fas fa-user-slash"></i> Deactivate</button>`;
+                        
+                        // "Remove User" button - THIS WILL ALSO PERFORM A SOFT DELETE (DEACTIVATE)
+                        // It's styled differently for a stronger visual cue if needed.
+                        // Show for active, non-admin users who are not the admin themselves
+                        if (!user.is_admin) { 
+                             actionButtonsHtml += `<button class="delete-btn" title="Remove User (Deactivates Account)"><i class="fas fa-user-times"></i> Remove User</button>`;
+                        }
+                    } else { // User is currently inactive
+                        actionButtonsHtml += `<button class="activate-btn" title="Activate User"><i class="fas fa-user-check"></i> Activate</button>`;
+                        // If you wanted a *true* permanent delete, it would go here,
+                        // typically for users who are ALREADY inactive AND not admins.
+                        // This requires a backend DELETE /api/admin/users/{user_id} endpoint.
+                        // Example (if backend DELETE endpoint exists):
+                        // if (!user.is_admin) {
+                        //      actionButtonsHtml += `<button class="permanent-delete-btn" title="Permanently Delete User from Database"><i class="fas fa-trash-alt"></i> Delete Permanently</button>`;
+                        // }
+                    }
+                }
+
+
+                card.innerHTML = `
+                    <div class="user-card-header">
+                        <div class="avatar-placeholder">${initials}</div>
+                        <div class="user-main-info">
+                            <p class="username">${escapeHtml(user.username)} (ID: ${user.id})</p>
+                            <p class="email">${escapeHtml(user.email)}</p>
+                        </div>
+                    </div>
+                    <div class="user-details">
+                        ${flagsHtml}
+                        <p><strong>Department:</strong> ${escapeHtml(user.department || 'N/A')}</p>
+                        <p><strong>Profession:</strong> ${escapeHtml(user.profession || 'N/A')}</p>
+                        ${lastActiveHtml}
+                    </div>
+                    <div class="action-buttons">
+                        ${actionButtonsHtml}
+                    </div>
+                `;
+
+                card.querySelectorAll('.action-buttons button').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const userId = user.id; // User from closure
+                        const originalBtnHtml = btn.innerHTML;
+                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                        let successMessage = 'Action successful!';
+                        let actionWasCancelled = false;
+
+                        try {
+                            if (btn.classList.contains('approve-student-btn')) {
+                                await apiCall(`/api/admin/users/${userId}/status`, 'PUT', { is_student: true, is_alumni: false });
+                                successMessage = `${user.username} approved as Student.`;
+                            } else if (btn.classList.contains('approve-alumni-btn')) {
+                                await apiCall(`/api/admin/users/${userId}/status`, 'PUT', { is_alumni: true, is_student: false });
+                                successMessage = `${user.username} approved as Alumni.`;
+                            } else if (btn.classList.contains('make-admin-btn')) {
+                                await apiCall(`/api/admin/users/${userId}/role`, 'PUT', { is_admin: true });
+                                successMessage = `${user.username} is now an Admin.`;
+                            } else if (btn.classList.contains('revoke-admin-btn')) {
+                                await apiCall(`/api/admin/users/${userId}/role`, 'PUT', { is_admin: false });
+                                successMessage = `Admin role revoked for ${user.username}.`;
+                            } else if (btn.classList.contains('deactivate-btn')) { // Standard Deactivate
+                                if (confirm(`DEACTIVATE: Are you sure you want to deactivate user ${user.username}? Their roles will be removed.`)) {
+                                    await apiCall(`/api/admin/users/${userId}/activity`, 'PUT', { is_active: false });
+                                    successMessage = `${user.username} has been deactivated.`;
+                                } else { successMessage = 'Deactivation cancelled.'; actionWasCancelled = true; }
+                            } else if (btn.classList.contains('activate-btn')) {
+                                await apiCall(`/api/admin/users/${userId}/activity`, 'PUT', { is_active: true });
+                                successMessage = `${user.username} has been activated.`;
+                            } else if (btn.classList.contains('delete-btn')) { // "Remove User" button (Soft Delete)
+                                if (confirm(`REMOVE USER: Are you sure you want to remove (deactivate) user ${user.username}? This will mark them as inactive and remove their roles.`)) {
+                                    if (confirm(`FINAL CONFIRMATION: Deactivate ${user.username}? They can be reactivated later.`)) {
+                                        await apiCall(`/api/admin/users/${userId}/activity`, 'PUT', { is_active: false });
+                                        successMessage = `${user.username} has been removed (deactivated).`;
+                                    } else { successMessage = 'Removal (deactivation) cancelled.'; actionWasCancelled = true;}
+                                } else { successMessage = 'Removal (deactivation) cancelled.'; actionWasCancelled = true;}
+                            }
+                            // NO HARD DELETE API CALL HERE
+                            
+                            if (!actionWasCancelled) { // Only alert and refresh if action was not cancelled
+                                alert(successMessage);
+                                await loadUsers(searchInput.value.trim(), includeInactiveCheckbox.checked);
+                                await loadInactiveCandidates();
+                            } else {
+                                alert(successMessage); // Still alert about cancellation
+                            }
+                        } catch (error) {
+                            console.error("Error during button action:", error);
+                            // apiCall should have already alerted the error
+                        } finally {
+                            // Always restore button's original HTML and enabled state
+                            btn.disabled = false; btn.innerHTML = originalBtnHtml;
+                        }
+                    });
+                });
+                return card;
+            }
+
+            async function loadUsers(searchTerm = '', showInactive = false) {
+                if (!userListContainer) return;
+                userListContainer.innerHTML = '<p class="loading">Loading users...</p>';
+                if (userListSubtitle) {
+                    let subtitleText = "";
+                    if (searchTerm) subtitleText += `Searching for "${escapeHtml(searchTerm)}"`;
+                    if (showInactive) subtitleText += (searchTerm ? " (including all deactivated/inactive)" : "(All Users, including deactivated/inactive)");
+                    else subtitleText += (searchTerm ? " (active only)" : "(Active & Recent by default)");
+                    userListSubtitle.textContent = subtitleText;
+                }
+                try {
+                    let url = `/api/admin/users?limit=100&include_inactive=${showInactive}`;
+                    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+                    
+                    const users = await apiCall(url);
+                    userListContainer.innerHTML = '';
+                    if (Array.isArray(users) && users.length === 0) {
+                        userListContainer.innerHTML = `<p class="no-data">No users ${searchTerm ? 'found matching "' + escapeHtml(searchTerm) + '"' : (showInactive ? 'found' : 'found based on current filters')}.</p>`;
+                    } else if (Array.isArray(users)) {
+                        users.forEach(user => userListContainer.appendChild(renderUserCard(user, false)));
+                    } else {
+                        userListContainer.innerHTML = '<p class="error-message">Error: Invalid data received for users.</p>';
+                    }
+                } catch (error) {
+                    userListContainer.innerHTML = `<p class="error-message">Could not load users: ${escapeHtml(error.message)}</p>`;
+                }
+            }
+
+            async function loadInactiveCandidates() {
+                if (!inactiveCandidatesListContainer) return;
+                inactiveCandidatesListContainer.innerHTML = '<p class="loading">Loading inactive candidates...</p>';
+                try {
+                    const users = await apiCall(`/api/admin/users/inactive-candidates`);
+                    inactiveCandidatesListContainer.innerHTML = '';
+                    if (Array.isArray(users) && users.length === 0) {
+                        inactiveCandidatesListContainer.innerHTML = `<p class="no-data">No active users found inactive for more than 90 days.</p>`;
+                    } else if (Array.isArray(users)) {
+                        users.forEach(user => inactiveCandidatesListContainer.appendChild(renderUserCard(user, true)));
+                    } else {
+                        inactiveCandidatesListContainer.innerHTML = '<p class="error-message">Error: Invalid data received for inactive candidates.</p>';
+                    }
+                } catch (error) {
+                    inactiveCandidatesListContainer.innerHTML = `<p class="error-message">Could not load inactive candidates: ${escapeHtml(error.message)}</p>`;
+                }
+            }
+
+            if(searchButton) searchButton.addEventListener('click', () => loadUsers(searchInput.value.trim(), includeInactiveCheckbox.checked));
+            if(searchInput) searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); loadUsers(searchInput.value.trim(), includeInactiveCheckbox.checked); }
+            });
+            if(includeInactiveCheckbox) includeInactiveCheckbox.addEventListener('change', () => {
+                loadUsers(searchInput.value.trim(), includeInactiveCheckbox.checked);
+            });
+
+            async function initializePage() {
+                const isAdmin = await fetchCurrentAdminDetails();
+                if (isAdmin) {
+                    loadUsers("", includeInactiveCheckbox.checked);
+                    loadInactiveCandidates();
+                } else {
+                    if (userListContainer) userListContainer.innerHTML = '<p class="error-message">Admin authorization failed. Please log in again.</p>';
+                    if (inactiveCandidatesListContainer) inactiveCandidatesListContainer.innerHTML = '';
+                }
+            }
+            initializePage();
+        });
+    </script>
+</body>
+</html>

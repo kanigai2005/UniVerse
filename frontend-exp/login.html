@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVerse - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --base-color: #1b6379; /* Dark Teal - Main Accent for Login */
+            --base-color-darker: #124e63; /* For button hover */
+            --base-color-lighter-accent: #50c1d8; /* Lighter accent for logo border or secondary elements */
+
+            --body-bg: #e0e7e9; /* Very light teal/gray for page background */
+            --login-box-bg: #ffffff; /* Box background is white */
+
+            --text-primary-dark: #212529; /* For main text on light backgrounds */
+            --text-secondary-dark: #6c757d; /* For muted text on light backgrounds */
+            --text-on-dark-button: #ffffff; /* Text for dark buttons (like the login button) */
+
+            --input-bg-light: #f8f9fa;
+            --input-text-dark: #495057;
+            --input-border-light: #ced4da;
+            --input-focus-border: var(--base-color);
+            --input-focus-shadow: rgba(27, 99, 121, 0.25); /* Shadow using base color's RGB */
+            
+            --link-color-themed: var(--base-color);
+            --link-hover-darker: var(--base-color-darker);
+
+            --error-color: #dc3545;
+            --error-bg-light: rgba(220, 53, 69, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--text-primary-dark);
+        }
+
+        .login-container {
+            background: var(--login-box-bg); /* WHITE BACKGROUND FOR THE BOX */
+            padding: 40px 35px;
+            border-radius: 15px;
+            text-align: center;
+            width: 360px;
+            max-width: 90%; /* Responsive */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            align-self: center;
+            object-fit: cover;
+            border: 3px solid var(--base-color-lighter-accent); /* Lighter teal border for logo */
+        }
+
+        h1 { /* UniVerse Title */
+            margin-bottom: 5px;
+            font-size: 2.8em;
+            margin-top: 0;
+            color: var(--base-color); /* THEMED COLOR FOR "UniVerse" */
+            font-weight: 700;
+        }
+
+        h2 { /* Login Subtitle */
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            margin-top: 0;
+            color: var(--text-secondary-dark); /* MUTED DARK TEXT FOR SUBTITLE */
+            font-weight: 400;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background-color: var(--error-bg-light);
+            border: 1px solid var(--error-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-align: left; /* Align error text left */
+        }
+
+        .login-form {
+            width: 100%;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border-light);
+            background-color: var(--input-bg-light);
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            color: var(--input-text-dark);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-field::placeholder {
+            color: #999;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px var(--input-focus-shadow);
+        }
+
+        .button-container {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--base-color); /* SOLID THEMED BACKGROUND FOR LOGIN BUTTON */
+            color: var(--text-on-dark-button); /* WHITE TEXT ON BUTTON */
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .login-btn:hover {
+            background-color: var(--base-color-darker); /* DARKER SHADE ON HOVER */
+            transform: translateY(-1px);
+        }
+        .login-btn:active {
+            transform: translateY(0px);
+        }
+
+        .links-container {
+            margin-top: 25px;
+        }
+
+        .link, .forgot-link {
+            display: block;
+            margin-top: 12px;
+            color: var(--link-color-themed); /* THEMED LINK COLOR */
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: color 0.3s ease;
+        }
+
+        .link:hover, .forgot-link:hover {
+            text-decoration: underline;
+            color: var(--link-hover-darker); /* DARKER THEMED LINK ON HOVER */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="https://i.pinimg.com/736x/e6/09/14/e609140846332f50c5593fb3b46e5b8b.jpg" alt="UniVerse Logo" class="logo">
+        <h1>UniVerse</h1>
+        <h2>Welcome Back!</h2>
+
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" action="/login" class="login-form">
+            <input type="text" name="username" class="input-field" placeholder="Username or Email" required>
+            <input type="password" name="password" class="input-field" placeholder="Password" required>
+            <div class="button-container">
+                <button type="submit" class="login-btn">Login</button>
+            </div>
+        </form>
+
+        <div class="links-container">
+            <a href="/register" class="link">Create an Account</a>
+        </div>
+    </div>
+</body>
+</html>

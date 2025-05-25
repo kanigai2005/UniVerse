@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - UniVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Light Theme */
+        :root {
+            --bg-light: #f4f6f8;
+            --nav-bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-hover-bg: #f0f0f0;
+            --text-dark: #212529;
+            --text-muted: #6c757d;
+            --primary-color: #007bff;
+            --primary-color-darker: #0056b3;
+            --link-hover: #0056b3;
+            --border-light: #dee2e6;
+            --button-bg: var(--primary-color);
+            --button-text: #ffffff;
+            --button-hover-bg: var(--primary-color-darker);
+            --navbar-link-color: #495057;
+            --navbar-link-hover-color: var(--primary-color);
+            --navbar-link-hover-bg: #e9ecef;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-top: 60px; /* Space for fixed navbar */
+            padding-bottom: 50px; /* Space for fixed footer */
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #23495a; /* Your desired navbar color */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .navbar a {
+            color: #e0e0e0; /* Light text for dark navbar */
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Increased gap for icon and text */
+        }
+         .navbar a i {
+             font-size: 1.2em; /* Slightly larger icons */
+         }
+         .navbar a span {
+             display: inline-block;
+         }
+
+        .navbar a:hover {
+            background-color: #365f73; /* Slightly lighter shade for hover on dark navbar */
+            color: #ffffff;
+        }
+
+        /* Main Content Area */
+        main {
+            flex-grow: 1;
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        header h1 .fa-trophy { /* Style for trophy icons */
+            margin: 0 10px;
+            color: #ffc107; /* Gold color for trophies */
+        }
+
+
+        /* Leaderboard Section */
+        #leaderboard {
+             background-color: var(--card-bg);
+             padding: 25px;
+             border-radius: 8px;
+             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        #leaderboard h2 {
+            font-size: 1.8em;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 10px;
+        }
+
+        #leaderboard-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #leaderboard-list li {
+            background: #f8f9fa;
+            margin: 10px 0;
+            padding: 15px 20px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            cursor: pointer; /* Make entire list item indicate clickability */
+        }
+
+        #leaderboard-list li:hover {
+             background-color: var(--card-hover-bg);
+             transform: translateY(-2px); /* Slight lift on hover */
+        }
+
+        .leaderboard-item-details {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            gap: 15px;
+        }
+
+        .leader-rank {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--text-muted);
+            min-width: 35px; /* Ensure rank aligns */
+            text-align: right;
+            padding-right: 5px;
+        }
+
+        .leader-info {
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .leader-name {
+            font-size: 1.15em; /* Slightly larger name */
+            font-weight: 600;
+            margin-bottom: 4px; /* More space below name */
+            color: var(--primary-color);
+            /* cursor: pointer; No need, whole li is clickable */
+        }
+         /* No separate hover for name, as li handles it */
+
+        .leader-details {
+            font-size: 0.9em; /* Slightly larger details */
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+        .leader-details span { margin-right: 10px; }
+        .leader-details span:last-child { margin-right: 0; }
+
+
+        .score-section {
+            text-align: right;
+            min-width: 130px; /* Adjusted for better alignment */
+            margin-left: 15px;
+            display: flex;
+            flex-direction: column; /* Stack scores vertically */
+            align-items: flex-end; /* Align to the right */
+        }
+
+        .gem-count {
+            font-size: 1.2em; /* More prominent gems */
+            color: #E67E22; /* A more distinct orange for gems */
+            font-weight: bold;
+            display: flex; /* For icon alignment */
+            align-items: center;
+            gap: 5px; /* Space between number and icon */
+            margin-bottom: 5px; /* Space between gem and activity */
+        }
+         .gem-count .fa-gem {
+             font-size: 0.9em; /* Adjust icon size relative to text */
+         }
+
+         .activity-score {
+            font-size: 0.95em; /* Slightly larger activity score */
+            color: var(--text-muted);
+            font-weight: 500; /* Slightly bolder */
+         }
+
+        .sort-controls {
+             text-align: center;
+             margin-bottom: 25px; /* More space */
+        }
+        .sort-controls button {
+            margin: 0 8px; /* More space between buttons */
+            padding: 8px 15px; /* Larger buttons */
+            font-size: 0.95em;
+            cursor: pointer;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            color: var(--text-dark);
+            border-radius: 5px; /* Softer radius */
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+         .sort-controls button.active {
+             background-color: var(--button-bg);
+             color: var(--button-text);
+             border-color: var(--button-bg);
+             font-weight: bold;
+             box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+         }
+         .sort-controls button:hover:not(.active) {
+              background-color: #d8dfe4;
+              border-color: #adb5bd;
+         }
+         .sort-indicator {
+             display: inline-block;
+             margin-left: 5px; /* More space for indicator */
+             font-size: 0.85em;
+             width: 1em; /* Ensure space for arrow */
+         }
+
+        /* Footer Styles */
+        .footer {
+            background-color: #e9ecef;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9em;
+            border-top: 1px solid var(--border-light);
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        /* Loading/Error/No-Data */
+        .loading, .error-message, .no-data {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .error-message { color: #dc3545; }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 700px) {
+            .navbar a span { display: none; }
+            .navbar a i { font-size: 1.3em; }
+            .navbar { justify-content: space-evenly;}
+
+            main { width: 100%; padding: 10px; box-sizing: border-box; margin-top: 10px;}
+            #leaderboard { padding: 15px; }
+            #leaderboard h2 { font-size: 1.5em; }
+            #leaderboard-list li {
+                flex-direction: row; /* Keep horizontal on small screens for leaderboard items */
+                align-items: center; /* Align items nicely */
+                padding: 12px 15px; /* Adjust padding */
+            }
+            .leaderboard-item-details {
+                gap: 10px;
+                /* flex-grow: 1; already there */
+            }
+             .leader-info {
+                 /* Allow info to shrink if score section needs space */
+                 min-width: 0;
+             }
+            .leader-name {
+                font-size: 1em;
+            }
+            .leader-details {
+                font-size: 0.8em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 150px; /* Prevent overly long details from breaking layout */
+            }
+            .score-section {
+                text-align: right;
+                margin-left: 10px; /* Keep some space */
+                min-width: 80px; /* Adjust min-width for scores */
+            }
+            .gem-count { font-size: 1em; }
+            .activity-score { font-size: 0.85em;}
+
+            .sort-controls button { font-size: 0.85em; padding: 5px 8px; margin: 0 3px; }
+        }
+         @media (max-width: 480px) {
+             #leaderboard-list li {
+                 padding: 10px;
+             }
+             .leader-rank { font-size: 1em; min-width: 25px; }
+             .leaderboard-item-details { gap: 8px; }
+             .leader-name { font-size: 0.95em; }
+             .leader-details { max-width: 100px; } /* Further restrict on very small screens */
+             .score-section { min-width: 70px; }
+             .gem-count, .activity-score { font-size: 0.8em; }
+         }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="home.html" title="Home"><i class="fas fa-home"></i><span></span></a>
+        <a href="explore.html" title="Explore"><i class="fas fa-compass"></i><span></span></a>
+        <a href="notifications.html" title="Notifications"><i class="fas fa-bell"></i><span></span></a>
+        <a href="help.html" title="Help"><i class="fas fa-question-circle"></i><span></span></a>
+        <a href="profile.html" id="nav-profile-link" title="Profile"><i class="fas fa-user"></i><span></span></a>
+        <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i><span></span></a>
+    </nav>
+
+    <main>
+        <header>
+            <h1><i class="fas fa-trophy"></i> Leaderboard <i class="fas fa-trophy"></i></h1>
+        </header>
+
+        <section id="leaderboard">
+            <h2>Top Alumni Contributors</h2>
+            <div class="sort-controls">
+                Sort by:
+                <button id="sort-gems" data-sortkey="alumni_gems">Alumni Gems <span class="sort-indicator"></span></button>
+                
+                <button id="sort-name" data-sortkey="username">Name <span class="sort-indicator"></span></button>
+            </div>
+            <ul id="leaderboard-list">
+                <p class="loading">Loading leaderboard...</p>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="footer">
+        © 2025 UniVerse. All rights reserved.
+    </footer>
+
+    <script src="/static/leaderboard.js"></script>
+</body>
+</html>
