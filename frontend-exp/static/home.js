@@ -229,7 +229,50 @@ fetch('/api/features')
             featuresContainer.innerHTML = `<p>Failed to load features.</p>`;
         }
     });
+ 
+        // Basic navigation function, can be expanded
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+        // Placeholder for navigating to a specific item (if cards become links)
+        function navigateToItem(itemId) {
+            if (itemId && itemId !== '#') {
+                console.log("Navigate to item: " + itemId);
+                // window.location.href = `/item/${itemId}`; // Example navigation
+            } else {
+                console.log("Card clicked, no specific item ID provided.");
+            }
+        }
 
+        // You would typically load dynamic content via JavaScript here
+        // For example, fetching events for #eventList or features for #featuresContainer
+        document.addEventListener('DOMContentLoaded', () => {
+            // Example: If you were fetching daily spark content
+            const dailySparkContentDiv = document.getElementById('dailySparkContent');
+            if (dailySparkContentDiv) {
+                // Replace with actual API call if needed
+                // For now, just updating the placeholder text slightly
+                // dailySparkContentDiv.innerHTML = "<p>Today's insightful question or tip will appear here!</p>";
+            }
+
+            // Example: If you were fetching features for .features container
+            const featuresContainer = document.getElementById('featuresContainer');
+            if (featuresContainer.children.length === 0) { // Only add if empty (e.g. if not hardcoded)
+                // Add features dynamically if needed
+            }
+
+            // Add click listeners to features if they were not hardcoded with onclick
+            document.querySelectorAll('.feature').forEach(feature => {
+                feature.addEventListener('click', () => {
+                    const title = feature.querySelector('h3').textContent.toLowerCase();
+                    if (title === 'profile') navigateTo('/user/profile.html');
+                    else if (title === 'connections') navigateTo('connections.html'); // Adjust URL as needed
+                    else if (title === 'jobs') navigateTo('jobs.html'); // Adjust URL as needed
+                    else if (title === 'events') navigateTo('events.html'); // Adjust URL as needed
+                    // Add more conditions for other features
+                });
+            });
+        });
 // Example of how you might trigger viewSearchHistory (you'll need a button in your HTML)
 // document.addEventListener('DOMContentLoaded', () => {
 //     const viewHistoryButton = document.getElementById('viewSearchHistoryButton');
