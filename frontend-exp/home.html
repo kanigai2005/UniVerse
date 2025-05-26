@@ -75,8 +75,6 @@
             color: #555;
         }
 
-        /* REMOVED SEARCH BAR STYLES */
-
         .todays-feed {
             background-color: #f9f9f9;
             padding: 1.5rem;
@@ -95,13 +93,15 @@
             font-weight: 600;
         }
 
-        .todays-feed p { /* Assuming daily spark content might have <p> */
+        .todays-feed #dailySparkContent { /* Target the div directly */
             color: #555;
             font-size: 0.9rem;
             margin-bottom: 0;
             flex-grow: 1;
             padding-right: 1rem;
+            cursor: pointer; /* Make the text area look clickable */
         }
+
 
         .view-daily-spark-btn {
             background-color: #0a66c2;
@@ -162,17 +162,28 @@
             background-color: white;
             min-width: 220px;
             max-width: 280px; /* Control max width for consistency */
-            padding: 1.2rem;
+            padding: 0; /* Remove padding if <a> tag takes over */
             border-radius: 8px;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.07); /* Slightly enhanced shadow */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer; /* Assuming cards are clickable */
             margin-right: 0.5rem; /* Consistent spacing */
             flex-shrink: 0; /* Prevent shrinking before scroll activates */
-            display: flex;
-            flex-direction: column; /* Align content vertically */
-            justify-content: space-between; /* Distribute space if content height varies */
+            display: flex; /* Needed if <a> is block and needs to contain flex items */
+            flex-direction: column; 
         }
+
+
+        .event-card > a, .featured-card > a { /* Style the direct <a> child */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.2rem; /* Add padding to the <a> tag */
+            height: 100%;
+            text-decoration: none; /* Remove underline */
+            color: inherit; /* Inherit color for base text */
+        }
+
 
         .event-card:last-child, .featured-card:last-child {
             margin-right: 0;
@@ -188,6 +199,7 @@
             margin-bottom: 0.5rem;
             font-size: 1.05rem; /* Slightly larger title */
             font-weight: 600;
+            /* color will be set by specific rules below or inherited */
         }
         .event-card h3 { color: #0a66c2; }
         .featured-card h3 { color: #135e3b; } /* Specific color for featured card titles */
@@ -209,13 +221,25 @@
 
         .feature {
             background-color: white;
-            padding: 1.5rem; /* Increased padding */
+            padding: 0; /* Remove padding if <a> takes over */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
             text-align: center; /* Center feature content */
         }
+
+        .feature > a { /* Style the direct <a> child */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem; /* Add padding to the <a> tag */
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+
 
         .feature:hover {
             transform: translateY(-5px);
@@ -249,6 +273,29 @@
             font-size: 0.9rem;
             margin-top: auto; /* Push footer to bottom */
         }
+
+        /* CSS ADDITION FOR NON-UNDERLINED LINKS IN CARDS */
+        .featured-card a, .feature a {
+            text-decoration: none; /* Remove underline */
+            color: inherit;        /* Inherit color from parent (h3, p) */
+            /* display: block; Make the entire card area clickable if the link wraps everything */
+            /* height: 100%; Ensure link fills the card if it's the sole wrapper */
+        }
+
+        /* Ensure text elements within links keep their specific styles and no underline */
+        .featured-card a h3, .featured-card a p,
+        .feature a h3, .feature a p, .feature a i {
+            text-decoration: none !important; /* Force no underline */
+            /* color: inherit; Re-evaluate if specific colors are needed or if inherit is fine */
+        }
+        /* Re-apply specific colors if `color: inherit` on the <a> tag overrides them */
+        .featured-card a h3 { color: #135e3b; }
+        .featured-card a p { color: #555; }
+        .feature a i { color: #0a66c2; }
+        .feature a h3 { color: #2c3e50; }
+        .feature a p { color: #666; }
+
+
     </style>
 </head>
 <body>
@@ -267,86 +314,91 @@
             <p>Connect, collaborate, and grow with our vibrant community.</p>
         </div>
 
-        <!-- SEARCH BAR AND HISTORY REMOVED -->
-
         <div class="todays-feed" id="todaysFeedContainer">
             <h2>Today's Spark</h2>
-            <div id="dailySparkContent">
-                <!-- Content for daily spark will be loaded here by JS -->
-                <p>Click here to explore Daily spark...</p>
+            <div id="dailySparkContent" onclick="navigateTo('dailyspark.html')">
+                <p>Click here to explore Daily Spark...</p>
             </div>
             <button class="view-daily-spark-btn" onclick="navigateTo('dailyspark.html')">View Spark</button>
         </div>
 
-        
-
-        <!-- NEW SECTION FOR 10 FLEX BOXES -->
         <div class="featured-opportunities-section" id="featuredOpportunitiesContainer">
             <h2>Featured Opportunities & Insights</h2>
             <div class="featured-list-container" id="featuredList">
-                <div class="featured-card" >
-                    <a href="https://www.datacamp.com/blog/top-ai-conferences"></a>
-                    <h3>AI Workshop</h3>
-                    <p>Explore the fundamentals of AI and machine learning in this hands-on workshop.</p>
-                </div>
-                <div class="featured-card" >
-                    <a href="https://startup.google.com/programs/startup-school/">
-                    <h3>Startup Pitch Night</h3>
-                    <p>Present your innovative business ideas to a panel of investors and mentors.</p></a>
-                </div>
-                <div class="https://azure.microsoft.com/en-us/resources/cloud-computing-dictionary/what-is-cloud-computing#:~:text=Cloud%20computing%20is%20the%20delivery,resources%2C%20and%20economies%20of%20scale." onclick="navigateToItem('#')">
-                    <h3>Cloud Computing Trends</h3>
-                    <p>A deep dive into the latest advancements in cloud services and serverless architecture.</p>
-                </div>
-                <div class="featured-card" >
-                    <a href="https://umbrella.cisco.com/info/cyber-threat-trends-report?utm_medium=search-paid&utm_source=g+google&utm_campaign=UMB_APJC_IN_EN_GS_Nonbrand_Security_T1&utm_content=DNS-FY24-Q4-Content-Ebook-Cyber-Threat-Trends-Report&_bt=712318013921&_bk=cyber%20security&_bm=p&_bn=g&_bg=161647967241&gad_source=1&gad_campaignid=20970546943&gbraid=0AAAAAB9mQgzfDugNKHz9w9lsRbGcTV7Ab&gclid=Cj0KCQjwotDBBhCQARIsAG5pinOmQy0B8NA9W-Ov_wppK73CulEfnUuqykdUijQJ09pT11HrgSm7YkYaAoG9EALw_wcB">
-                    <h3>Cybersecurity Seminar</h3>
-                    <p>Learn essential strategies to protect digital assets from modern cyber threats.</p></a>
+                <div class="featured-card">
+                    <a href="https://www.datacamp.com/blog/top-ai-conferences" target="_blank" rel="noopener noreferrer">
+                        <h3>AI Workshop</h3>
+                        <p>Explore the fundamentals of AI and machine learning in this hands-on workshop.</p>
+                    </a>
                 </div>
                 <div class="featured-card">
-                    <a href="https://pll.harvard.edu/course/data-science-visualization">
-                    <h3>Data Visualization Challenge</h3>
-                    <p>Turn complex datasets into compelling and insightful visual stories. Prizes to be won!</p></a>
+                    <a href="https://www.startupindia.gov.in/content/sih/en/reources/online-courses.html" target="_blank" rel="noopener noreferrer">
+                        <h3>Startup Pitch Night</h3>
+                        <p>Present your innovative business ideas to a panel of investors and mentors.</p>
+                    </a>
                 </div>
-                <div class="featured-card" >
-                    <a href="https://www.atlassian.com/software/jira?utm_source=gdn&utm_medium=paid-display&utm_campaign=P:jira|O:ppm|V:gdn|G:in|L:en|F:aware|D:alld|T:custom-audience|Z:pmax&utm_content=P:jira|O:ppm|V:gdn|G:in|L:en|F:aware|D:alld|T:custom-audience|Z:pmax|A:assets|U:custom-intent-projmgmt_assets-features-projmgmt-projmgmt-flexible-multi-na-na-projmgmt&utm_source=gdn&utm_medium=paid-display&campaign=20775561062&adgroup=&device=c&devicemodel=&placement=&aceid=&creative=&adtype=&gclid=Cj0KCQjwotDBBhCQARIsAG5pinMFR1cPGbadqFbFieO9E30NZUY-lAF19oI-kcg2YqU_v4hGElrjRqsaAo2qEALw_wcB&country=&network=x&targetid=&gad_source=1&gad_campaignid=20779560421&gbraid=0AAAAADkKUlCTiZ5UPFPclu0Iz3svrrO4a">
-                    <h3>Product Management Bootcamp</h3>
-                    <p>Master the art of building, launching, and managing successful tech products.</p></a>
+                <div class="featured-card">
+                     <a href="https://azure.microsoft.com/en-us/resources/cloud-computing-dictionary/what-is-cloud-computing" target="_blank" rel="noopener noreferrer">
+                        <h3>Cloud Computing Trends</h3>
+                        <p>A deep dive into the latest advancements in cloud services and serverless architecture.</p>
+                    </a>
                 </div>
-                <div class="featured-card" >
-                    <a href="https://workshops.aws/categories/Blockchain">
-                    <h3>Blockchain Explained</h3>
-                    <p>Understand the core concepts and real-world applications of blockchain technology.</p></a>
+                <div class="featured-card">
+                    <a href="https://umbrella.cisco.com/info/cyber-threat-trends-report?utm_medium=search-paid&utm_source=g+google&utm_campaign=UMB_APJC_IN_EN_GS_Nonbrand_Security_T1&utm_content=DNS-FY24-Q4-Content-Ebook-Cyber-Threat-Trends-Report&_bt=712318013921&_bk=cyber%20security&_bm=p&_bn=g&_bg=161647967241&gad_source=1&gad_campaignid=20970546943&gbraid=0AAAAAB9mQgzfDugNKHz9w9lsRbGcTV7Ab&gclid=Cj0KCQjwotDBBhCQARIsAG5pinOmQy0B8NA9W-Ov_wppK73CulEfnUuqykdUijQJ09pT11HrgSm7YkYaAoG9EALw_wcB" target="_blank" rel="noopener noreferrer">
+                        <h3>Cybersecurity Seminar</h3>
+                        <p>Learn essential strategies to protect digital assets from modern cyber threats.</p>
+                    </a>
                 </div>
-                
+                <div class="featured-card">
+                    <a href="https://pll.harvard.edu/course/data-science-visualization" target="_blank" rel="noopener noreferrer">
+                        <h3>Data Visualization Challenge</h3>
+                        <p>Turn complex datasets into compelling and insightful visual stories. Prizes to be won!</p>
+                    </a>
+                </div>
+                <div class="featured-card">
+                    <a href="https://www.atlassian.com/software/jira?utm_source=gdn&utm_medium=paid-display&utm_campaign=P:jira|O:ppm|V:gdn|G:in|L:en|F:aware|D:alld|T:custom-audience|Z:pmax&utm_content=P:jira|O:ppm|V:gdn|G:in|L:en|F:aware|D:alld|T:custom-audience|Z:pmax|A:assets|U:custom-intent-projmgmt_assets-features-projmgmt-projmgmt-flexible-multi-na-na-projmgmt&utm_source=gdn&utm_medium=paid-display&campaign=20775561062&adgroup=&device=c&devicemodel=&placement=&aceid=&creative=&adtype=&gclid=Cj0KCQjwotDBBhCQARIsAG5pinMFR1cPGbadqFbFieO9E30NZUY-lAF19oI-kcg2YqU_v4hGElrjRqsaAo2qEALw_wcB&country=&network=x&targetid=&gad_source=1&gad_campaignid=20779560421&gbraid=0AAAAADkKUlCTiZ5UPFPclu0Iz3svrrO4a" target="_blank" rel="noopener noreferrer">
+                        <h3>Product Management Bootcamp</h3>
+                        <p>Master the art of building, launching, and managing successful tech products.</p>
+                    </a>
+                </div>
+                <div class="featured-card">
+                    <a href="https://workshops.aws/categories/Blockchain" target="_blank" rel="noopener noreferrer">
+                        <h3>Blockchain Explained</h3>
+                        <p>Understand the core concepts and real-world applications of blockchain technology.</p>
+                    </a>
+                </div>
+                <!-- Add 3 more similar featured-card divs with their respective <a> tags if needed -->
             </div>
         </div>
 
         <div class="features" id="featuresContainer">
-            <!-- Feature cards will be loaded here by JS, or hardcode placeholders -->
             <div class="feature">
                 <a href="connection.html">
-                <i class="fas fa-users"></i>
-                <h3>Connections</h3>
-                <p>Manage your connections</p></a>
+                    <i class="fas fa-users"></i>
+                    <h3>Connections</h3>
+                    <p>Manage your connections</p>
+                </a>
             </div>
              <div class="feature">
-                <a href="intership.html">
-                <i class="fas fa-briefcase"></i>
-                <h3>Jobs</h3>
-                <p>Find job opportunities</p></a>
+                <a href="internship.html"> <!-- Corrected from intership.html -->
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Jobs</h3>
+                    <p>Find job opportunities</p>
+                </a>
             </div>
              <div class="feature">
                 <a href="explore-hackathons.html">
-                <i class="fas fa-calendar-alt"></i>
-                <h3>Events</h3>
-                <p>See upcoming events</p></a>
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Events</h3>
+                    <p>See upcoming events</p>
+                </a>
             </div>
              <div class="feature">
-                <a href="profile.html">
-                <i class="fas fa-user-circle"></i>
-                <h3>Profile</h3>
-                <p>View and edit your profile</p></a>
+                <a href="profile.html"> <!-- Assuming profile.html is in the root or /user/profile.html -->
+                    <i class="fas fa-user-circle"></i>
+                    <h3>Profile</h3>
+                    <p>View and edit your profile</p>
+                </a>
             </div>
         </div>
     </div>
@@ -355,9 +407,22 @@
         <p>© 2025 UniVerse. All rights reserved.</p>
     </footer>
 
-   
+    <script>
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+        // Removed navigateToItem as links are direct now
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Daily spark text area click:
+            const dailySparkTextDiv = document.getElementById('dailySparkContent');
+            if (dailySparkTextDiv) {
+                dailySparkTextDiv.addEventListener('click', () => {
+                    navigateTo('dailyspark.html');
+                });
+            }
+        });
     </script>
-    <!-- Link to your external home.js if it contains more complex logic -->
-    <script src="/static/home.js"></script> 
+    <!-- <script src="/static/home.js"></script> -->
 </body>
 </html>
