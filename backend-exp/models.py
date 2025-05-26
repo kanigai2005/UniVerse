@@ -151,6 +151,7 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
     contact_id = Column(Integer, ForeignKey("chat_contacts.id"))
+    
     sender = Column(String, nullable=True) # Could be 'user' or 'bot' or username
     text = Column(String, nullable=True)
     file_path = Column(String, nullable=True)
@@ -584,7 +585,7 @@ class ChatMessageOut(BaseModel):
     contact_id: int
     sender: Optional[str] = None
     text: Optional[str] = None
-    file_path: Optional[str] = None
+    file_path: Optional[str] = None # << Does this match what your frontend expects? Or should it be file_url?
     timestamp: datetime
     model_config = ConfigDict(from_attributes=True)
 

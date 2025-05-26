@@ -464,41 +464,66 @@ async def send_chat_message_api( # Renamed
 
     contact = db.query(models.ChatContact).filter(models.ChatContact.id == message_data.contact_id).first()
     if not contact:
+        logger.warning(f"User '{current_user.username}' attempted to send to non-existent contact_id: {message_data.contact_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat contact not found")
 
     # --- Security Check (similar to get_chat_messages) ---
     is_participant = False
     if contact.name and contact.name.startswith("chat_users_"):
         try:
-            parts = contact.name.split('_');
+            parts = contact.name.split('_') # Semicolon was here, removed for standard Python style
             if len(parts) == 4:
                 user_id1 = int(parts[2]); user_id2 = int(parts[3])
                 if current_user.id in [user_id1, user_id2]:
                     is_participant = True
-        except: pass
+        except Exception as e: # Catch specific errors like ValueError, IndexError if possible
+            logger.warning(f"Error parsing contact name '{contact.name}' for security check: {e}")
+            pass # is_participant remains False
     if not is_participant:
-        logger.warning(f"User '{current_user.username}' forbidden to send to chat contact ID {contact.id}.")
+        logger.warning(f"User '{current_user.username}' forbidden to send to chat contact ID {contact.id}. Contact name: '{contact.name}'")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot send messages to this chat.")
     # --- End Security Check ---
 
+    # Prepare file_path from incoming message_data
+    actual_file_path = None
+    if hasattr(message_data, 'file_url') and message_data.file_url:
+        actual_file_path = message_data.file_url
+
     db_message = models.ChatMessage(
         contact_id=message_data.contact_id,
-        sender_id=current_user.id, # Store sender's ID
-        sender_username=current_user.username, # Store sender's username
+        sender=current_user.username,  # Correct: Use the 'sender' (String) column
         text=message_data.text.strip(),
         timestamp=datetime.utcnow(),
-        file_url=message_data.file_url if hasattr(message_data, 'file_url') else None # If file uploads are part of SendMessageRequest
+        file_path=actual_file_path     # Correct: Use the 'file_path' (String) column
     )
     try:
-        db.add(db_message); db.commit(); db.refresh(db_message)
-        # Ensure relationships needed by ChatMessageOut are loaded (e.g., sender User object)
-        db.refresh(db_message, ['sender']) # Assuming 'sender' relationship to User model from sender_id
-        return db_message
+        db.add(db_message)
+        db.commit()
+        db.refresh(db_message) # Get any DB-generated values like ID, timestamp
+
+        # --- MODIFICATION FROM STEP 3: Correct Response Serialization ---
+        # REMOVE the following line:
+        # db.refresh(db_message, ['sender']) # This is incorrect as 'sender' is a string column, not a relationship here.
+
+        # Construct the response dictionary explicitly
+        final_response_data = {
+            "id": db_message.id,
+            "contact_id": db_message.contact_id,
+            "sender": db_message.sender,  # This is the username string you stored
+            "text": db_message.text,
+            "timestamp": db_message.timestamp,
+            "file_path": db_message.file_path, # Pass the file_path
+            # If your ChatMessageOut Pydantic model uses 'file_url' instead of 'file_path', map it:
+            # "file_url": db_message.file_path,
+            # Add other fields if your ChatMessageOut expects them and db_message has them
+        }
+        logger.debug(f"Data being passed to ChatMessageOut for response: {final_response_data}")
+        return models.ChatMessageOut(**final_response_data)
+
     except Exception as e:
         db.rollback()
         logger.error(f"DB error sending message from '{current_user.username}': {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not send message.")
-
 @router.post(f"{BASE_API_PATH}/upload-file", tags=["Chat", "API"]) # Consider a response model e.g., FileUploadResponse
 async def upload_chat_file_api( # Renamed
     file: UploadFile = File(...),
