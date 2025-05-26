@@ -8,17 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #1a1a1a;
-            --nav-bg: #2f2f2f;
-            --card-bg: #2a2a2a;
+            --bg-dark: #dee3e2;
+            --nav-bg: #174340;
+            --card-bg: #b4b9b8;
             --card-hover-bg: #3a3a3a;
             --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --accent-color: #2f4f4f; /* Dark Slate Gray */
+            --text-secondary: #1a1919;
+            --accent-color: #204343; /* Dark Slate Gray */
             --link-hover: #90caf9;
             --border-color: #444;
-            --button-bg: #64b5f6; /* Light Blue */
-            --button-text: #1a1a1a;
+            --button-bg:rgb(38, 95, 142); /* Light Blue */
+            --button-text: #d4d0d0;
             --button-hover-bg: #2f4f4f; /* Dark Slate Gray for hover */
             --success-color: #2f4f4f; /* Dark Slate Gray for success */
             --error-color: #ef5350;
@@ -123,30 +123,30 @@
         /* Hackathon List */
         #current-hackathons-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; list-style: none; padding: 0; }
         .hackathon-card {
-            padding: 18px; border-radius: 6px; background-color: var(--nav-bg);
+            padding: 18px; border-radius: 6px; background-color: rgb(23, 75, 75);color:#dee3e2;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
             border: 1px solid var(--border-color); display: flex; flex-direction: column;
         }
         .hackathon-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-color: var(--accent-color); }
-        .hackathon-name { font-size: 1.2em; font-weight: 600; color: var(--accent-color); margin: 0 0 8px 0; }
-        .hackathon-date, .hackathon-location, .hackathon-theme, .hackathon-prize { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-        .hackathon-date i, .hackathon-location i, .hackathon-theme i, .hackathon-prize i { color: var(--accent-color); width: 16px; text-align: center;}
+        .hackathon-name { font-size: 1.2em; font-weight: 600; color: #dee3e2; margin: 0 0 8px 0; }
+        .hackathon-date, .hackathon-location, .hackathon-theme, .hackathon-prize { font-size: 0.85em; color:#dee3e2; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .hackathon-date i, .hackathon-location i, .hackathon-theme i, .hackathon-prize i { color: #dee3e2; width: 16px; text-align: center;}
         .hackathon-details-link { margin-top: auto; padding-top: 10px; text-align: right; }
-        .hackathon-details-link button { font-size: 0.9em; padding: 6px 12px; background-color: #555; color: var(--text-primary); border:none; border-radius: 4px; cursor:pointer; transition: background-color 0.2s ease;}
+        .hackathon-details-link button { font-size: 0.9em; padding: 6px 12px; background-color: #928b8b; color: rgb(24, 26, 29); border:none; border-radius: 4px; cursor:pointer; transition: background-color 0.2s ease;}
         .hackathon-details-link button:hover { background-color: var(--accent-color); }
 
 
         /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
-        .modal-content { background-color: var(--card-bg); color: var(--text-primary); padding: 25px 30px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); width: 90%; max-width: 650px; position: relative; animation: fadeInModal 0.3s ease-out; }
+        .modal-content { background-color: var(--card-bg); color: black; padding: 25px 30px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); width: 90%; max-width: 650px; position: relative; animation: fadeInModal 0.3s ease-out; }
         @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .modal-header h2 { margin: 0; font-size: 1.6em; color: var(--accent-color); }
+        .modal-header h2 { margin: 0; font-size: 1.6em; color: black; }
         .close-modal { position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.2s; border: none; background: none; padding: 0; line-height: 1; }
         .close-modal:hover { color: #fff; }
         .modal-body { margin-bottom: 20px; font-size: 1em; line-height: 1.7; max-height: 70vh; /* Increased max-height for form */ overflow-y: auto; }
         .modal-body p { margin: 10px 0; }
-        .modal-body strong { color: var(--text-primary); font-weight: 600;}
+        .modal-body strong { color: black; font-weight: 600;}
         .modal-footer { text-align: right; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; }
         .modal-register-btn { background-color: var(--button-bg); color: var(--button-text); padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 1em; font-weight: bold; transition: background-color 0.2s ease-in-out; }
         .modal-register-btn:hover { background-color: var(--button-hover-bg); }
@@ -156,7 +156,7 @@
         .error-message { color: var(--error-color); font-weight: bold;}
 
         /* Footer */
-        .footer { background-color: var(--nav-bg); color: var(--text-secondary); text-align: center; padding: 15px 0; font-size: 0.9em; box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3); position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;}
+        .footer { background-color: var(--nav-bg); color:whitesmoke; text-align: center; padding: 15px 0; font-size: 0.9em; box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3); position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;}
 
     </style>
 </head>

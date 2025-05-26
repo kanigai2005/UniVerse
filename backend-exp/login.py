@@ -158,12 +158,12 @@ async def register(
 
         # Redirect students and admins to their home page after registration
         # Redirect alumni to login page with a success message
-        if role.lower() in ["student", "admin"]:
+        if role.lower() in ["student", "alumni"]:
             success_message = f"Registration as {role} successful. Welcome!"
             query_params = urlencode({"message": success_message})
             # Assuming user home page is now /user/home
-            return RedirectResponse(url=f"/user/home?{query_params}", status_code=status.HTTP_303_SEE_OTHER)
-        else: # Alumni
+            return RedirectResponse(url=f"/?{query_params}", status_code=status.HTTP_303_SEE_OTHER)
+        else: # Admin
             query_params = urlencode({"message": "Registration successful. Please log in."})
             return RedirectResponse(url=f"/?{query_params}", status_code=status.HTTP_303_SEE_OTHER)
 
