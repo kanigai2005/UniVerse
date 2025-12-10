@@ -6,7 +6,7 @@
 
 **Core User Experience (Students & Alumni):**
 
-*   **Authentication:** Secure user registration (with distinct roles: Student, Alumni, Admin), login, logout, and password reset functionality using OTP email verification.
+*   **Authentication:** Secure user registration (with distinct roles: Student, Alumni, Admin), login, logout.
 *   **Personalized Dashboard/Home:** A central landing page after login, potentially displaying a personalized feed of relevant activities, upcoming events, new Q&A, or Daily Spark prompts.
 *   **User Profiles:**
     *   Viewable public profiles displaying professional information (profession, current company, department, alma mater).
